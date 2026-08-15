@@ -6,6 +6,7 @@ Bu klasör, fabrika üretim–depo–satış–sevkiyat–cari–personel yönet
 
 | Klasör | İçerik |
 |---|---|
+| [`00-project-brief`](./00-project-brief/) | Kullanıcının verdiği özgün kapsam ve teknik gereksinim promptu |
 | [`01-design`](./01-design/) | Web, public katalog, mobil, görsel sistem ve tüm ekran envanteri |
 | [`02-architecture`](./02-architecture/) | Veritabanı mimarisi ve teknik altyapı ön taslağı |
 | [`03-production-warehouse`](./03-production-warehouse/) | Üretim ve depo modüllerinin ayrıntılı ekran/veri incelemesi |
@@ -15,12 +16,13 @@ Bu klasör, fabrika üretim–depo–satış–sevkiyat–cari–personel yönet
 
 ## Önerilen okuma sırası
 
-1. [`00-complete-ui-design-package.md`](./01-design/00-complete-ui-design-package.md) ile genel kapsamı inceleyin.
-2. [`01-master-screen-inventory.md`](./01-design/01-master-screen-inventory.md) üzerinden ekran ve modül envanterini kontrol edin.
-3. [`database-technical-architecture.md`](./02-architecture/database-technical-architecture.md) ile veri ve deployment ön taslağını değerlendirin.
-4. [`production-warehouse-deep-dive.md`](./03-production-warehouse/production-warehouse-deep-dive.md) ile üretim/depo kritik akışlarını inceleyin.
-5. [`project-management-slides.md`](./04-presentation/project-management-slides.md) ve [`slide_notes.md`](./04-presentation/slide_notes.md) ile proje yönetimi sunumunu kullanın.
-6. [`factory-erp-design-workflow/SKILL.md`](./06-process-skill/factory-erp-design-workflow/SKILL.md) ile süreci sonraki benzer projelerde tekrar uygulayın.
+1. [`original-project-prompt.md`](./00-project-brief/original-project-prompt.md) ile özgün gereksinim kaynağını inceleyin.
+2. [`00-complete-ui-design-package.md`](./01-design/00-complete-ui-design-package.md) ile genel kapsamı inceleyin.
+3. [`01-master-screen-inventory.md`](./01-design/01-master-screen-inventory.md) üzerinden ekran ve modül envanterini kontrol edin.
+4. [`database-technical-architecture.md`](./02-architecture/database-technical-architecture.md) ile veri ve deployment ön taslağını değerlendirin.
+5. [`production-warehouse-deep-dive.md`](./03-production-warehouse/production-warehouse-deep-dive.md) ile üretim/depo kritik akışlarını inceleyin.
+6. [`project-management-slides.md`](./04-presentation/project-management-slides.md) ve [`slide_notes.md`](./04-presentation/slide_notes.md) ile proje yönetimi sunumunu kullanın.
+7. [`factory-erp-design-workflow/SKILL.md`](./06-process-skill/factory-erp-design-workflow/SKILL.md) ile süreci sonraki benzer projelerde tekrar uygulayın.
 
 ## Tasarım kapsamı
 
