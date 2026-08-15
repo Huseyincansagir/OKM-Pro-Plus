@@ -1,0 +1,17 @@
+# Windows thumbnail cache files
+Thumbs.db
+ehthumbs.db
+ThumbCache.db
+index.dat
+
+# Folder config files
+Desktop.ini
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
