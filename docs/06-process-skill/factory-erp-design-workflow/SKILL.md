@@ -39,14 +39,23 @@ Varsayılan olarak aşağıdaki dosyaları üret:
 
 | Dosya | İçerik |
 |---|---|
-| `docs/01-design/01-master-screen-inventory.md` | Tüm modül, route, ekran, rol ve durum envanteri |
-| `docs/01-design/02-web-ux-architecture.md` | Web bilgi mimarisi ve ekran akışları |
-| `docs/01-design/03-production-warehouse-deep-dive.md` | Üretim ve depo ekranlarının ayrıntılı incelemesi |
-| `docs/02-architecture/01-database-technical-architecture.md` | Veritabanı, transaction, API ve deployment ön taslağı |
-| `docs/01-design/05-mobile-complete-design.md` | Mobil ekran ve barkod akışları |
-| `docs/01-design/06-public-catalog-final.md` | Public katalog ve teklif sepeti |
-| `docs/01-design/09-visual-design-system.md` | Renk, tipografi, bileşen ve durum sistemi |
-| `docs/04-presentation/` | En fazla 12 slaytlık sunum içeriği ve konuşma notları |
+| `/design/master-screen-inventory.md` | Tüm modül, route, ekran, rol ve durum envanteri |
+| `/design/web-ux-architecture.md` | Web bilgi mimarisi ve ekran akışları |
+| `/design/production-warehouse-deep-dive.md` | Üretim ve depo ekranlarının ayrıntılı incelemesi |
+| `/design/database-technical-architecture.md` | Veritabanı, transaction, API ve deployment ön taslağı |
+| `/design/mobile-design.md` | Mobil ekran ve barkod akışları |
+| `/design/public-catalog-design.md` | Public katalog ve teklif sepeti |
+| `/design/visual-design-system.md` | Renk, tipografi, bileşen ve durum sistemi |
+| `/design/decision-log.md` | Source of truth, varsayım ve açık kararlar |
+| `/design/domain-model.md` | Bounded context ve entity ilişkileri |
+| `/design/business-workflows.md` | Satış, üretim ve personel workflow'ları |
+| `/design/implementation-readiness.md` | Design Gate değerlendirmesi |
+| `/design/implementation-ready.md` | Implementation başlangıç gate'i |
+| `/design/ui-mockup-review.md` | Mockup, marka ve görsel asset incelemesi |
+
+## Design Gate
+
+Yeni kodlama başlatmadan önce `/design/implementation-ready.md` bulunmalı ve `READY` durumunda olmalıdır. Ekrandaki entity database/domain tasarımında yoksa, workflow state'i tanımlı değilse, permission veya veri kaynağı belli değilse, belge ilişkisi veya stok/cari etkisi belirtilmemişse Design Gate başarısız kabul edilir.
 
 ## Tasarım ekranı şablonu
 

@@ -33,8 +33,8 @@ Use the relevant skills under `.claude/skills/` rather than treating one giant i
 ## Repository rules
 
 - Read existing code and documentation before changing architecture.
-- Keep the numbered `/docs/00`–`/docs/06` package as the design source of truth.
-- Keep domain and database decisions synchronized with `docs/01-design/13-decision-log.md`.
+- Keep `/design` as the design source of truth; keep the numbered `/docs/00`–`/docs/06` package as synchronized archive and delivery copies.
+- Keep domain and database decisions synchronized with `/design/decision-log.md`; update numbered docs copies after canonical changes.
 - Do not introduce duplicate sources of truth for products, customers, stock, documents or current-account transactions.
 - Do not use mock data as the final implementation.
 - Do not leave TODO/placeholder business functionality behind.
