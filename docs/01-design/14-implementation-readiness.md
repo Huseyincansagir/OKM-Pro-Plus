@@ -41,7 +41,7 @@ Aşağıdaki kararlar schema ve domain davranışını değiştirebileceği içi
 8. Maaş/bordro kapsamı ve harici sistem entegrasyonu.
 9. Şirket içi server işletim sistemi, HTTPS/LAN modeli ve RPO/RTO hedefleri.
 
-Bu kararlar `/design/decision-log.md` içinde `OPEN DECISION` olarak tutulmaktadır.
+Bu kararlar `docs/01-design/13-decision-log.md` içinde `OPEN DECISION` olarak tutulmaktadır.
 
 ## 3. Architecture'a geçiş kriteri
 

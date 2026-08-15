@@ -144,11 +144,11 @@ Public form gönderildikten sonra şirket içi sistemde `NEW` durumunda yeni bir
 
 ## 11. Görsel mockup'lar
 
-![Public ürün kataloğu masaüstü mockup'ı](uretim-depo-public-catalog-desktop-mockup.png)
+![Public ürün kataloğu masaüstü mockup'ı](../05-assets/mockups/uretim-depo-public-catalog-desktop-mockup.png)
 
-![Teklif sepeti masaüstü mockup'ı](uretim-depo-quote-cart-desktop-mockup.png)
+![Teklif sepeti masaüstü mockup'ı](../05-assets/mockups/uretim-depo-quote-cart-desktop-mockup.png)
 
-![Teklif talebi mobil form mockup'ı](uretim-depo-quote-form-mobile-mockup.png)
+![Teklif talebi mobil form mockup'ı](../05-assets/mockups/uretim-depo-quote-form-mobile-mockup.png)
 
 ## 12. Onaylanmış görsel yön
 

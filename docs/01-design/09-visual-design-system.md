@@ -45,10 +45,10 @@ Başlıklar güçlü ve kısa tutulacaktır. Sayfa başlığı 28–32 px aralı
 
 | Ekran | Tasarım amacı | Dosya |
 |---|---|---|
-| Yönetici dashboard'u | Rol bazlı özet, KPI, grafik ve risk listesi | `uretim-depo-erp-dashboard-reference.png` |
-| Sipariş detay ve onay | Durum akışı, ürünler, stok özeti ve sorumlu onayı | `uretim-depo-order-detail-mockup.png` |
-| Ürün kataloğu | Görsel ürün kartları, filtreler ve hızlı ürün detayı | `uretim-depo-product-catalog-mockup.png` |
-| Mobil barkod | Kamera taraması, ürün sonucu ve operasyon butonları | `uretim-depo-mobile-barcode-mockup.png` |
+| Yönetici dashboard'u | Rol bazlı özet, KPI, grafik ve risk listesi | `../05-assets/mockups/uretim-depo-erp-dashboard-reference.png` |
+| Sipariş detay ve onay | Durum akışı, ürünler, stok özeti ve sorumlu onayı | `../05-assets/mockups/uretim-depo-order-detail-mockup.png` |
+| Ürün kataloğu | Görsel ürün kartları, filtreler ve hızlı ürün detayı | `../05-assets/mockups/uretim-depo-product-catalog-mockup.png` |
+| Mobil barkod | Kamera taraması, ürün sonucu ve operasyon butonları | `../05-assets/mockups/uretim-depo-mobile-barcode-mockup.png` |
 
 ## 6. Görsel kabul kriterleri
 

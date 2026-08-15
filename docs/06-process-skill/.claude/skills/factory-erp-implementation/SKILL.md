@@ -11,7 +11,7 @@ description: Tasarımı kodlayan ana geliştirme skill'i. Backend, web, mobile, 
 
 ## Başlangıç koşulu
 
-`/design/implementation-ready.md` yoksa veya Design Gate başarısızsa yeni business feature implement etmeye başlama. Mevcut küçük altyapı düzeltmeleri gerekiyorsa yap, ancak domain tasarımını varsayarak gizlice değiştirme.
+`docs/01-design/15-implementation-ready.md` yoksa veya Design Gate başarısızsa yeni business feature implement etmeye başlama. Mevcut küçük altyapı düzeltmeleri gerekiyorsa yap, ancak domain tasarımını varsayarak gizlice değiştirme.
 
 ## Teknoloji
 

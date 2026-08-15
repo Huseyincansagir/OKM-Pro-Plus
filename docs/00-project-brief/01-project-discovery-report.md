@@ -2,7 +2,7 @@
 
 ## 1. Project Status
 
-Repository inspection was performed against commit `8e8aed7` and the local uncommitted scaffold was removed before this discovery/design pass. The repository currently contains documentation, visual assets, skill instructions and the new `/design` artefacts; it does not contain a committed production application.
+Repository inspection was performed against commit `8e8aed7` and the local uncommitted scaffold was removed before this discovery/design pass. The repository currently contains documentation, visual assets, skill instructions and the canonical numbered `docs/00`–`docs/06` artefacts; it does not contain a committed production application.
 
 | Area | Current status |
 |---|---|
@@ -20,7 +20,7 @@ Repository inspection was performed against commit `8e8aed7` and the local uncom
 
 Mevcut repository bir **dokümantasyon ve tasarım başlangıç deposudur**, henüz uygulama runtime'ı değildir. Önerilen hedef mimari; şirket içi server üzerinde Docker Compose ile çalışan modüler monolith, ASP.NET Core REST API, PostgreSQL, Next.js web, Flutter mobile ve reverse proxy bileşenlerinden oluşur.
 
-Mevcut tasarım dosyaları başlangıç kaynaklarıdır; yeni canonical design artefact'ları `/design` altında tutulmaktadır. Presentation dosyaları mevcut olsa da bu bootstrap promptunda yeni sunum üretimi yapılmamıştır.
+Mevcut tasarım dosyaları kanonik numbered `docs` yapısında tutulmaktadır. Presentation dosyaları mevcut olsa da bu bootstrap promptunda yeni sunum üretimi yapılmamıştır.
 
 ## 3. Technical Stack
 
@@ -80,7 +80,7 @@ Reporting / Notifications / Audit
   → domain kararlarını ve kritik etkileri görünür kılar
 ```
 
-Canonical source-of-truth matrisi `/design/domain-model.md` içindedir. Özellikle `Product`, `Customer`, `Stock`, `StockMovement`, `SalesOrder`, `DeliveryNote`, `Invoice`, `CurrentTransaction`, `Payment`, `ProductionRecord` ve `Employee` için duplicate ana kayıt oluşturulmayacaktır.
+Canonical source-of-truth matrisi `docs/02-architecture/00-domain-model.md` içindedir. Özellikle `Product`, `Customer`, `Stock`, `StockMovement`, `SalesOrder`, `DeliveryNote`, `Invoice`, `CurrentTransaction`, `Payment`, `ProductionRecord` ve `Employee` için duplicate ana kayıt oluşturulmayacaktır.
 
 ## 5. Main Workflows
 
@@ -96,7 +96,7 @@ Canonical source-of-truth matrisi `/design/domain-model.md` içindedir. Özellik
 
 `Employee → Attendance → Overtime/Leave → Approval → Production Assignment → Payroll Record`
 
-Her workflow için actor, input, state, transition, permission, database effect, stock effect, financial effect ve audit gereksinimi `/design/business-workflows.md` içinde tanımlanmıştır.
+Her workflow için actor, input, state, transition, permission, database effect, stock effect, financial effect ve audit gereksinimi `docs/01-design/12-business-workflows.md` içinde tanımlanmıştır.
 
 ## 6. Screen Inventory Summary
 
@@ -108,7 +108,7 @@ Web, public ve mobil olmak üzere üç kullanıcı yüzeyi tasarlanmıştır.
 | Public | Public ana sayfa, ürün listesi, ürün detayı, teklif sepeti, müşteri formu, talep özeti, başarı ekranı |
 | Mobile | Giriş, bağlantı durumu, görev ana sayfası, barkod, stok sorgu, sayım, transfer, sevkiyat, üretim, bildirim ve profil |
 
-Her ekran için route, role, data source, action, state, permission, related document, database effect, empty/loading/error/offline, mobile behavior ve acceptance criteria kontrolü `/design/master-screen-inventory.md` ve ilgili UX dosyalarında yapılmıştır.
+Her ekran için route, role, data source, action, state, permission, related document, database effect, empty/loading/error/offline, mobile behavior ve acceptance criteria kontrolü `docs/01-design/01-master-screen-inventory.md` ve ilgili UX dosyalarında yapılmıştır.
 
 ## 7. Technical Decisions
 
@@ -139,7 +139,7 @@ Design Gate'i etkileyen açık kararlar:
 9. Server işletim sistemi, HTTPS ve LAN erişim modeli.
 10. Backup RPO/RTO, retention ve restore test takvimi.
 
-Ayrıntılı sahip/etki/öneri matrisi `/design/decision-log.md` içindedir.
+Ayrıntılı sahip/etki/öneri matrisi `docs/01-design/13-decision-log.md` içindedir.
 
 ## 9. Risks
 
@@ -153,7 +153,7 @@ Ayrıntılı sahip/etki/öneri matrisi `/design/decision-log.md` içindedir.
 | Şirket server/backup operasyonunun net olmaması | Veri kaybı ve kesinti | Operations skill ile RPO/RTO, restore ve monitoring planı |
 | Mobil ağ kesintisi | Çift/eksik stok hareketi | Offline stok/finans commit'ini yasaklamak |
 | Büyük listelerde client-side data | Performans ve güvenlik riski | Server-side query, pagination ve index |
-| Mevcut design dosyalarının `/design` dışında da tutulması | Yanlış dosya source of truth seçimi | `/design` canonical kabulü ve eski docs'a referans politikası |
+| Aynı design dosyalarının birden fazla klasörde tutulması | Yanlış dosya source of truth seçimi | Numaralı `docs/00`–`docs/06` yapısını tek canonical paket olarak kullanmak |
 
 ## 10. Design Gate Result
 
@@ -164,7 +164,7 @@ DESIGN STATUS:
 BLOCKED
 ```
 
-Blocker'lar `/design/decision-log.md` ve `/design/implementation-readiness.md` dosyalarında kayıtlıdır. Tasarım Gate başarılı duruma çekilmeden production code, migration veya API implementasyonuna başlanmamalıdır.
+Blocker'lar `docs/01-design/13-decision-log.md` ve `docs/01-design/14-implementation-readiness.md` dosyalarında kayıtlıdır. Tasarım Gate başarılı duruma çekilmeden production code, migration veya API implementasyonuna başlanmamalıdır.
 
 ## 11. Recommended Next Skill
 

@@ -14,7 +14,7 @@ Implementation'a geçmeden önce aşağıdaki artefact'lar aynı commit veya izl
 - `decision-log.md`: Açık kararlar çözülmüş olmalı.
 - `domain-model.md`: Entity, bounded context ve source of truth güncel olmalı.
 - `business-workflows.md`: State transition ve effect'ler seçilmiş kurallarla uyumlu olmalı.
-- `database-technical-architecture.md`: Seçilen vergi, partial shipment/invoice, BOM, lot ve bordro kapsamını yansıtmalı.
+- `docs/02-architecture/01-database-technical-architecture.md`: Seçilen vergi, partial shipment/invoice, BOM, lot ve bordro kapsamını yansıtmalı.
 - `master-screen-inventory.md`: Yeni state, alan ve permission değişiklikleriyle uyumlu olmalı.
 - `mobile-design.md` ve `public-catalog-design.md`: Kritik operasyon ve public erişim kararlarını yansıtmalı.
 

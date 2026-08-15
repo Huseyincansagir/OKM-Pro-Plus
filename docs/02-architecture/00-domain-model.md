@@ -120,4 +120,4 @@ ProductionPlan
 
 ## 6. Tasarım sonucu
 
-Source of truth haritası; `/design` altındaki tüm ekran, workflow ve teknik dokümanların ortak referansıdır. Aynı kavram için farklı modüllerde ikinci bir ana kayıt tasarlanırsa bu durum `decision-log.md` içinde açıkça değerlendirilmeden Design Gate geçilmez.
+Source of truth haritası; `docs/01-design` ve `docs/02-architecture` altındaki kanonik ekran, workflow ve teknik dokümanların ortak referansıdır. Aynı kavram için farklı modüllerde ikinci bir ana kayıt tasarlanırsa bu durum `docs/01-design/13-decision-log.md` içinde açıkça değerlendirilmeden Design Gate geçilmez.

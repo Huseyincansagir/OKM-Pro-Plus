@@ -18,7 +18,7 @@ Bu skill, ürünün kodunu yazmadan önce iş akışını, kullanıcı deneyimin
 - Mobil uygulamayı masaüstünün küçültülmüş kopyası yapma; görev odaklı tasarla.
 - Finansal ve stok hareketlerinde silme yerine iptal/ters kayıt yaklaşımını koru.
 - Gereksiz kullanıcı onayı istemeden makul varsayımlar yap.
-- Belirsiz veya iş riski oluşturan kararları `decision-log.md` içinde tut.
+- Belirsiz veya iş riski oluşturan kararları `docs/01-design/13-decision-log.md` içinde tut.
 
 ## Uygulanacak sıra
 
@@ -102,14 +102,14 @@ En az aşağıdakileri tasarımda görünür kıl:
 
 Kodlama başlamadan önce şu dosyalar mevcut olmalı:
 
-- `master-screen-inventory.md`
-- `web-ux-architecture.md`
-- `production-warehouse-deep-dive.md`
-- `database-technical-architecture.md`
-- `mobile-design.md`
-- `public-catalog-design.md`
-- `visual-design-system.md`
-- `decision-log.md`
+- `docs/01-design/01-master-screen-inventory.md`
+- `docs/01-design/02-web-ux-architecture.md`
+- `docs/01-design/03-production-warehouse-deep-dive.md`
+- `docs/02-architecture/01-database-technical-architecture.md`
+- `docs/01-design/05-mobile-complete-design.md`
+- `docs/01-design/06-public-catalog-final.md`
+- `docs/01-design/09-visual-design-system.md`
+- `docs/01-design/13-decision-log.md`
 
 Aşağıdaki tutarsızlıklardan biri varsa implementation'a geçme:
 
@@ -121,25 +121,26 @@ Aşağıdaki tutarsızlıklardan biri varsa implementation'a geçme:
 - Stok/cari etkisi belirtilmemiş.
 - Kritik ağ kesintisi veya hata durumu tanımlanmamış.
 
-Gate başarılıysa `implementation-ready.md` oluştur.
+Gate başarılıysa `docs/01-design/15-implementation-ready.md` oluştur.
 
 ## Varsayılan tasarım artefact'ları
 
 ```text
-/design
-  master-screen-inventory.md
-  web-ux-architecture.md
-  production-warehouse-deep-dive.md
-  database-technical-architecture.md
-  mobile-design.md
-  public-catalog-design.md
-  visual-design-system.md
-  decision-log.md
-  implementation-ready.md
-
-/presentation
-  project-management-slides.md
-  slide_notes.md
+docs/
+  00-project-brief/01-project-discovery-report.md
+  01-design/00-complete-ui-design-package.md
+  01-design/01-master-screen-inventory.md
+  01-design/02-web-ux-architecture.md
+  01-design/03-production-warehouse-deep-dive.md
+  02-architecture/01-database-technical-architecture.md
+  01-design/05-mobile-complete-design.md
+  01-design/06-public-catalog-final.md
+  01-design/09-visual-design-system.md
+  01-design/12-business-workflows.md
+  01-design/13-decision-log.md
+  01-design/15-implementation-ready.md
+  02-architecture/00-domain-model.md
+  06-process-skill/00-skill-system-review.md
 ```
 
 ## Sunum standardı

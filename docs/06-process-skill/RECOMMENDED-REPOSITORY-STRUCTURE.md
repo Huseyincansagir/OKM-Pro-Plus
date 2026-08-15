@@ -36,27 +36,14 @@ factory-erp/
 │   ├── nginx/
 │   └── deployment/
 │
-├── design/
-│   ├── master-screen-inventory.md
-│   ├── web-ux-architecture.md
-│   ├── production-warehouse-deep-dive.md
-│   ├── database-technical-architecture.md
-│   ├── mobile-design.md
-│   ├── public-catalog-design.md
-│   ├── visual-design-system.md
-│   ├── decision-log.md
-│   └── implementation-ready.md
-│
-├── presentation/
-│   ├── project-management-slides.md
-│   └── slide_notes.md
-│
 ├── docs/
-│   ├── architecture/
-│   ├── api/
-│   ├── operations/
-│   ├── security/
-│   └── user-guides/
+│   ├── 00-project-brief/
+│   ├── 01-design/             # UX, workflow, visual system, gate
+│   ├── 02-architecture/       # domain and database source of truth
+│   ├── 03-production-warehouse/
+│   ├── 04-presentation/        # project slides and speaker notes
+│   ├── 05-assets/              # mockups and other design assets
+│   └── 06-process-skill/        # skills, rules and process notes
 │
 ├── tests/
 │   ├── unit/
@@ -93,12 +80,12 @@ factory-erp-operations
 
 Root'ta `AGENTS.md` oluştur ve şu mantığı kullan:
 
-1. Önce repository'yi ve `/design` artefact'larını oku.
-2. Yeni business feature'da önce design/architecture etkisini değerlendir.
-3. `implementation-ready.md` yoksa büyük feature'a doğrudan başlama.
+1. Önce repository'yi ve kanonik `docs/00`–`docs/06` artefact'larını oku.
+2. Yeni business feature'da önce `docs/01-design` ve `docs/02-architecture` etkisini değerlendir.
+3. `docs/01-design/15-implementation-ready.md` yoksa büyük feature'a doğrudan başlama.
 4. Kod değişikliğinden sonra test ve security skill'lerini çalıştır.
 5. Deployment veya infrastructure değişikliğinde operations skill'ini kullan.
-6. Tasarımla implementation çelişirse tasarımı ve `decision-log.md`yi güncelle.
+6. Tasarımla implementation çelişirse ilgili kanonik dokümanı ve `docs/01-design/13-decision-log.md`yi güncelle.
 
 ## Git'te tutulmaması gerekenler
 

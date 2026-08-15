@@ -62,6 +62,7 @@
 | O-010 | Backup saklama ve felaket kurtarma hedefleri | RPO/RTO, disk ve harici yedekleme maliyetini belirler. | Sistem yöneticisi |
 | O-011 | Şirket içi server işletim sistemi ve LAN/HTTPS modeli | Docker, reverse proxy, sertifika ve mobil erişim kurulumu etkilenir. | Sistem yöneticisi |
 | O-012 | Fiyat listesi ve müşteri bazlı fiyatlandırma | Quote ve order fiyatının ürün kartından mı, fiyat listesinden mi geleceği netleşmelidir. | Satış + yönetim |
+| O-013 | Final marka adı, logo ve ürün görseli lisansı | Manus mockup'larında MaviKağıt, NAVIS ve Napkinova adları birlikte kullanılmıştır; uygulama token'ları, header ve public katalog tek marka altında sabitlenmelidir. | Proje sahibi + pazarlama |
 
 ## 5. Karar yönetimi kuralları
 

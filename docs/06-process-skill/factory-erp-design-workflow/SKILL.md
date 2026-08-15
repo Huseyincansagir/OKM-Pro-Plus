@@ -39,15 +39,14 @@ Varsayılan olarak aşağıdaki dosyaları üret:
 
 | Dosya | İçerik |
 |---|---|
-| `master-screen-inventory.md` | Tüm modül, route, ekran, rol ve durum envanteri |
-| `web-ux-architecture.md` | Web bilgi mimarisi ve ekran akışları |
-| `production-warehouse-deep-dive.md` | Üretim ve depo ekranlarının ayrıntılı incelemesi |
-| `database-technical-architecture.md` | Veritabanı, transaction, API ve deployment ön taslağı |
-| `mobile-design.md` | Mobil ekran ve barkod akışları |
-| `public-catalog-design.md` | Public katalog ve teklif sepeti |
-| `visual-design-system.md` | Renk, tipografi, bileşen ve durum sistemi |
-| `project-management-slides.md` | En fazla 12 slaytlık sunum içeriği |
-| `slide_notes.md` | Slayt bazlı konuşma metni |
+| `docs/01-design/01-master-screen-inventory.md` | Tüm modül, route, ekran, rol ve durum envanteri |
+| `docs/01-design/02-web-ux-architecture.md` | Web bilgi mimarisi ve ekran akışları |
+| `docs/01-design/03-production-warehouse-deep-dive.md` | Üretim ve depo ekranlarının ayrıntılı incelemesi |
+| `docs/02-architecture/01-database-technical-architecture.md` | Veritabanı, transaction, API ve deployment ön taslağı |
+| `docs/01-design/05-mobile-complete-design.md` | Mobil ekran ve barkod akışları |
+| `docs/01-design/06-public-catalog-final.md` | Public katalog ve teklif sepeti |
+| `docs/01-design/09-visual-design-system.md` | Renk, tipografi, bileşen ve durum sistemi |
+| `docs/04-presentation/` | En fazla 12 slaytlık sunum içeriği ve konuşma notları |
 
 ## Tasarım ekranı şablonu
 
