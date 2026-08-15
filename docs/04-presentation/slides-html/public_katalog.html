@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    .slide-container { width: 1280px; min-height: 720px; background: #e2e8f0; color: #0f172a; display: grid; grid-template-columns: 25% 75%; font-family: Arial, sans-serif; }
+    .anchor { background: #0f2a47; color: #f8fafc; min-height: 720px; padding: 58px 32px 0 48px; display: flex; flex-direction: column; justify-content: space-between; }
+    .num { font-family: "Arial Narrow", Arial, sans-serif; font-size: 74px; line-height: 1; color: #8dd5cc; font-weight: 700; }
+    .anchor h2 { font-family: "Arial Narrow", Arial, sans-serif; font-size: 36px; line-height: 1.1; margin-top: 16px; }
+    .anchor p { font-size: 16px; line-height: 1.4; color: #cbd5e1; padding-bottom: 42px; }
+    .content { padding: 48px 52px 0 48px; display: flex; flex-direction: column; }
+    .eyebrow { font-size: 14px; text-transform: uppercase; letter-spacing: 1.7px; color: #d97706; font-weight: 700; margin-bottom: 12px; }
+    h1 { font-family: "Arial Narrow", Arial, sans-serif; font-size: 36px; line-height: 1.1; color: #0f172a; margin-bottom: 16px; }
+    .lead { font-size: 18px; line-height: 1.4; color: #334155; margin-bottom: 24px; }
+    .visuals { display: flex; gap: 24px; align-items: flex-start; margin-bottom: 24px; }
+    .visual-desktop { background: #f8fafc; border: 1px solid #cbd5e1; box-shadow: 8px 8px 0 #c4cedb; padding: 12px; width: 600px; height: 340px; display: flex; align-items: center; justify-content: center; }
+    .visual-desktop img { width: 574px; height: 314px; object-fit: contain; display: block; }
+    .visual-mobile { background: #f8fafc; border: 1px solid #cbd5e1; box-shadow: 8px 8px 0 #c4cedb; padding: 12px; width: 220px; height: 340px; display: flex; align-items: center; justify-content: center; }
+    .visual-mobile img { width: 194px; height: 314px; object-fit: contain; display: block; }
+    .details { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .col h3 { font-family: "Arial Narrow", Arial, sans-serif; font-size: 20px; color: #0f2a47; margin-bottom: 8px; border-bottom: 2px solid #d97706; padding-bottom: 4px; }
+    .col p { font-size: 15px; line-height: 1.4; color: #334155; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <aside class="anchor">
+      <div>
+        <div class="num">09</div>
+        <h2>Ürün, Public Katalog ve Teklif Sepeti</h2>
+      </div>
+      <p>Dış müşterinin ürün seçtiği, miktar ve not belirttiği, teklif talebi gönderdiği public deneyim.</p>
+    </aside>
+    <main class="content">
+      <div class="eyebrow">Dış Müşteri Deneyimi</div>
+      <h1>Hesap açmadan hızlı ve güvenli teklif talebi</h1>
+      <p class="lead">Public katalog, dış müşterinin ürünleri seçmesini sağlar. Stok ve şirket içi maliyet bilgisi gösterilmez. Teklif sepetinde ürün miktarı, ürün notu ve genel talep notu alınır.</p>
+      
+      <div class="visuals">
+        <div class="visual-desktop">
+          <img src="/home/ubuntu/uretim-depo-quote-cart-desktop-mockup.png" alt="Teklif Sepeti Masaüstü" />
+        </div>
+        <div class="visual-mobile">
+          <img src="/home/ubuntu/uretim-depo-quote-form-mobile-mockup.png" alt="Teklif Formu Mobil" />
+        </div>
+      </div>
+      
+      <div class="details">
+        <div class="col">
+          <h3>Teklif Sepeti</h3>
+          <p>Müşteri, ürünleri sepetine ekler. Sepet, sipariş veya ödeme işlemi olmadığını açıkça belirtir. Miktar ve notlar kolayca düzenlenebilir.</p>
+        </div>
+        <div class="col">
+          <h3>İletişim ve Gönderim</h3>
+          <p>Firma, yetkili, telefon ve e-posta bilgileri iki aşamalı form ile toplanır. Gönderim sonrası şirket içi sisteme NEW durumunda talep düşer.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

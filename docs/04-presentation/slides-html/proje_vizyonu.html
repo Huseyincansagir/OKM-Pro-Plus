@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    .slide-container{width:1280px;min-height:720px;background:#e2e8f0;color:#0f172a;display:grid;grid-template-columns:38% 62%;font-family:Arial,sans-serif}
+    .left{background:#0f2a47;color:#f8fafc;min-height:720px;padding:76px 56px 0 64px;display:flex;flex-direction:column;justify-content:space-between}
+    .kicker{font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#8dd5cc;font-weight:700}
+    h1{font-family:"Arial Narrow",Arial,sans-serif;font-size:57px;line-height:0.98;letter-spacing:-1.4px;margin-top:42px;max-width:390px}
+    .rule{width:96px;height:8px;background:#d97706;margin-top:34px}
+    .subtitle{font-size:21px;line-height:1.35;color:#dbeafe;max-width:385px;margin-top:24px}
+    .footer{font-size:14px;color:#b7c7d8;line-height:1.5;padding-bottom:28px}
+    .right{padding:40px 46px 34px 42px;display:flex;flex-direction:column;justify-content:center;gap:16px}
+    .eyebrow{font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;font-weight:700}
+    .hero-title{font-family:"Arial Narrow",Arial,sans-serif;font-size:32px;line-height:1.1;margin-bottom:4px}
+    .hero-copy{font-size:18px;line-height:1.45;color:#334155;max-width:700px}
+    /* Reduced padding and image height to remove overflow without touching fonts or top title padding */
+    .visual{background:#f8fafc;border:1px solid #cbd5e1;box-shadow:10px 4px 0 #c4cedb;padding:12px;min-height:420px;display:flex;align-items:center;justify-content:center}
+    .visual img{width:760px;height:412px;object-fit:contain;display:block}
+    .tags{display:flex;gap:12px;flex-wrap:wrap}
+    .tag{background:#0f766e;color:#f8fafc;padding:10px 16px;font-size:14px;font-weight:700;letter-spacing:.2px}
+    .tag.amber{background:#d97706}
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <section class="left">
+      <div>
+        <div class="kicker">Proje Yönetimi Sunumu</div>
+        <h1>Fabrika<br/>ERP-Lite<br/>Arayüz Tasarımı</h1>
+        <div class="rule"></div>
+        <p class="subtitle">Üretim, depo, satış, cari ve personel süreçlerini tek merkezde birleştiren tasarım paketi.</p>
+      </div>
+      <div class="footer">Kodlama öncesi tasarım kilometre taşı<br/>Web · Public Katalog · Mobil Operasyon</div>
+    </section>
+    <section class="right">
+      <div>
+        <div class="eyebrow">Tasarım aşaması</div>
+        <div class="hero-title">Gerçek operasyonu yönetecek ortak bir deneyim</div>
+        <p class="hero-copy">Teklif talebinden tahsilata, üretim iş emrinden depo girişine kadar süreçlerin aynı veri ve ekran dili içinde çalışması hedeflendi.</p>
+      </div>
+      <div class="visual"><img src="/home/ubuntu/uretim-depo-erp-dashboard-reference.png" alt="Yönetici dashboard arayüz referansı" /></div>
+      <div class="tags"><span class="tag">Tasarım tamamlandı</span><span class="tag">12 ana sunum başlığı</span><span class="tag amber">Kodlamaya hazır backlog</span></div>
+    </section>
+  </div>
+</body>
+</html>

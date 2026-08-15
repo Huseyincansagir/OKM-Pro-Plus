@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #E2E8F0; 
+      color: #0F172A; 
+      display: grid; 
+      grid-template-columns: 25% 75%; 
+      font-family: Arial, sans-serif; 
+    }
+    .anchor { 
+      background: #0F2A47; 
+      color: #F8FAFC; 
+      padding: 58px 32px 0 48px; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+      min-height: 720px;
+    }
+    .num { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 74px; 
+      line-height: 1; 
+      color: #8DD5CC; 
+      font-weight: 700; 
+    }
+    .anchor h2 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 36px; 
+      line-height: 1.1; 
+      margin-top: 16px; 
+    }
+    .anchor p { 
+      font-size: 16px; 
+      line-height: 1.4; 
+      color: #CBD5E1; 
+      padding-bottom: 42px; 
+    }
+    .content { 
+      padding: 48px 52px 0 48px; 
+      display: flex; 
+      flex-direction: column; 
+    }
+    .eyebrow { 
+      font-size: 14px; 
+      text-transform: uppercase; 
+      letter-spacing: 1.7px; 
+      color: #D97706; 
+      font-weight: 700; 
+      margin-bottom: 12px; 
+    }
+    h1 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 32px; 
+      line-height: 1.1; 
+      color: #0F172A;
+      margin-bottom: 24px;
+    }
+    .grid { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 32px; 
+      margin-top: 12px;
+    }
+    .col { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 20px; 
+    }
+    .col-row {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
+    .visual-web { 
+      background: #F8FAFC; 
+      border: 2px solid #0F172A; 
+      box-shadow: 8px 8px 0 #94A3B8; 
+      padding: 8px; 
+      width: 416px; 
+      height: 234px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .visual-web img { 
+      width: 396px; 
+      height: 214px; 
+      object-fit: contain; 
+      display: block; 
+    }
+    .visual-mobile { 
+      background: #F8FAFC; 
+      border: 2px solid #0F172A; 
+      box-shadow: 8px 8px 0 #94A3B8; 
+      padding: 8px; 
+      width: 176px; 
+      height: 313px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      flex-shrink: 0;
+    }
+    .visual-mobile img { 
+      width: 156px; 
+      height: 293px; 
+      object-fit: contain; 
+      display: block; 
+    }
+    .text-block h3 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 22px; 
+      color: #0F766E; 
+      margin-bottom: 10px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px; 
+    }
+    .text-block p { 
+      font-size: 16px; 
+      line-height: 1.45; 
+      color: #334155; 
+    }
+    .text-block strong { 
+      color: #D97706; 
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <aside class="anchor">
+      <div>
+        <div class="num">10</div>
+        <h2>Üretim, Depo ve Mobil Operasyon</h2>
+      </div>
+      <p>İş emri, makine, üretim gerçekleşmesi, stok girişi ve mobil barkod operasyonları.</p>
+    </aside>
+    <main class="content">
+      <div class="eyebrow">Saha ve Üretim Yönetimi</div>
+      <h1>Gerçek zamanlı veri girişi ve operasyonel kontrol</h1>
+      
+      <div class="grid">
+        <!-- Web / Production Column -->
+        <div class="col">
+          <div class="visual-web">
+            <img src="/home/ubuntu/uretim-depo-shipment-mockup.png" alt="Web Üretim ve Sevkiyat Arayüzü" />
+          </div>
+          <div class="text-block">
+            <h3>Üretim ve Stok Entegrasyonu</h3>
+            <p>Üretim iş emrinde hedef, gerçekleşen, kalan miktar, makine, personel, fire ve duruş aynı ekran içinde takip edilir. Üretim tamamlandığında gerçekleşen miktar <strong>otomatik olarak depo stok girişine</strong> dönüşür.</p>
+          </div>
+        </div>
+        
+        <!-- Mobile Column -->
+        <div class="col-row">
+          <div class="visual-mobile">
+            <img src="/home/ubuntu/uretim-depo-mobile-barcode-mockup.png" alt="Mobil Barkod Operasyonu" />
+          </div>
+          <div class="text-block">
+            <h3>Mobil Saha Operasyonu</h3>
+            <p>Mobil uygulama masaüstünün küçültülmüş kopyası değildir. Ana işlem; <strong>barkod tarama, stok sorgulama, sayım, transfer, sevkiyat doğrulama ve üretim kaydıdır.</strong></p>
+            <br/>
+            <p>Ağ kesildiğinde stok ve finans işlemleri sessizce gönderilmez; kullanıcıya açık bağlantı durumu gösterilir ve veri güvenliği sağlanır.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

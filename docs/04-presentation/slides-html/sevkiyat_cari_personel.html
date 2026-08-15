@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #E2E8F0; 
+      color: #0F172A; 
+      display: grid; 
+      grid-template-columns: 25% 75%; 
+      font-family: Arial, sans-serif; 
+    }
+    .anchor { 
+      background: #0F2A47; 
+      color: #F8FAFC; 
+      padding: 58px 32px 0 48px; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+      min-height: 720px;
+    }
+    .num { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 74px; 
+      line-height: 1; 
+      color: #8DD5CC; 
+      font-weight: 700; 
+    }
+    .anchor h2 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 36px; 
+      line-height: 1.1; 
+      margin-top: 16px; 
+    }
+    .anchor p { 
+      font-size: 16px; 
+      line-height: 1.4; 
+      color: #CBD5E1; 
+      padding-bottom: 42px; 
+    }
+    .content { 
+      padding: 48px 52px 0 48px; 
+      display: flex; 
+      flex-direction: column; 
+    }
+    .eyebrow { 
+      font-size: 14px; 
+      text-transform: uppercase; 
+      letter-spacing: 1.7px; 
+      color: #D97706; 
+      font-weight: 700; 
+      margin-bottom: 12px; 
+    }
+    h1 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 32px; 
+      line-height: 1.1; 
+      color: #0F172A;
+      margin-bottom: 24px;
+    }
+    .grid { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 32px; 
+      margin-top: 12px;
+    }
+    .col { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 20px; 
+    }
+    .visual-web { 
+      background: #F8FAFC; 
+      border: 2px solid #0F172A; 
+      box-shadow: 8px 8px 0 #94A3B8; 
+      padding: 8px; 
+      width: 416px; 
+      height: 234px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .visual-web img { 
+      width: 396px; 
+      height: 214px; 
+      object-fit: contain; 
+      display: block; 
+    }
+    .text-block h3 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 22px; 
+      color: #0F766E; 
+      margin-bottom: 10px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px; 
+    }
+    .text-block p { 
+      font-size: 16px; 
+      line-height: 1.45; 
+      color: #334155; 
+    }
+    .text-block strong { 
+      color: #D97706; 
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <aside class="anchor">
+      <div>
+        <div class="num">11</div>
+        <h2>Sevkiyat, Cari ve Personel Görünümü</h2>
+      </div>
+      <p>Sevkiyat takibi, cari hesap/ödeme ve personel/puantaj ekranlarının yönetim görünümü.</p>
+    </aside>
+    <main class="content">
+      <div class="eyebrow">Finans ve İK Yönetimi</div>
+      <h1>Bütünleşik Finans ve Personel Takibi</h1>
+      
+      <div class="grid">
+        <!-- Accounting Column -->
+        <div class="col">
+          <div class="visual-web">
+            <img src="/home/ubuntu/uretim-depo-accounting-current-account-mockup.png" alt="Cari Hesap ve Ödeme Arayüzü" />
+          </div>
+          <div class="text-block">
+            <h3>Cari ve Ödeme Yönetimi</h3>
+            <p>Cari ekranında borç, alacak, bakiye ve geciken tutar üst düzey KPI olarak görünür; ödeme kaydı işlem sonrası <strong>yeni bakiyeyi önceden gösterir</strong>.</p>
+          </div>
+        </div>
+        
+        <!-- HR Column -->
+        <div class="col">
+          <div class="visual-web">
+            <img src="/home/ubuntu/uretim-depo-hr-attendance-mockup.png" alt="Personel ve Puantaj Arayüzü" />
+          </div>
+          <div class="text-block">
+            <h3>Personel ve Puantaj</h3>
+            <p>Personel ekranında günlük puantaj, devamsızlık, izin, fazla mesai ve <strong>onay bekleyen izinler</strong> tek dashboard'da toplanır.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

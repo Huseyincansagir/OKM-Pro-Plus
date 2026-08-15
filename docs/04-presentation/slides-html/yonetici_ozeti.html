@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    .slide-container{width:1280px;min-height:720px;background:#e2e8f0;color:#0f172a;display:grid;grid-template-columns:22% 78%;font-family:Arial,sans-serif}
+    .anchor{background:#0f2a47;color:#f8fafc;min-height:720px;padding:58px 42px 0 48px;display:flex;flex-direction:column;justify-content:space-between}
+    .num{font-family:"Arial Narrow",Arial,sans-serif;font-size:74px;line-height:1;color:#8dd5cc;font-weight:700}
+    .anchor h2{font-family:"Arial Narrow",Arial,sans-serif;font-size:29px;line-height:1.05;max-width:190px;margin-top:16px}
+    .anchor p{font-size:16px;line-height:1.4;color:#cbd5e1;padding-bottom:42px}
+    .content{padding:54px 62px 0 52px}
+    .eyebrow{font-size:14px;text-transform:uppercase;letter-spacing:1.7px;color:#d97706;font-weight:700}
+    h1{font-family:"Arial Narrow",Arial,sans-serif;font-size:43px;line-height:1.05;margin-top:11px}
+    .lead{font-size:22px;line-height:1.38;color:#334155;max-width:970px;margin-top:20px}
+    .divider{height:5px;width:100%;background:#cbd5e1;margin-top:28px}
+    /* Reduced vertical spacing in matrix to avoid overflow */
+    .matrix{display:grid;grid-template-columns:1fr 1.25fr;margin-top:18px;border-top:2px solid #0f2a47}
+    .head{font-size:14px;text-transform:uppercase;letter-spacing:1.2px;color:#64748b;font-weight:700;padding:10px 16px 8px 0;border-bottom:1px solid #cbd5e1}
+    .cell{font-size:18px;line-height:1.25;padding:8px 20px 8px 0;border-bottom:1px solid #cbd5e1}
+    .cell.impact{color:#334155;padding-right:0}
+    .cell strong{color:#0f766e}
+    /* Shrink closing spacing */
+    .closing{margin-top:12px;background:#0f766e;color:#f8fafc;padding:12px 18px;font-size:19px;line-height:1.3}
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <aside class="anchor"><div><div class="num">02</div><h2>Yönetici Özeti</h2></div><p>Karar almayı kolaylaştıran; kapsamı, bağımlılıkları ve sonraki adımları görünür kılan tasarım kilometre taşı.</p></aside>
+    <main class="content">
+      <div class="eyebrow">Proje yönetimi açısından</div>
+      <h1>Tasarımın odak noktası: gerçek operasyonu sadeleştirmek</h1>
+      <p class="lead">Tasarım aşaması, kopuk departman süreçlerini tek bir ortak veri ve ekran dili altında birleştirdi. Öncelik; görsel efekt değil, güvenli karar, izlenebilir belge akışı ve hızlı kullanım oldu.</p>
+      <div class="divider"></div>
+      <section class="matrix">
+        <div class="head">Tasarım sonucu</div><div class="head">Proje etkisi</div>
+        <div class="cell"><strong>Ortak web bilgi mimarisi</strong></div><div class="cell impact">Departmanlar aynı ekran ve süreç dilini kullanır.</div>
+        <div class="cell"><strong>Rol bazlı dashboard ve yetki</strong></div><div class="cell impact">Kullanıcıya yalnızca görevine uygun işlem gösterilir.</div>
+        <div class="cell"><strong>Siparişten tahsilata bağlantı</strong></div><div class="cell impact">Satış, depo ve muhasebe kopukluğu azalır.</div>
+        <div class="cell"><strong>Mobil barkod ve üretim akışı</strong></div><div class="cell impact">Saha işlemlerinde veri giriş hızı ve doğruluğu artar.</div>
+        <div class="cell"><strong>Public katalog ve teklif sepeti</strong></div><div class="cell impact">Dış müşteri talebi standart, izlenebilir kayda dönüşür.</div>
+      </section>
+      <div class="closing">Yönetim açısından öneri: Bu tasarım paketi, geliştirme backlog’unun ve öncelik kararlarının temel referansı olarak kullanılmalı.</div>
+    </main>
+  </div>
+</body>
+</html>

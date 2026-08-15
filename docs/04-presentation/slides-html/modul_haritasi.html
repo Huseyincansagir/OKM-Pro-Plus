@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    .slide-container{width:1280px;min-height:720px;background:#e2e8f0;color:#0f172a;font-family:Arial,sans-serif;padding:52px 58px 0 58px}
+    .top{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:4px solid #0f2a47;padding-bottom:20px}
+    .eyebrow{font-size:14px;text-transform:uppercase;letter-spacing:1.7px;color:#d97706;font-weight:700}
+    .num{font-family:"Arial Narrow",Arial,sans-serif;font-size:64px;color:#0f2a47;font-weight:700;line-height:.9}
+    h1{font-family:"Arial Narrow",Arial,sans-serif;font-size:43px;margin-top:10px;line-height:1}
+    .lead{font-size:20px;line-height:1.35;color:#334155;max-width:930px;margin-top:22px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+    .module{background:#f8fafc;border-top:8px solid #0f2a47;padding:16px 20px 20px 20px;box-shadow:6px 6px 0 #cbd5e1;min-height:210px}
+    .module.teal{border-top-color:#0f766e}
+    .module.amber{border-top-color:#d97706}
+    .module h2{font-family:"Arial Narrow",Arial,sans-serif;font-size:28px;line-height:1.1;color:#0f172a;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px}
+    .item{font-size:17px;line-height:1.4;color:#334155;padding:8px 0;border-bottom:1px solid #e2e8f0}
+    .item:last-child{border-bottom:none}
+    .item::before{content:"■";color:#8dd5cc;font-size:10px;margin-right:10px;vertical-align:middle}
+    .module.teal .item::before{color:#0f766e}
+    .module.amber .item::before{color:#d97706}
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Sistem Mimarisi</div>
+        <h1>Modül Haritası</h1>
+      </div>
+      <div class="num">05</div>
+    </div>
+    <p class="lead">Bu modüllerin tamamı aynı müşteri, ürün, belge, stok, personel ve cari verisini kullanacak şekilde, birbirine tam entegre olarak tasarlanmıştır.</p>
+    
+    <div class="grid">
+      <div class="module">
+        <h2>Gelir ve Satış</h2>
+        <div class="item">Teklif talepleri</div>
+        <div class="item">Teklifler</div>
+        <div class="item">Siparişler</div>
+      </div>
+      
+      <div class="module teal">
+        <h2>Fiziksel Akış</h2>
+        <div class="item">Depo ve stok</div>
+        <div class="item">Barkod işlemleri</div>
+        <div class="item">İrsaliye</div>
+      </div>
+      
+      <div class="module amber">
+        <h2>Üretim</h2>
+        <div class="item">İş emirleri</div>
+        <div class="item">Makineler</div>
+        <div class="item">Üretim kayıtları</div>
+      </div>
+      
+      <div class="module amber">
+        <h2>Finans</h2>
+        <div class="item">Fatura</div>
+        <div class="item">Cari hesap ve ekstre</div>
+        <div class="item">Ödemeler</div>
+      </div>
+      
+      <div class="module">
+        <h2>İnsan Kaynağı</h2>
+        <div class="item">Personel</div>
+        <div class="item">Puantaj</div>
+        <div class="item">İzin ve mesai</div>
+      </div>
+      
+      <div class="module teal">
+        <h2>Yönetim ve Analiz</h2>
+        <div class="item">Dashboard ve raporlar</div>
+        <div class="item">Bildirimler</div>
+        <div class="item">Roller ve yetkiler</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

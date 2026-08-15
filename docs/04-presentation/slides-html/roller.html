@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #E2E8F0; 
+      color: #0F172A; 
+      display: grid; 
+      grid-template-columns: 25% 75%; 
+      font-family: Arial, sans-serif; 
+    }
+    .anchor { 
+      background: #0F172A; 
+      color: #F8FAFC; 
+      padding: 58px 42px 0 48px; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+      min-height: 720px;
+    }
+    .num { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 74px; 
+      line-height: 1; 
+      color: #D97706; 
+      font-weight: 700; 
+    }
+    .anchor h2 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 32px; 
+      line-height: 1.1; 
+      margin-top: 16px; 
+    }
+    .anchor p { 
+      font-size: 16px; 
+      line-height: 1.4; 
+      color: #CBD5E1; 
+      padding-bottom: 42px; 
+    }
+    .content { 
+      padding: 54px 62px 0 52px; 
+    }
+    .eyebrow { 
+      font-size: 14px; 
+      text-transform: uppercase; 
+      letter-spacing: 1.7px; 
+      color: #D97706; 
+      font-weight: 700; 
+    }
+    h1 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 40px; 
+      line-height: 1.05; 
+      margin-top: 11px; 
+      color: #0F172A;
+    }
+    .lead { 
+      font-size: 20px; 
+      line-height: 1.38; 
+      color: #334155; 
+      max-width: 850px; 
+      margin-top: 20px; 
+    }
+    .grid { 
+      display: grid; 
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 24px; 
+      margin-top: 36px; 
+    }
+    .card { 
+      background: #F8FAFC; 
+      border: 2px solid #0F172A; 
+      box-shadow: 8px 8px 0 #0F172A; 
+      padding: 20px; 
+      min-height: 124px; 
+    }
+    .card h3 { 
+      font-family: "Arial Narrow", Arial, sans-serif; 
+      font-size: 22px; 
+      color: #0F172A; 
+      margin-bottom: 8px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px; 
+    }
+    .card p { 
+      font-size: 16px; 
+      line-height: 1.35; 
+      color: #334155; 
+    }
+    .card.admin { 
+      box-shadow: 8px 8px 0 #D97706; 
+      border-color: #D97706;
+    }
+    .card.admin h3 {
+      color: #D97706;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <aside class="anchor">
+      <div>
+        <div class="num">06</div>
+        <h2>Kullanıcı Rolleri ve Karar Noktaları</h2>
+      </div>
+      <p>Rol ve işlem bazlı yetkilendirme modelinin karar noktalarına etkisi.</p>
+    </aside>
+    <main class="content">
+      <div class="eyebrow">Yetkilendirme Modeli</div>
+      <h1>İşlem bazlı izinler ve karar noktaları</h1>
+      <p class="lead">Sistemde kullanıcıların yalnızca rolü değil, işlem bazlı izinleri de belirleyicidir. Bu yaklaşım; ürün görüntüleme, sipariş onayı, stok düzeltme, fatura iptali, ödeme oluşturma ve izin onayı gibi kritik işlemleri birbirinden ayırır.</p>
+      
+      <div class="grid">
+        <div class="card">
+          <h3>Yönetici</h3>
+          <p>Sipariş, risk, kritik uyarı ve performans yönetimi</p>
+        </div>
+        <div class="card">
+          <h3>Satış</h3>
+          <p>Teklif, müşteri ve sipariş hazırlama</p>
+        </div>
+        <div class="card">
+          <h3>Depo</h3>
+          <p>Stok, barkod, irsaliye ve yükleme</p>
+        </div>
+        <div class="card">
+          <h3>Üretim</h3>
+          <p>İş emri, makine, personel, fire ve duruş</p>
+        </div>
+        <div class="card">
+          <h3>Muhasebe</h3>
+          <p>Fatura, cari, ödeme ve tahsilat</p>
+        </div>
+        <div class="card">
+          <h3>İK</h3>
+          <p>Puantaj, izin, mesai ve maaş</p>
+        </div>
+        <div class="card admin">
+          <h3>Sistem Yöneticisi</h3>
+          <p>Kullanıcı, rol, yetki, audit ve sistem sağlığı</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

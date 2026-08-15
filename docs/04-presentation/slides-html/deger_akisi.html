@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    .slide-container { width: 1280px; min-height: 720px; background: #e2e8f0; color: #0f172a; font-family: Arial, sans-serif; padding: 52px 58px 0 58px; }
+    .top { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 4px solid #0f2a47; padding-bottom: 20px; }
+    .eyebrow { font-size: 14px; text-transform: uppercase; letter-spacing: 1.7px; color: #d97706; font-weight: 700; }
+    .num { font-family: "Arial Narrow", Arial, sans-serif; font-size: 64px; color: #0f2a47; font-weight: 700; line-height: .9; }
+    h1 { font-family: "Arial Narrow", Arial, sans-serif; font-size: 43px; margin-top: 10px; line-height: 1; }
+    .lead { font-size: 20px; line-height: 1.35; color: #334155; max-width: 930px; margin-top: 22px; }
+    
+    .flow-container { margin-top: 36px; display: flex; flex-direction: column; gap: 40px; }
+    .track { background: #f8fafc; border: 1px solid #cbd5e1; box-shadow: 8px 8px 0 #c4cedb; padding: 24px; position: relative; }
+    .track-title { font-family: "Arial Narrow", Arial, sans-serif; font-size: 24px; color: #0f2a47; margin-bottom: 20px; border-left: 6px solid #0f766e; padding-left: 12px; }
+    .track.production .track-title { border-left-color: #d97706; }
+    
+    .steps { display: flex; justify-content: space-between; align-items: center; position: relative; }
+    .steps::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: #cbd5e1; z-index: 1; }
+    
+    .step { background: #ffffff; border: 2px solid #0f2a47; width: 200px; height: 110px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 12px; position: relative; z-index: 2; box-shadow: 4px 4px 0 #0f2a47; }
+    .step-num { font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+    .step-name { font-size: 16px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+    .step-dept { font-size: 13px; color: #0f766e; margin-top: 8px; font-weight: 700; }
+    .track.production .step-dept { color: #d97706; }
+    
+    .connector { position: absolute; right: -24px; top: 50%; transform: translateY(-50%); font-size: 24px; color: #0f2a47; z-index: 3; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Süreç Entegrasyonu</div>
+        <h1>Uçtan Uca Değer Akışı</h1>
+      </div>
+      <div class="num">04</div>
+    </div>
+    <p class="lead">Teklif talebinden tahsilata ve üretimden stoğa uzanan merkezi iş akışları, kopuk departman süreçlerini tek bir veri modelinde birleştirir.</p>
+    
+    <div class="flow-container">
+      <!-- Track 1: Sales & Finance -->
+      <div class="track">
+        <div class="track-title">Satış ve Finans Akışı</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">Adım 1</div>
+            <div class="step-name">Public Katalog &<br/>Teklif Talebi</div>
+            <div class="step-dept">Dış Müşteri</div>
+          </div>
+          <div class="step">
+            <div class="step-num">Adım 2</div>
+            <div class="step-name">Teklif &<br/>Sipariş Taslağı</div>
+            <div class="step-dept">Satış</div>
+          </div>
+          <div class="step">
+            <div class="step-num">Adım 3</div>
+            <div class="step-name">Sorumlu Onayı &<br/>Rezervasyon</div>
+            <div class="step-dept">Yönetim</div>
+          </div>
+          <div class="step">
+            <div class="step-num">Adım 4</div>
+            <div class="step-name">İrsaliye &<br/>Sevkiyat</div>
+            <div class="step-dept">Depo</div>
+          </div>
+          <div class="step">
+            <div class="step-num">Adım 5</div>
+            <div class="step-name">Fatura &<br/>Cari Ödeme</div>
+            <div class="step-dept">Muhasebe</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Track 2: Production & Stock -->
+      <div class="track production">
+        <div class="track-title">Üretim ve Stok Akışı</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">Adım 1</div>
+            <div class="step-name">Üretim Planı &<br/>İş Emri</div>
+            <div class="step-dept">Üretim Planlama</div>
+          </div>
+          <div class="step">
+            <div class="step-num">Adım 2</div>
+            <div class="step-name">Makine &<br/>Personel Atama</div>
+            <div class="step-dept">Üretim Sorumlusu</div>
+          </div>
+          <div class="step">
+            <div class="step-num">Adım 3</div>
+            <div class="step-name">Üretim<br/>Gerçekleşmesi</div>
+            <div class="step-dept">Saha Operatörü</div>
+          </div>
+          <div class="step">
+            <div class="step-num">Adım 4</div>
+            <div class="step-name">Fire &<br/>Duruş Kaydı</div>
+            <div class="step-dept">Saha Operatörü</div>
+          </div>
+          <div class="step">
+            <div class="step-num">Adım 5</div>
+            <div class="step-name">Tamamlanma &<br/>Stok Girişi</div>
+            <div class="step-dept">Depo / Üretim</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
