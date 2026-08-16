@@ -19,4 +19,7 @@ await identitySeeder.SeedBootstrapAdminAsync(builder.Configuration);
 var catalogSeeder = scope.ServiceProvider.GetRequiredService<FactoryErp.Infrastructure.Products.CatalogSeeder>();
 await catalogSeeder.SeedAsync();
 
-Console.WriteLine("Factory ERP database migration and optional foundation/catalog seed completed.");
+var salesSeeder = scope.ServiceProvider.GetRequiredService<FactoryErp.Infrastructure.Sales.SalesSeeder>();
+await salesSeeder.SeedAsync();
+
+Console.WriteLine("Factory ERP database migration and optional foundation/catalog/sales seed completed.");

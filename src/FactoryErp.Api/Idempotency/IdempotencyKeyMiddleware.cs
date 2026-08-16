@@ -12,6 +12,7 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next)
         "/api/v1/payments",
         "/api/v1/shipments",
         "/api/v1/production",
+        "/api/v1/quote-requests",
     ];
 
     public async Task InvokeAsync(HttpContext context)

@@ -30,6 +30,19 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<StockMovementRecord> StockMovements => Set<StockMovementRecord>();
     public DbSet<ProductionOrderRecord> ProductionOrders => Set<ProductionOrderRecord>();
     public DbSet<ProductionRecord> ProductionRecords => Set<ProductionRecord>();
+    public DbSet<CustomerRecord> Customers => Set<CustomerRecord>();
+    public DbSet<CustomerAddressRecord> CustomerAddresses => Set<CustomerAddressRecord>();
+    public DbSet<CustomerContactRecord> CustomerContacts => Set<CustomerContactRecord>();
+    public DbSet<PriceListRecord> PriceLists => Set<PriceListRecord>();
+    public DbSet<CustomerPriceGroupRecord> CustomerPriceGroups => Set<CustomerPriceGroupRecord>();
+    public DbSet<CustomerPriceGroupMemberRecord> CustomerPriceGroupMembers => Set<CustomerPriceGroupMemberRecord>();
+    public DbSet<ProductPriceRecord> ProductPrices => Set<ProductPriceRecord>();
+    public DbSet<QuoteRequestRecord> QuoteRequests => Set<QuoteRequestRecord>();
+    public DbSet<QuoteRequestItemRecord> QuoteRequestItems => Set<QuoteRequestItemRecord>();
+    public DbSet<StockReservationRecord> StockReservations => Set<StockReservationRecord>();
+    public DbSet<SalesOrderRecord> SalesOrders => Set<SalesOrderRecord>();
+    public DbSet<SalesOrderItemRecord> SalesOrderItems => Set<SalesOrderItemRecord>();
+    public DbSet<SalesOrderApprovalRecord> SalesOrderApprovals => Set<SalesOrderApprovalRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

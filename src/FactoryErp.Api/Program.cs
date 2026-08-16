@@ -38,6 +38,20 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(PermissionPolicies.SystemRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "system.read"));
+    options.AddPolicy(PermissionPolicies.OrderCreate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "order.create"));
+    options.AddPolicy(PermissionPolicies.OrderRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "order.read"));
+    options.AddPolicy(PermissionPolicies.OrderSubmit, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "order.submit"));
+    options.AddPolicy(PermissionPolicies.OrderApprove, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "order.approve"));
+    options.AddPolicy(PermissionPolicies.OrderReject, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "order.reject"));
+    options.AddPolicy(PermissionPolicies.QuoteRequestRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "quote-request.read"));
+    options.AddPolicy(PermissionPolicies.QuoteRequestReview, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "quote-request.review"));
 });
 
 var app = builder.Build();

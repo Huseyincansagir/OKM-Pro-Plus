@@ -1,0 +1,602 @@
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using FactoryErp.Application.Abstractions.Persistence;
+using FactoryErp.Application.Products;
+using FactoryErp.Application.Sales;
+using FactoryErp.Domain.Common;
+using FactoryErp.Infrastructure.Persistence;
+using FactoryErp.Infrastructure.Persistence.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace FactoryErp.Infrastructure.Sales;
+
+public sealed class SalesCommandService(
+    FactoryErpDbContext dbContext,
+    IProductCatalogService productCatalogService,
+    IAuditWriter auditWriter,
+    IIdempotencyStore idempotencyStore) : ISalesCommandService
+{
+    public async Task<QuoteRequestDto> CreatePublicQuoteRequestAsync(
+        CreatePublicQuoteRequest request,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!request.ConsentAccepted)
+        {
+            throw new DomainException(new("CONSENT_REQUIRED", "Teklif talebi için iletişim/onay kabul edilmelidir."));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.CompanyName)
+            || string.IsNullOrWhiteSpace(request.ContactName)
+            || string.IsNullOrWhiteSpace(request.Phone)
+            || string.IsNullOrWhiteSpace(request.Email)
+            || request.Items.Count == 0)
+        {
+            throw new DomainException(new("QUOTE_REQUEST_INVALID", "Teklif talebi firma, iletişim ve en az bir ürün içermelidir."));
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        var requestNumber = await NextNumberAsync("quote_request", "TLT", now, cancellationToken);
+        var quoteRequest = new QuoteRequestRecord
+        {
+            Id = Guid.NewGuid(),
+            RequestNumber = requestNumber,
+            Source = "Public",
+            Status = "Received",
+            CustomerCandidateName = $"{request.CompanyName.Trim()} / {request.ContactName.Trim()}",
+            CustomerCandidateEmail = request.Email.Trim(),
+            CustomerCandidatePhone = request.Phone.Trim(),
+            ConsentAt = now,
+            CreatedAt = now,
+        };
+
+        foreach (var line in request.Items)
+        {
+            var preview = await productCatalogService.PreviewQuantityAsync(
+                new QuantityPreviewRequest(line.ProductId, line.EnteredQuantity, line.EnteredPackagingId, line.ViewMode, "QuoteRequest", null),
+                cancellationToken);
+            if (preview is null)
+            {
+                throw new DomainException(new("PRODUCT_OR_PACKAGING_NOT_FOUND", "Teklif kalemindeki ürün veya ambalaj bulunamadı."));
+            }
+
+            quoteRequest.Items.Add(new QuoteRequestItemRecord
+            {
+                Id = Guid.NewGuid(),
+                ProductId = line.ProductId,
+                EnteredQuantity = line.EnteredQuantity,
+                EnteredPackagingId = line.EnteredPackagingId,
+                QuantityBase = preview.QuantityBase,
+                PackagingSnapshot = JsonSerializer.Serialize(preview.EnteredPackaging),
+            });
+        }
+
+        dbContext.QuoteRequests.Add(quoteRequest);
+        await auditWriter.AppendAsync(new(
+            "QuoteRequestCreated",
+            nameof(QuoteRequestRecord),
+            quoteRequest.Id,
+            null,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new { quoteRequest.RequestNumber, quoteRequest.Status, quoteRequest.Items.Count })));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return MapQuoteRequest(quoteRequest);
+    }
+
+    public async Task<IReadOnlyCollection<QuoteRequestDto>> ListQuoteRequestsAsync(CancellationToken cancellationToken = default)
+    {
+        var requests = await dbContext.QuoteRequests
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return requests.Select(MapQuoteRequest).ToArray();
+    }
+
+    public async Task<QuoteRequestDto?> GetQuoteRequestAsync(Guid quoteRequestId, CancellationToken cancellationToken = default)
+    {
+        var request = await dbContext.QuoteRequests
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == quoteRequestId, cancellationToken);
+        return request is null ? null : MapQuoteRequest(request);
+    }
+
+    public async Task<QuoteRequestDto?> ReviewQuoteRequestAsync(
+        Guid quoteRequestId,
+        Guid actorId,
+        Guid? customerId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        var idempotencyScope = $"quote-request:review:{actorId}:{quoteRequestId}";
+        var payloadHash = ComputePayloadHash(new { quoteRequestId, actorId, customerId, action = "review" });
+        var replay = await TryReplayAsync<QuoteRequestDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var request = await dbContext.QuoteRequests
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == quoteRequestId, cancellationToken);
+        if (request is null)
+        {
+            return null;
+        }
+
+        if (request.Status is not ("Received" or "InReview"))
+        {
+            throw new DomainException(new("QUOTE_REQUEST_NOT_REVIEWABLE", "Teklif talebi mevcut durumunda incelenemez."));
+        }
+
+        if (customerId.HasValue)
+        {
+            var customerExists = await dbContext.Customers.AnyAsync(
+                x => x.Id == customerId.Value && !x.IsDeleted && x.Status == "Active",
+                cancellationToken);
+            if (!customerExists)
+            {
+                throw new DomainException(new("CUSTOMER_NOT_ACTIVE", "Teklif talebi yalnızca aktif müşteriyle bağlanabilir."));
+            }
+        }
+
+        request.CustomerId = customerId;
+        request.Status = "InReview";
+        request.ReviewedBy = actorId;
+        request.ReviewedAt = DateTimeOffset.UtcNow;
+        await auditWriter.AppendAsync(new("QuoteRequestReviewed", nameof(QuoteRequestRecord), request.Id, actorId, correlationId));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var result = MapQuoteRequest(request);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            200,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    public async Task<SalesOrderDto> CreateSalesOrderAsync(
+        CreateSalesOrderRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        var customer = await dbContext.Customers
+            .SingleOrDefaultAsync(x => x.Id == request.CustomerId && !x.IsDeleted && x.Status == "Active", cancellationToken);
+        if (customer is null)
+        {
+            throw new DomainException(new("CUSTOMER_NOT_ACTIVE", "Sipariş yalnızca aktif müşteri için oluşturulabilir."));
+        }
+
+        if (request.Items.Count == 0)
+        {
+            throw new DomainException(new("ORDER_ITEMS_REQUIRED", "Sipariş en az bir kalem içermelidir."));
+        }
+
+        var idempotencyScope = $"sales-order:create:{actorId}";
+        var payloadHash = ComputePayloadHash(request);
+        var replay = await TryReplayAsync<SalesOrderDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        var order = new SalesOrderRecord
+        {
+            Id = Guid.NewGuid(),
+            OrderNumber = await NextNumberAsync("sales_order", "SO", now, cancellationToken),
+            CustomerId = request.CustomerId,
+            Status = "Draft",
+            CurrencyCode = string.IsNullOrWhiteSpace(request.CurrencyCode) ? "TRY" : request.CurrencyCode.Trim().ToUpperInvariant(),
+            CreatedBy = actorId,
+            CreatedAt = now,
+            UpdatedAt = now,
+            RowVersion = 1,
+        };
+
+        foreach (var line in request.Items)
+        {
+            var preview = await productCatalogService.PreviewQuantityAsync(
+                new QuantityPreviewRequest(line.ProductId, line.EnteredQuantity, line.EnteredPackagingId, line.ViewMode, "SalesOrder", null),
+                cancellationToken);
+            if (preview is null)
+            {
+                throw new DomainException(new("PRODUCT_OR_PACKAGING_NOT_FOUND", "Sipariş kalemindeki ürün veya ambalaj bulunamadı."));
+            }
+
+            var price = line.UnitPrice < 0 ? throw new DomainException(new("PRICE_INVALID", "Birim fiyat negatif olamaz.")) : line.UnitPrice;
+            order.Items.Add(new SalesOrderItemRecord
+            {
+                Id = Guid.NewGuid(),
+                ProductId = line.ProductId,
+                OrderedQty = preview.QuantityBase,
+                ReservedQty = 0,
+                ShippedQty = 0,
+                CancelledQty = 0,
+                RemainingQty = preview.QuantityBase,
+                EnteredQuantity = line.EnteredQuantity,
+                EnteredPackagingId = line.EnteredPackagingId,
+                PackagingSnapshot = JsonSerializer.Serialize(preview.EnteredPackaging),
+                PartialDeliveryAllowed = line.PartialDeliveryAllowed,
+                UnitPrice = price,
+                TaxCode = line.TaxCode,
+                PriceSnapshot = JsonSerializer.Serialize(new { unitPrice = price, currency = order.CurrencyCode, at = now }),
+                RowVersion = 1,
+            });
+        }
+
+        order.TotalNet = order.Items.Sum(x => x.OrderedQty * x.UnitPrice);
+        order.TotalTax = 0;
+        order.TotalGross = order.TotalNet + order.TotalTax;
+        dbContext.SalesOrders.Add(order);
+        await auditWriter.AppendAsync(new(
+            "SalesOrderCreated",
+            nameof(SalesOrderRecord),
+            order.Id,
+            actorId,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new { order.OrderNumber, order.Status, order.Items.Count })));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var result = MapSalesOrder(order);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            200,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return result;
+    }
+
+    public async Task<SalesOrderDto?> GetSalesOrderAsync(Guid orderId, CancellationToken cancellationToken = default)
+    {
+        var order = await dbContext.SalesOrders
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == orderId, cancellationToken);
+        return order is null ? null : MapSalesOrder(order);
+    }
+
+    public async Task<SalesOrderDto?> SubmitSalesOrderAsync(
+        Guid orderId,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        var idempotencyScope = $"sales-order:submit:{actorId}:{orderId}";
+        var payloadHash = ComputePayloadHash(new { orderId, actorId, action = "submit" });
+        var replay = await TryReplayAsync<SalesOrderDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var order = await dbContext.SalesOrders
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == orderId, cancellationToken);
+        if (order is null)
+        {
+            return null;
+        }
+
+        if (order.Status != "Draft" || order.Items.Count == 0)
+        {
+            throw new DomainException(new("INVALID_ORDER_SUBMISSION", "Yalnızca kalem içeren taslak sipariş onaya gönderilebilir."));
+        }
+
+        order.Status = "PendingApproval";
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+        await auditWriter.AppendAsync(new("SalesOrderSubmitted", nameof(SalesOrderRecord), order.Id, actorId, correlationId));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var result = MapSalesOrder(order);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            200,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    public async Task<SalesOrderDto?> ApproveSalesOrderAsync(
+        Guid orderId,
+        Guid actorId,
+        string? comment,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        var idempotencyScope = $"sales-order:approve:{actorId}:{orderId}";
+        var payloadHash = ComputePayloadHash(new { orderId, actorId, comment, action = "approve" });
+        var replay = await TryReplayAsync<SalesOrderDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var order = await dbContext.SalesOrders
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == orderId, cancellationToken);
+        if (order is null)
+        {
+            return null;
+        }
+
+        if (order.Status != "PendingApproval")
+        {
+            throw new DomainException(new("STATE_TRANSITION_CONFLICT", "Sipariş yalnızca onay beklerken onaylanabilir."));
+        }
+
+        var warehouse = await dbContext.Warehouses
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Code)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (warehouse is null)
+        {
+            throw new DomainException(new("WAREHOUSE_REQUIRED", "Rezervasyon için aktif depo bulunamadı."));
+        }
+
+        foreach (var item in order.Items)
+        {
+            var stock = await LockFirstStockAsync(item.ProductId, warehouse.Id, cancellationToken);
+            if (stock is null)
+            {
+                throw new DomainException(new("STOCK_NOT_FOUND", "Sipariş ürünü için depo stoğu bulunamadı."));
+            }
+
+            var available = stock.OnHandQtyBase - stock.ReservedQtyBase;
+            if (available < item.RemainingQty)
+            {
+                throw new DomainException(new(
+                    "INSUFFICIENT_AVAILABLE_STOCK",
+                    "Sipariş onayı için kullanılabilir stok yetersiz.",
+                    new Dictionary<string, object?>
+                    {
+                        ["productId"] = item.ProductId,
+                        ["requestedQuantityBase"] = item.RemainingQty,
+                        ["availableQuantityBase"] = available,
+                    }));
+            }
+
+            stock.ReservedQtyBase += item.RemainingQty;
+            item.ReservedQty += item.RemainingQty;
+            dbContext.StockReservations.Add(new StockReservationRecord
+            {
+                Id = Guid.NewGuid(),
+                SalesOrderItemId = item.Id,
+                ProductId = item.ProductId,
+                WarehouseId = warehouse.Id,
+                QuantityBase = item.RemainingQty,
+                ConsumedQtyBase = 0,
+                ReleasedQtyBase = 0,
+                Status = "Open",
+                RowVersion = 1,
+            });
+        }
+
+        order.Status = "Approved";
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+        dbContext.SalesOrderApprovals.Add(new SalesOrderApprovalRecord
+        {
+            Id = Guid.NewGuid(),
+            SalesOrderId = order.Id,
+            Decision = "Approved",
+            Comment = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim(),
+            DecidedBy = actorId,
+            DecidedAt = DateTimeOffset.UtcNow,
+        });
+        await auditWriter.AppendAsync(new(
+            "SalesOrderApproved",
+            nameof(SalesOrderRecord),
+            order.Id,
+            actorId,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new { order.Status, reservation = true })));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var result = MapSalesOrder(order);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            200,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    public async Task<SalesOrderDto?> RejectSalesOrderAsync(
+        Guid orderId,
+        Guid actorId,
+        string comment,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(comment))
+        {
+            throw new DomainException(new("REJECTION_COMMENT_REQUIRED", "Sipariş reddi için gerekçe zorunludur."));
+        }
+
+        var idempotencyScope = $"sales-order:reject:{actorId}:{orderId}";
+        var payloadHash = ComputePayloadHash(new { orderId, actorId, comment, action = "reject" });
+        var replay = await TryReplayAsync<SalesOrderDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var order = await dbContext.SalesOrders
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == orderId, cancellationToken);
+        if (order is null)
+        {
+            return null;
+        }
+
+        if (order.Status != "PendingApproval")
+        {
+            throw new DomainException(new("STATE_TRANSITION_CONFLICT", "Sipariş yalnızca onay beklerken reddedilebilir."));
+        }
+
+        order.Status = "Cancelled";
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+        dbContext.SalesOrderApprovals.Add(new SalesOrderApprovalRecord
+        {
+            Id = Guid.NewGuid(),
+            SalesOrderId = order.Id,
+            Decision = "Rejected",
+            Comment = comment.Trim(),
+            DecidedBy = actorId,
+            DecidedAt = DateTimeOffset.UtcNow,
+        });
+                await auditWriter.AppendAsync(new("SalesOrderRejected", nameof(SalesOrderRecord), order.Id, actorId, correlationId));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var result = MapSalesOrder(order);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            200,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    private async Task<T?> TryReplayAsync<T>(
+        string scope,
+        string key,
+        string payloadHash,
+        CancellationToken cancellationToken)
+    {
+        var stored = await idempotencyStore.FindAsync(scope, key, cancellationToken);
+        if (stored is null)
+        {
+            return default;
+        }
+
+        if (!string.Equals(stored.PayloadHash, payloadHash, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new DomainException(new(
+                "IDEMPOTENCY_PAYLOAD_MISMATCH",
+                "Aynı Idempotency-Key farklı payload ile tekrar kullanılamaz."));
+        }
+
+        return JsonSerializer.Deserialize<T>(stored.ResponseBody);
+    }
+
+    private static string ComputePayloadHash(object payload)
+    {
+        var json = JsonSerializer.Serialize(payload);
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json))).ToLowerInvariant();
+    }
+
+    private async Task<StockRecord?> LockFirstStockAsync
+(Guid productId, Guid warehouseId, CancellationToken cancellationToken)
+        => await dbContext.Stocks
+            .FromSqlInterpolated($"SELECT * FROM stocks WHERE product_id = {productId} AND warehouse_id = {warehouseId} ORDER BY location_id LIMIT 1 FOR UPDATE")
+            .SingleOrDefaultAsync(cancellationToken);
+
+    private async Task<string> NextNumberAsync(string documentType, string prefix, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var year = now.Year;
+        var sequence = await dbContext.DocumentSequences
+            .FromSqlInterpolated($"SELECT * FROM document_sequences WHERE document_type = {documentType} AND year = {year} FOR UPDATE")
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (sequence is null)
+        {
+            sequence = new DocumentSequenceRecord
+            {
+                Id = Guid.NewGuid(),
+                DocumentType = documentType,
+                Year = year,
+                CurrentValue = 1,
+                UpdatedAt = now,
+            };
+            dbContext.DocumentSequences.Add(sequence);
+        }
+        else
+        {
+            sequence.CurrentValue++;
+            sequence.UpdatedAt = now;
+        }
+
+        return $"{prefix}-{year}-{sequence.CurrentValue:D6}";
+    }
+
+    private static QuoteRequestDto MapQuoteRequest(QuoteRequestRecord request)
+        => new(
+            request.Id,
+            request.RequestNumber,
+            request.Status,
+            request.Source,
+            request.CustomerCandidateName ?? string.Empty,
+            request.CustomerCandidateEmail ?? string.Empty,
+            request.CustomerCandidatePhone ?? string.Empty,
+            request.Items.Select(x => new QuoteRequestItemDto(
+                x.Id,
+                x.ProductId,
+                x.EnteredQuantity,
+                x.EnteredPackagingId,
+                x.QuantityBase,
+                x.PackagingSnapshot)).ToArray(),
+            request.CreatedAt);
+
+    private static SalesOrderDto MapSalesOrder(SalesOrderRecord order)
+        => new(
+            order.Id,
+            order.OrderNumber,
+            order.CustomerId,
+            order.Status,
+            order.CurrencyCode,
+            order.TotalNet,
+            order.TotalTax,
+            order.TotalGross,
+            order.RowVersion,
+            order.Items.Select(x => new SalesOrderItemDto(
+                x.Id,
+                x.ProductId,
+                x.OrderedQty,
+                x.ReservedQty,
+                x.ShippedQty,
+                x.CancelledQty,
+                x.RemainingQty,
+                x.EnteredQuantity,
+                x.EnteredPackagingId,
+                x.PackagingSnapshot,
+                x.PartialDeliveryAllowed,
+                x.UnitPrice,
+                x.TaxCode,
+                x.RowVersion)).ToArray(),
+            order.CreatedAt);
+}
