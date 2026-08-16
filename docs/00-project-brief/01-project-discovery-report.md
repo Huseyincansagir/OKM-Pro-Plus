@@ -2,7 +2,7 @@
 
 ## 1. Project Status
 
-Repository inspection and merge review were performed against the remote consolidated commit `e8873e8`; the local uncommitted implementation scaffold was removed before this design review. The repository currently contains documentation, visual assets, skill instructions and the canonical `/design` artefacts plus the supporting numbered `docs/00`–`docs/06` archive; it does not contain a committed production application.
+Repository inspection and merge review were performed against the remote consolidated commit `e8873e8`; the local uncommitted implementation scaffold was removed before this design review. The repository currently contains documentation, visual assets, skill instructions and the canonical `/design` artefacts plus the supporting numbered `docs/00`–`docs/06` archive; it does not contain a committed production application. The Grok session notes dated 16 August 2026 were reviewed and archived; useful technical proposals were merged as candidates while open decisions remained open.
 
 | Area | Current status |
 |---|---|

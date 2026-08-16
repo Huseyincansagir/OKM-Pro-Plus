@@ -17,6 +17,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`public-catalog-design.md`](./public-catalog-design.md) | Public katalog ve teklif sepeti |
 | [`visual-design-system.md`](./visual-design-system.md) | Görsel tasarım standardı |
 | [`ui-mockup-review.md`](./ui-mockup-review.md) | Mockup UX, marka ve görsel varlık kabul incelemesi |
+| [`grok-session-review.md`](./grok-session-review.md) | Grok notlarının karşılaştırmalı teknik ve karar incelemesi |
 | [`domain-model.md`](./domain-model.md) | Bounded context ve source-of-truth haritası |
 | [`business-workflows.md`](./business-workflows.md) | Sales, production ve personnel workflow'ları |
 | [`database-technical-architecture.md`](./database-technical-architecture.md) | PostgreSQL, API, transaction ve deployment ön taslağı |

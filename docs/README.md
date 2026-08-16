@@ -21,6 +21,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 3. [`../design/decision-log.md`](../design/decision-log.md)
 4. [`../design/implementation-readiness.md`](../design/implementation-readiness.md)
 5. [`../design/ui-mockup-review.md`](../design/ui-mockup-review.md)
+6. [`../design/grok-session-review.md`](../design/grok-session-review.md) — Grok notlarının karşılaştırmalı incelemesi.
 
 ## Arşiv okuma sırası
 
