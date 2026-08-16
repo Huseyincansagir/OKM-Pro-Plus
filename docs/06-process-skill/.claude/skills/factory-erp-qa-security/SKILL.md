@@ -60,6 +60,11 @@ Ana akış:
 - `quantity_base` ile ambalaj görünümü arasında hesap farkı oluşmamalı.
 - Hard constraint ihlalleri ile soft warning'ler farklı sonuç ve yetki davranışı üretmeli.
 - Araç adayları bakım, zaman çakışması, kg, m³, palet, ölçü ve kapı açıklığı kurallarına göre doğru elenmeli.
+- Her adayın `candidate_status`, `rejection_code`, kullanım oranları ve açıklaması saklanmalı; alternatif adayların neden elendiği doğrulanmalı.
+- Toplam hacim yeterli olsa bile zemin ayak izi, kapı açıklığı, iç ölçü, yükseklik ve yön uyumsuzluğu doğru hard error üretmeli.
+- İstiflenemeyen/ezilebilir ürün, uyumsuzluk grubu ve durak erişimi kontrolleri ayrı test edilmeli.
+- Aks/yük bölgesi verisi yoksa sonuç `NotEvaluated` olmalı; test sistemi aks uygunluğu iddia etmemeli.
+- Güvenlik payı ve skor parametre seti version değişiminde input/algorithm snapshot ile birlikte saklanmalı.
 - First Fit Decreasing önerisi aynı input snapshot ve algorithm version ile tekrarlanabilir olmalı.
 - `viewMode` değişimi `operationPackagingId` veya `quantityBase` değerini değiştirmemeli.
 - İstemciden gelen `quantityBase` değiştirildiğinde backend bunu reddetmeli veya kendi hesabıyla değiştirmeli.
@@ -122,6 +127,9 @@ En az şu roller için pozitif ve negatif test yap:
 - package trace by barcode/customer/address
 - capacity validation and load-plan calculation
 - vehicle candidate scoring and rejection reasons
+- candidate rejection code and capacity-usage snapshot integrity
+- floor footprint, door opening, orientation, height and axle-check behavior
+- safety-margin and parameter-set versioning
 - mixed-pallet constraint validation
 - route stop access validation
 - load-plan replan and validation result query

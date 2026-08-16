@@ -105,7 +105,7 @@ Barkod çözümle
   → Aynı request tekrarında ilk sonucu döndür
 ```
 
-İlk sürümde sistemin otomatik önerisi **uygunluk ön kontrolü ve manuel düzenleme desteği** olarak kabul edilir; matematiksel olarak optimal yükleme garantisi verilmez. Depo sorumlusu planı onaylar, gerçek yükleme barkodlarla doğrulanır.
+İlk sürümde sistemin otomatik önerisi **hard constraint uygunluk kontrolü + açıklanabilir aday araç önerisi + manuel düzenleme desteği** olarak kabul edilir; matematiksel olarak optimal yükleme garantisi verilmez. Her aday için ağırlık, hacim, palet, zemin alanı, yükseklik, kapı, boyut, istif, aks ve durak erişimi sonucu saklanır. Elenen adayın `rejection_code` ve açıklaması kullanıcıya gösterilir; uygun adaylar kullanım oranı ve operasyonel risk skoruyla karşılaştırılır. Depo sorumlusu planı kabul eder, başka aracı seçer veya replan yapar; gerçek yükleme barkodlarla doğrulanır. Ayrıntılı eşleştirme kuralları `vehicle-capacity-matching.md` dosyasındadır.
 
 ## 3. Üretimden stoğa workflow'u
 

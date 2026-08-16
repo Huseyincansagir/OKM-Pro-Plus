@@ -223,6 +223,7 @@ Ambalaj miktarı ile fiziksel yükleme farklı sorumluluklardır. `5 Koli` ürü
 | `PackagingPhysicalProfile` | Kutu/koli/paket/palet dış ölçüsü, dara, brüt ağırlık ve istifleme kuralları |
 | `PalletType` | Palet ölçüsü, dara ağırlığı, maksimum yük ve istifleme sınırı |
 | `VehicleCapacity` | Araç/kargo tipi için maksimum ağırlık, hacim, palet ve ölçü kapasitesi |
+| `VehicleFitEvaluation` | Bir araç adayının hard/soft kontrolleri, kullanım oranları, fit skoru, elenme kodu ve açıklaması |
 | `LoadPlan` | Bir shipment için taslak, doğrulanmış veya kilitlenmiş yükleme planı |
 | `LoadUnit` | Palet, kafes, koli grubu veya loose yük birimi; karışık palet olabilir |
 | `LoadUnitItem` | LoadUnit içindeki ürün, ambalaj seviyesi, temel miktar ve fiziksel değerler |
@@ -257,10 +258,12 @@ Shipment
 - Bir durakta teslim edilen paketler, diğer durakların kalan yükünden ayrıştırılır; teslimat kanıtı ve teslim alan kişi route stop üzerinde tutulur.
 - Hard constraint ihlali (`weight`, `volume`, `dimension`, `door`, `stacking`, `compatibility`, `quantity`, `package ownership`, `route overlap`) planı `Infeasible` yapar; soft constraint ihlali açıklanabilir warning/penalty üretir.
 - Araç eşleştirmesi aktiflik, bakım, zaman çakışması, toplam brüt ağırlık, hacim, palet/slot, iç ölçü, kapı açıklığı, istifleme ve durak erişimi sırasıyla kontrol edilerek yapılır.
-- MVP algoritması açıklanabilir `First Fit Decreasing + constraint validation` yaklaşımıdır; matematiksel optimalite iddia edilmez.
+- Her değerlendirilen araç için `VehicleFitEvaluation` oluşturulur; seçilen araç kadar elenen araçların `rejection_code`, kapasite snapshot'ı ve açıklaması da saklanır.
+- `VehicleFitEvaluation` içinde ağırlık, hacim, palet, zemin alanı, yükseklik, kapı, boyut, istif, aks ve durak erişimi kontrollerinin sonucu ayrı tutulur; aks verisi yoksa `NotEvaluated` denir.
+- MVP algoritması açıklanabilir `First Fit Decreasing + constraint validation` yaklaşımıdır; matematiksel optimalite iddia edilmez. Ayrıntılı kapasite eşleştirme kuralları `vehicle-capacity-matching.md` dosyasındadır.
 - `LoadPlan` sonucu `Feasibility`, `VehicleFit`, `Utilization`, `ValidationSummary`, `AlgorithmMetadata` ve `ManualChanges` bilgilerini taşımalıdır.
 - Shipment miktarı, araç/rota, fiziksel profil, palet tipi, alıcı durağı veya gerçek yük değiştiğinde plan yeniden doğrulanmalı; `Locked` plan sessizce değiştirilememelidir.
 
 ## 9. Tasarım sonucu
 
-Source of truth haritası `/design` altındaki canonical ekran, workflow ve teknik dokümanların ortak referansıdır. Numaralı `docs/00`–`docs/06` dosyaları senkronize arşiv olarak korunur. Aynı kavram için farklı modüllerde ikinci bir ana kayıt tasarlanırsa bu durum `/design/decision-log.md` içinde açıkça değerlendirilmeden Design Gate geçilmez.
+Source of truth haritası `/design` altındaki canonical ekran, workflow ve teknik dokümanların ortak referansıdır. Araç kapasite eşleştirme kararlarında `vehicle-capacity-matching.md` ayrıntılı teknik referanstır. Numaralı `docs/00`–`docs/06` dosyaları senkronize arşiv olarak korunur. Aynı kavram için farklı modüllerde ikinci bir ana kayıt tasarlanırsa bu durum `/design/decision-log.md` içinde açıkça değerlendirilmeden Design Gate geçilmez.

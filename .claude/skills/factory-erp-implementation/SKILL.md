@@ -90,6 +90,9 @@ PDF ve Excel çıktılarında aynı domain verisini kullan. Rapor ekranı ile ex
 - Barkod tarama sonucu ürün, ambalaj/yük birimi ve işlem bağlamı doğrulanmadan işlem formu veya kesinleştirme aksiyonu açılmamalı.
 - `Temel Birim / Ambalaj / Kırılım` toggle'ı yalnızca görünümü değiştirmeli; işlem seviyesi ayrı state ve `quantity_base` önizlemesiyle yönetilmeli.
 - Kargo planı ekranında hard constraint, soft warning, vehicle-fit gerekçesi, algorithm/version ve manuel değişiklik açıklaması görünür olmalı.
+- Her araç adayı için `load_plan_vehicle_candidates` veya `VehicleFitEvaluation` sonucu, kapasite kullanım oranları ve `rejection_code` saklanmalı; yalnızca önerilen araç kaydedilmemeli.
+- Toplam kg/m³ kontrolü; zemin alanı, kapı açıklığı, iç ölçü, yükseklik, yön, istif, durak erişimi ve varsa aks/yük bölgesi kontrolünden ayrı çalıştırılmalı.
+- Kapasite güvenlik payları ve skor ağırlıkları policy/parameter set olarak versionlanmalı; kod içine sessiz sabit olarak gömülmemeli.
 - First Fit Decreasing veya seçilen heuristik deterministik input snapshot ile çalışmalı; matematiksel optimalite garanti ediliyorsa ayrıca kanıtlanmadan böyle sunulmamalı.
 - Mobil toggle API'sinde `viewMode` ile `operationPackagingId` ayrı request alanları olmalı; `quantityBase`, `display` ve `packagingSnapshot` server-side hesaplanmalı.
 - Miktar preview transaction oluşturmamalı; sayım, transfer, load scan ve delivery endpoint'leri `Idempotency-Key`, context/permission ve concurrency kontrolü olmadan kesinleşmemeli.

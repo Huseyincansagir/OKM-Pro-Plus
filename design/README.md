@@ -25,6 +25,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`open-decisions-workshop.md`](./open-decisions-workshop.md) | Karar atölyesi için yönetim özeti, karar formu ve Design Gate kapanış planı |
 | [`product-packaging-and-uom.md`](./product-packaging-and-uom.md) | Palet-koli-paket-temel birim hiyerarşisi ve miktar dönüşüm kuralları |
 | [`logistics-planning-rules-and-algorithms.md`](./logistics-planning-rules-and-algorithms.md) | Hard/soft lojistik kuralları, araç kapasite eşleştirme ve karışık palet algoritması |
+| [`vehicle-capacity-matching.md`](./vehicle-capacity-matching.md) | Araç kapasite eşleştirme, aday eleme, fit skoru ve yük dağılımı detayları |
 | [`shipment-logistics-ui-design.md`](./shipment-logistics-ui-design.md) | Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı |
 | [`domain-model.md`](./domain-model.md) | Bounded context ve source-of-truth haritası |
 | [`business-workflows.md`](./business-workflows.md) | Sales, production ve personnel workflow'ları |

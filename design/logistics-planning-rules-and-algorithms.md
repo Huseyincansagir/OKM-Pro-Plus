@@ -138,9 +138,15 @@ Bu ağırlıklar MVP başlangıç parametresidir; gerçek operasyon verisiyle de
 
 Hard constraint ihlali olan aday skorlanmaz. Skor yalnızca uygun adaylar arasında karşılaştırma yapar. UI şu açıklamayı vermelidir: “Bu araç seçildi çünkü kapasite kontrollerinden geçti ve durak erişimi en düşük operasyonel riskli adaydır.”
 
-## 5. Karışık palet planlama algoritması
+## 5. Ayrıntılı araç kapasite eşleştirme referansı
 
-### 5.1 Girdi hazırlama
+Araç tipi/gerçek araç ayrımı, kapasite profili, ağırlık-hacim-paletten bağımsız zemin ve kapı kontrolleri, aks verisi, aday elenme kodları, kullanım oranları, kapasite güvenlik payları, durak erişimi ve örnek `VehicleFit` response sözleşmesi `vehicle-capacity-matching.md` içinde ayrıntılı olarak tanımlıdır.
+
+Yüksek seviyeli akış burada korunur; implementasyon öncesinde iki belge birlikte okunmalıdır.
+
+## 6. Karışık palet planlama algoritması
+
+### 6.1 Girdi hazırlama
 
 Her shipment kalemi şu planlama kaydına dönüştürülür:
 
@@ -170,7 +176,7 @@ Kalemler önce şu gruplara ayrılır:
 3. Ambalaj ve fiziksel boyut grubu.
 4. İstifleme/hassasiyet grubu.
 
-### 5.2 MVP sezgisel yöntem
+### 6.2 MVP sezgisel yöntem
 
 İlk sürüm için açıklanabilir **First Fit Decreasing + kısıt kontrolü** yaklaşımı önerilir:
 
@@ -191,7 +197,7 @@ Kalemler önce şu gruplara ayrılır:
 14. Depo sorumlusuna manuel düzenleme sun
 ```
 
-### 5.3 Aday LoadUnit ceza skoru
+### 6.3 Aday LoadUnit ceza skoru
 
 Hard constraint'i geçen her aday için aşağıdaki ceza bileşenleri hesaplanabilir:
 
@@ -207,7 +213,7 @@ Penalty =
 
 `CompatibilityPenalty` veya `StackRiskPenalty` hard kural kapsamındaysa aday doğrudan elenir. Soft kabul edilen durumlarda ceza olarak gösterilir. Amaç algoritmanın neden bir palet seçtiğinin açıklanabilmesidir.
 
-### 5.4 Karışık palet izin matrisi
+### 6.4 Karışık palet izin matrisi
 
 | Durum | Varsayılan davranış |
 |---|---|
@@ -220,7 +226,7 @@ Penalty =
 | Kırılabilir ve titreşim/ezilme riski | Ayrı yük birimi öner |
 | Paket barkodu olmayan gevşek yük | Yükleme öncesi barkod/etiket üret veya manuel kontrol iste |
 
-### 5.5 Çok duraklı yükleme sırası
+### 6.5 Çok duraklı yükleme sırası
 
 Rota durakları `1..N` şeklinde sıralıysa, arka kapıdan boşaltılan standart araç varsayımında önerilen yükleme mantığı şöyledir:
 
@@ -236,7 +242,7 @@ Ancak karışık palet tek parça taşınıyorsa, palet içindeki erken durak pa
 - Farklı boşaltma yüzü olan araç seç.
 - Yetkili override ile planı kilitle; açıklama zorunlu olsun.
 
-## 6. Çoklu sevkiyat ve araç paylaşımı
+## 7. Çoklu sevkiyat ve araç paylaşımı
 
 Bir araç aynı zaman aralığında birden fazla sevkiyat taşıyacaksa:
 
@@ -248,7 +254,7 @@ Bir araç aynı zaman aralığında birden fazla sevkiyat taşıyacaksa:
 
 İlk sürümde aynı araçta çoklu shipment desteği aktif edilecekse planlama ekranı shipment bazlı alt bölümler göstermelidir; aksi halde MVP’de tek araç–tek aktif plan varsayımıyla başlanmalıdır. Bu konu karara bağlıdır ve `decision-log.md` içinde açıkça tutulmalıdır.
 
-## 7. Plan sonucu ve açıklanabilirlik
+## 8. Plan sonucu ve açıklanabilirlik
 
 `LoadPlan` çıktısı yalnızca palet listesi olmamalıdır. En az şu bilgileri üretmelidir:
 
@@ -265,7 +271,7 @@ Bir araç aynı zaman aralığında birden fazla sevkiyat taşıyacaksa:
 
 Öneri ekranında “neden bu araç/palet?” açıklaması bulunmalıdır. Kullanıcı yalnızca renkli bir skor görmemeli; bloke veya uyarının hangi fiziksel kuraldan kaynaklandığını okuyabilmelidir.
 
-## 8. Replan ve kilit kuralları
+## 9. Replan ve kilit kuralları
 
 Aşağıdaki değişiklikler planı yeniden doğrulamayı zorunlu kılar:
 
@@ -279,7 +285,7 @@ Aşağıdaki değişiklikler planı yeniden doğrulamayı zorunlu kılar:
 
 `LoadPlan.Locked` sonrasında sessiz düzenleme yapılmaz. Değişiklik yeni plan versiyonu, validation sonucu ve audit kaydı üretir. `shipment.depart` yalnızca geçerli ve kilitli planla çalışır.
 
-## 9. QA kabul senaryoları
+## 10. QA kabul senaryoları
 
 - Ağırlık kapasitesini aşan araç adayları elenir.
 - Hacim yeterli görünse bile kapı açıklığına sığmayan palet adayı elenir.
@@ -294,7 +300,7 @@ Aşağıdaki değişiklikler planı yeniden doğrulamayı zorunlu kılar:
 - Algoritma aynı girdi ve parametrelerle tekrar çalıştırıldığında aynı öneriyi veya sürüm farkını açıklayabilir.
 - Gerçek yükleme farkları planned-versus-actual raporuna düşer.
 
-## 10. Karar ve kapsam notu
+## 11. Karar ve kapsam notu
 
 Bu belge **MVP için açıklanabilir heuristik planlama** önerir. Gerçek 3D bin-packing, aks ağırlığı optimizasyonu, trafik bazlı kesin rota optimizasyonu veya otomatik araç rezervasyonu ancak saha verisi, araç ana verisi ve proje sahibi kararı sonrası ayrı kapsam olarak ele alınmalıdır.
 
@@ -310,3 +316,4 @@ Bu belge harici veri kullanmaz; repository içindeki canonical domain, database,
 - [`business-workflows.md`](./business-workflows.md)
 - [`product-packaging-and-uom.md`](./product-packaging-and-uom.md)
 - [`shipment-logistics-ui-design.md`](./shipment-logistics-ui-design.md)
+- [`vehicle-capacity-matching.md`](./vehicle-capacity-matching.md)

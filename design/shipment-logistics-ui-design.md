@@ -4,7 +4,7 @@
 **Durum:** Kodlama öncesi canonical UI tasarımı
 **Marka:** Karar verilene kadar nötr `Factory ERP`
 **Arayüz dili:** Türkçe; entity, property, route ve API isimleri İngilizce
-**İlgili ana tasarım:** `visual-design-system.md`, `master-screen-inventory.md`, `production-warehouse-deep-dive.md`, `logistics-planning-rules-and-algorithms.md`
+**İlgili ana tasarım:** `visual-design-system.md`, `master-screen-inventory.md`, `production-warehouse-deep-dive.md`, `logistics-planning-rules-and-algorithms.md`, `vehicle-capacity-matching.md`
 
 ## 1. Tasarım amacı
 
@@ -86,6 +86,8 @@ Renk tek başına kullanılmaz; her rozet metin, ikon ve gerekirse açıklama il
 
 `Uygunluğu Hesapla`, `Alternatif Araçları Gör`, `Palet Ekle`, `Kalem Ata`, `Duraklara Dağıt`, `Yeniden Planla`, `Barkod Yazdır`, `Planı Kilitle`.
 
+`Kapasite detayını aç` içinde `weight_ratio`, `volume_ratio`, `pallet_ratio`, `floor_area_ratio`, `height_ratio`, `door_check_status`, `dimension_check_status`, `stacking_check_status`, `axle_check_status` ve `stop_access_status` alanları açıklama metinleriyle gösterilir.
+
 Plan kilitleme öncesi ağırlık, hacim, palet sayısı, ölçü, kapı açıklığı, uyumluluk, istifleme, kalan miktar ve alıcı durağı kontrolleri yapılır. Bloke uyarı varsa plan kilitlenemez; warning varsa yetkili override ve açıklama istenir.
 
 ### Algoritma önerisi ve açıklanabilirlik paneli
@@ -107,6 +109,32 @@ Algoritma: FFD-constraint-v1
 ```
 
 Hard constraint ihlali kırmızı blokaj olarak gösterilir. Soft constraint uyarısı sarı açıklama ve önerilen düzeltme aksiyonuyla gösterilir. Depo sorumlusu manuel palet/araç değişikliği yaptığında “Öneriden farklı planlandı” etiketi, gerekçe ve yeni validation sonucu görünür.
+
+### Araç adayları karşılaştırma paneli
+
+`Alternatif Araçları Gör` aksiyonu yalnızca araç isimlerini listelememelidir. Her aday için fit sonucu, kullanım oranları, kontrol durumu ve elenme nedeni gösterilir:
+
+```text
+ARAÇ ADAYLARI
+
+✓ 34 ABC 123 · Panelvan · Skor 86,4
+  426 / 650 kg · 2,4 / 4,5 m³ · 2 / 4 palet
+  Kapı ✓ · Boyut ✓ · İstif ✓ · Durak erişimi ⚠
+  Önerilen: düşük operasyonel risk
+
+○ 34 XYZ 789 · Kamyonet · Skor 79,1
+  426 / 900 kg · 2,4 / 6,0 m³ · 2 / 6 palet
+  Kapı ✓ · Boyut ✓ · İstif ✓ · Durak erişimi ✓
+  Alternatif olarak seçilebilir
+
+× 34 KLM 456 · Panelvan · Elendi
+  `DOOR_OPENING_MISMATCH`
+  PALLET-002 kapı açıklığına sığmıyor
+
+[Seç] [Neden elendi?] [Kapasite detayını aç]
+```
+
+Ağırlık, hacim, palet, zemin alanı ve yükseklik oranları ayrı gösterilmelidir. Aks verisi mevcut değilse “Aks kontrolü hesaplanmadı” metni gösterilir; sistem bunu yeşil uygunluk gibi sunmaz. Bu panel `load_plan_vehicle_candidates` snapshot'ını okur ve yalnızca seçilen aracı değil, elenen adayların nedenlerini de görünür kılar.
 
 ## 4. Ekran 2 — Rota ve teslimat panosu
 

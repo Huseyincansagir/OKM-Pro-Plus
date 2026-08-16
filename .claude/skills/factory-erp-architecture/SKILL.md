@@ -84,6 +84,8 @@ Temel entity grupları:
 - Araç, sevkiyat, rota durağı ve paket state'lerini bağımsız state machine olarak tasarla; kısmi teslim, eksik, iade ve teslim kanıtını kaybetme.
 - Kargo planlamada hard constraint ile soft constraint ayrımını açıkça modelle; `Infeasible`, `FeasibleWithWarnings` ve `Feasible` sonuçlarını sakla.
 - Vehicle-fit ve LoadPlan önerisinin `algorithm_name`, `algorithm_version`, input/capacity snapshot, score, validation summary ve manual change audit bilgilerini koru; optimalite iddiası yoksa UI/API bunu açıkça belirtmeli.
+- Her değerlendirilen araç için `load_plan_vehicle_candidates` veya eşdeğer `VehicleFitEvaluation` kaydı tut; seçilmeyen adayın `rejection_code`, kapasite kullanım oranları, kapı/boyut/istif/aks/durak sonucu ve açıklamasını kaybetme.
+- Araç eşleştirme ayrıntıları için `vehicle-capacity-matching.md` canonical referansını kullan; toplam kg/m³ kontrolünü palet zemini, kapı açıklığı, yükseklik, yön ve durak erişimi kontrolleriyle karıştırma.
 - Plan değişikliği shipment miktarı, araç/rota, fiziksel profil, palet veya gerçek yük değiştiğinde versioned replan üretmeli; locked plan sessizce güncellenmemeli.
 - Mobil `viewMode` (`BaseUnit`, `Packaging`, `Breakdown`) yalnızca görünüm sözleşmesidir; `operationPackagingId` işlem seviyesidir ve `quantityBase` backend'de yeniden hesaplanır.
 - Mobil miktar işlemleri için barkod resolve, quantity preview, count, transfer, load scan ve delivery endpoint'leri aynı context/permission/idempotency/hata sözleşmesini kullanmalıdır.
