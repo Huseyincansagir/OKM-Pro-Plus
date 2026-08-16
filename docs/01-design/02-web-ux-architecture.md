@@ -76,17 +76,18 @@ Bugün çalışan personel, devamsızlık, izinli personel, fazla mesai ve onay 
 | Ürün adı | Birincil metin |
 | Ürün kodu | İkincil metin |
 | Barkod | Barkod rozeti veya kodu |
-| Stok | Mevcut / rezerve / kullanılabilir |
+| Stok | Temel birimde mevcut / rezerve / kullanılabilir; ambalaj görünümü |
+| Ambalaj | `Palet → Koli → Paket → Temel Birim` özeti |
 | Fiyat | TRY formatında |
 | Durum | Aktif veya pasif |
 
-Ürün detayında üst bölümde fotoğraf, ürün adı, kod ve stok özeti; alt bölümde bilgiler, barkodlar, fiyatlar, stok hareketleri ve bağlı üretim kayıtları sekmeleri bulunacaktır. “Teklife ekle” işlemi public katalogda birincil, şirket içi katalogda ikincil işlem olacaktır.
+Ürün detayında üst bölümde fotoğraf, ürün adı, kod, temel birim ve stok özeti; alt bölümde bilgiler, barkodlar, palet/koli/paket dönüşümleri, fiyatlar, stok hareketleri ve bağlı üretim kayıtları sekmeleri bulunacaktır. “Teklife ekle” işlemi public katalogda birincil, şirket içi katalogda ikincil işlem olacaktır.
 
 ## 5. Public ürün kataloğu ve teklif sepeti
 
 Public katalog, şirket içi ERP menüsünden görsel olarak ayrılacak ve müşterinin teknik sistem hissine kapılmadan ürün seçmesini sağlayacaktır. Ürün kartında fotoğraf, ürün adı, kodu, kısa açıklaması ve “Teklife ekle” butonu bulunacaktır. Filtreler kategori, ürün tipi ve arama alanından oluşacaktır.
 
-Teklif sepeti sağdan açılan panel veya ayrı sayfa olarak tasarlanacaktır. Her satırda ürün, miktar, müşteri notu ve kaldırma işlemi yer alacaktır. Son adımda firma, yetkili, telefon ve e-posta alanları istenecek; gönderimden sonra talep numarası ve “Şirketimiz inceleyip sizinle iletişime geçecektir” mesajı gösterilecektir.
+Teklif sepeti sağdan açılan panel veya ayrı sayfa olarak tasarlanacaktır. Her satırda ürün, girilen miktar, ambalaj seviyesi, temel birim karşılığı, müşteri notu ve kaldırma işlemi yer alacaktır. Örneğin `5 Koli (10.000 adet)`. Son adımda firma, yetkili, telefon ve e-posta alanları istenecek; gönderimden sonra talep numarası ve “Şirketimiz inceleyip sizinle iletişime geçecektir” mesajı gösterilecektir.
 
 ## 6. Sipariş akışı
 
@@ -101,8 +102,8 @@ Tabloda sipariş numarası, müşteri, tarih, toplam, ödeme şartı, sevk durum
 | Sekme | İçerik |
 |---|---|
 | Genel | Müşteri, adres, ödeme şartı, teslim tarihi, notlar |
-| Ürünler | Ürün, miktar, fiyat, iskonto, vergi, toplam |
-| Stok ve rezervasyon | Mevcut, rezerve, eksik ve kullanılabilir miktar |
+| Ürünler | Ürün, girilen miktar + ambalaj, temel miktar, fiyat, iskonto, vergi, toplam |
+| Stok ve rezervasyon | Temel birimde mevcut, rezerve, eksik ve kullanılabilir miktar; ambalaj görünümü |
 | Belgeler | Teklif, irsaliye, sevkiyat, fatura bağlantıları |
 | Onay geçmişi | Onaylayan kişi, tarih, karar ve açıklama |
 | Aktivite | Kayıt üzerinde yapılan değişikliklerin zaman çizelgesi |
@@ -113,7 +114,7 @@ Sorumlu “Onayla” butonuna bastığında ayrı bir onay paneli açılacak ve 
 
 ## 7. Depo ve stok ekranları
 
-Stok listesi ürün, depo, konum, mevcut miktar, rezerve miktar ve kullanılabilir miktar kolonlarını gösterecektir. Kritik stok satırlarında görsel uyarı ve minimum stok değeri görünür olacaktır. Stok detayında giriş, çıkış, transfer, sayım, iade ve düzeltme hareketleri zaman sırasıyla listelenecektir.
+Stok listesi ürün, depo, konum, temel birimde mevcut/rezerve/kullanılabilir miktar ve seçilebilir ambalaj görünümü kolonlarını gösterecektir. Kritik stok satırlarında görsel uyarı ve temel birimle minimum stok değeri görünür olacaktır. Stok detayında giriş, çıkış, transfer, sayım, iade ve düzeltme hareketleri zaman sırasıyla listelenecektir.
 
 Barkod okuyucu, web üzerinde klavye girdisi gibi çalıştığında odaklanmış barkod alanı otomatik olarak ürünü bulacak; mobilde kamera taraması aynı ürün detayına bağlanacaktır. Ürün bulunduğunda kullanıcıya “Stok görüntüle”, “Transfer başlat”, “Sayım yap” ve yetkisi varsa “Düzeltme talebi oluştur” işlemleri sunulacaktır.
 
@@ -125,7 +126,7 @@ Barkod okuyucu, web üzerinde klavye girdisi gibi çalıştığında odaklanmı�
 
 ## 9. İrsaliye ve sevkiyat ekranları
 
-Onaylanmış siparişten irsaliye oluşturulurken kullanıcı, her ürün için sipariş miktarı, rezerve miktar, daha önce sevk edilen miktar ve sevk edilecek miktarı görecektir. Stok yetersizse sistem irsaliyeyi kesinleştirmeden önce açık bir uyarı verecektir.
+Onaylanmış siparişten irsaliye oluşturulurken kullanıcı, her ürün için sipariş, rezerve, daha önce sevk edilen ve sevk edilecek miktarı hem temel birimde hem seçilen ambalaj görünümünde görecektir. Örneğin `5 Koli (10.000 adet)`. Stok yetersizse sistem irsaliyeyi kesinleştirmeden önce açık bir uyarı verecektir.
 
 Sevkiyat detayında irsaliye ve müşteri özeti üstte; araç, şoför, yükleme tarihi, çıkış tarihi ve teslim durumu ortada; teslim belgesi ve notlar altta yer alacaktır. Sevkiyat durumu yatay bir adım göstergesiyle hazırlanıyor, sevke hazır, sevk edildi, teslim edildi ve iptal şeklinde izlenecektir.
 

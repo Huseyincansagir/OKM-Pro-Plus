@@ -73,12 +73,12 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 | Teklif talepleri listesi | Talep no, firma, iletişim, tarih, ürün sayısı, durum, sorumlu | İncele, sorumlu ata, teklife dönüştür, reddet |
 | Teklif talebi detayı | Firma, yetkili, telefon, e-posta, ürünler, miktarlar, notlar, kaynak | İncele, müşteri oluştur, teklif oluştur |
 | Teklifler listesi | Teklif no, müşteri, tarih, geçerlilik, toplam, durum | Filtrele, PDF al, siparişe dönüştür |
-| Teklif oluştur/düzenle | Müşteri, ürün, miktar, birim fiyat, iskonto, vergi, toplam, geçerlilik, not | Kaydet, PDF üret, gönder, kabul/ret |
-| Fiyat listeleri (O-012 seçilirse) | Liste, geçerlilik, para birimi, ürün fiyatları, müşteri grubu | Oluştur, kopyala, yayına al, pasifleştir |
+| Teklif oluştur/düzenle | Müşteri, ürün, miktar, seçilen ambalaj, temel miktar karşılığı, birim fiyat, iskonto, vergi, toplam, geçerlilik, not | Kaydet, PDF üret, gönder, kabul/ret |
+| Fiyat listeleri (O-012 seçilirse) | Liste, geçerlilik, para birimi, ürün fiyatları, müşteri grubu, fiyatın hangi ambalaj seviyesine ait olduğu | Oluştur, kopyala, yayına al, pasifleştir |
 | Müşteri fiyat grupları (O-012 seçilirse) | Grup, müşteri bağlantıları, varsayılan liste, geçerlilik | Ata, kaldır, geçmişi gör |
 | Siparişler listesi | Sipariş no, müşteri, tarih, toplam, onay, sevk, fatura durumu | Filtrele, toplu dışa aktar, detay |
-| Sipariş oluştur | Müşteri, teslimat adresi, ürünler, ödeme şartı, teslim tarihi, not | Taslak kaydet, onaya gönder |
-| Sipariş detayı | Genel, ürünler, stok rezervasyonu, belgeler, onay geçmişi, aktivite | Onayla, reddet, iptal et, irsaliye oluştur |
+| Sipariş oluştur | Müşteri, teslimat adresi, ürünler, girilen miktar + ambalaj, temel miktar önizlemesi, ödeme şartı, teslim tarihi, not | Taslak kaydet, onaya gönder |
+| Sipariş detayı | Genel, ürünler, `5 Koli (10.000 adet)` görünümü, temel miktarlar, stok rezervasyonu, belgeler, onay geçmişi, aktivite | Onayla, reddet, iptal et, irsaliye oluştur |
 | Sipariş onay paneli | Toplam, stok uygunluğu, ödeme şartı, teslim tarihi, risk özeti | Onayla veya açıklamalı reddet |
 | Müşteri listesi | Kod, firma, yetkili, telefon, bakiye, risk, son işlem | Yeni müşteri, içe/dışa aktar, detaya git |
 | Müşteri detayı | Kimlik, adresler, contacts, satışlar, teklifler, siparişler, cari, risk, notlar | Düzenle, not ekle, cari ekstreye git |
@@ -89,24 +89,25 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 | Ekran | Temel içerik | Ana işlemler |
 |---|---|---|
 | Ürün kart görünümü | Fotoğraf, ürün adı, kod, barkod, stok, fiyat, aktiflik | Detay, düzenle, teklife ekle |
-| Ürün tablo görünümü | Kod, ad, kategori, birim, stok, minimum stok, fiyat, durum | Filtrele, dışa aktar, toplu işlem |
-| Ürün detayı | Görsel, kod, barkodlar, açıklama, paket/koli, fiyat, maliyet, minimum stok, hareketler | Düzenle, barkod ekle, görsel yükle |
-| Ürün oluştur/düzenle | Tüm ürün kartı alanları | Kaydet, aktif/pasif yap |
+| Ürün tablo görünümü | Kod, ad, kategori, temel birim, ambalaj özeti, stok, minimum stok, fiyat, durum | Filtrele, dışa aktar, toplu işlem |
+| Ürün detayı | Görsel, kod, barkodlar, temel birim, palet-koli-paket hiyerarşisi, dönüşüm katsayıları, fiyat, maliyet, minimum stok, hareketler | Düzenle, ambalaj ekle/sürümle, barkod ekle, görsel yükle |
+| Ürün oluştur/düzenle | Ürün ana bilgileri, `base_uom`, ambalaj seviyeleri, koli/paket içerikleri, parçalı işlem izni | Kaydet, aktif/pasif yap, dönüşüm doğrula |
+| Ambalaj hiyerarşisi | Seviye, ad, üst ambalaj, alt ambalaj adedi, temel birim karşılığı, satılabilirlik, parçalı işlem | Ekle, sıralamayı değiştir, effective date ile sürümle |
 | Kategori listesi | Kategori adı, üst kategori, ürün sayısı, durum | Ekle, düzenle, arşivle |
-| Barkod yönetimi | Barkod, ürün, tip, birim, aktiflik | Ekle, değiştir, pasifleştir |
+| Barkod yönetimi | Barkod, ürün, ambalaj seviyesi, barkod tipi, aktiflik | Ekle, değiştir, pasifleştir |
 
 ### 4.5 Depo ve stok modülü
 
 | Ekran | Temel içerik | Ana işlemler |
 |---|---|---|
-| Stok listesi | Ürün, depo, konum, mevcut, rezerve, kullanılabilir, minimum stok | Sorgula, filtrele, dışa aktar |
-| Stok detayı | Depo/konum kırılımı, rezervasyonlar, hareket zaman çizelgesi | Hareket gör, sayım başlat, transfer başlat |
-| Stok hareketleri | Tarih, hareket tipi, ürün, depo, miktar, belge, kullanıcı | Filtrele, belgeye git, dışa aktar |
+| Stok listesi | Ürün, depo, konum, temel birim mevcut/rezerve/kullanılabilir, ambalaj kırılımı, minimum stok | Sorgula, koli/paket görünümü seç, filtrele, dışa aktar |
+| Stok detayı | Depo/konum kırılımı, temel miktar, `5 Koli + 6 Paket` ambalaj görünümü, rezervasyonlar, hareket zaman çizelgesi | Görünüm birimi değiştir, hareket gör, sayım başlat, transfer başlat |
+| Stok hareketleri | Tarih, hareket tipi, ürün, depo, temel miktar, girilen ambalaj, belge, kullanıcı | Filtrele, belgeye git, dışa aktar |
 | Depolar | Depo kodu, adı, sorumlu, konum sayısı, durum | Depo ekle, düzenle, pasif yap |
 | Depo konumları | Raf/konum kodu, depo, kapasite, durum | Konum ekle, düzenle |
-| Transfer oluştur | Kaynak, hedef, ürün, miktar, açıklama | Taslak, onay, transferi tamamla |
-| Sayım | Sayım no, depo, sorumlu, tarih, durum, fark | Sayım başlat, barkodla say, sonuçlandır |
-| Stok düzeltme | Ürün, mevcut, yeni miktar, fark nedeni, belge | Talep oluştur, yetkili onayı |
+| Transfer oluştur | Kaynak, hedef, ürün, miktar + ambalaj, temel miktar önizlemesi, açıklama | Taslak, onay, transferi tamamla |
+| Sayım | Sayım no, depo, sorumlu, tarih, durum, fark, sayım birimi | Sayım başlat, barkodla koli/paket say, sonuçlandır |
+| Stok düzeltme | Ürün, mevcut temel miktar, girilen ambalaj, yeni miktar, fark nedeni, belge | Talep oluştur, yetkili onayı |
 | Barkod merkezi | Kamera/USB barkod, ürün sonucu, yapılabilir işlemler | Sorgu, sayım, transfer, sevkiyat |
 
 ### 4.6 Üretim modülü
@@ -126,10 +127,10 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 
 | Ekran | Temel içerik | Ana işlemler |
 |---|---|---|
-| İrsaliyeler listesi | İrsaliye no, sipariş, müşteri, tarih, toplam, durum, fatura durumu | Yeni irsaliye, filtrele, faturala |
-| İrsaliye oluştur | Sipariş, müşteri, adres, ürünler, sevk miktarları, tarih, açıklama | Taslak, hazırla, kesinleştir |
-| İrsaliye detayı | Ürünler, stok çıkışı, bağlı sipariş, sevkiyat, fatura, hareket | PDF, iptal, sevkiyat oluştur |
-| Sevkiyat listesi | Sevkiyat no, irsaliye, müşteri, araç, şoför, tarih, teslim durumu | Oluştur, yükle, teslim et |
+| İrsaliyeler listesi | İrsaliye no, sipariş, müşteri, tarih, temel miktar toplamı, ambalaj görünümü, durum, fatura durumu | Yeni irsaliye, filtrele, faturala |
+| İrsaliye oluştur | Sipariş, müşteri, adres, ürünler, sevk edilecek miktar + ambalaj, temel miktar, tarih, açıklama | Taslak, hazırla, kesinleştir |
+| İrsaliye detayı | Ürünler, `5 Koli (10.000 adet)` görünümü, temel stok çıkışı, bağlı sipariş, sevkiyat, fatura, hareket | PDF, iptal, sevkiyat oluştur |
+| Sevkiyat listesi | Sevkiyat no, irsaliye, müşteri, araç, şoför, temel/ambalaj toplamı, tarih, teslim durumu | Oluştur, yükle, teslim et |
 | Sevkiyat detayı | Araç, şoför, yükleme, çıkış, teslim, belge, not | Hazırla, sevk edildi, teslim edildi |
 | Araçlar | Plaka, araç tipi, kapasite, durum | Ekle, düzenle |
 | Şoförler | Sicil, ad, telefon, ehliyet, durum | Ekle, düzenle |
@@ -139,7 +140,7 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 | Ekran | Temel içerik | Ana işlemler |
 |---|---|---|
 | Faturalar listesi | Fatura no, müşteri, tarih, irsaliye, toplam, vade, ödeme durumu, faturalanan/kalan miktar | Oluştur, PDF, filtrele |
-| Faturalandırma allocation ekranı (O-003 seçilirse) | İrsaliye kalemi, sevk edilen, faturalanan, kalan, seçilen miktar | Miktar seç, doğrula, faturaya aktar |
+| Faturalandırma allocation ekranı (O-003 seçilirse) | İrsaliye kalemi, temel sevk edilen, faturalanan, kalan, ambalaj görünümü, seçilen miktar | Miktar/ambalaj seç, doğrula, faturaya aktar |
 | Fatura detayı | Kalemler, ara toplam, iskonto, vergi, genel toplam, vade, bağlı belgeler, cari etkisi | PDF, iptal yetkisi, ödeme ekle |
 | Fatura oluştur | İrsaliye/sipariş, müşteri, kalemler, vergi, iskonto, vade | Ön izleme, oluştur |
 | Cari hesaplar listesi | Müşteri, borç, alacak, bakiye, geciken, risk | Detaya git, risk filtresi |

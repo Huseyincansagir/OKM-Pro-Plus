@@ -21,25 +21,27 @@ Public Quote Request
 
 | Geçiş | Aktör | Girdi | State | Permission | Database etkisi | Stok etkisi | Finansal etkisi | Audit |
 |---|---|---|---|---|---|---|---|---|
-| Talep gönderme | Public müşteri | Ürün, miktar, firma, iletişim | `NEW` | Public request submit | `QuoteRequest`, items, consent metadata | Yok | Yok | Talep oluşturma |
-| Talep inceleme | Satış | Talep, müşteri eşleştirme, not | `REVIEWING` | `quote-request.review` | Talep sorumlu ve durum güncellemesi | Yok | Yok | İnceleme başlangıcı |
-| Teklif oluşturma | Satış | Ürün, miktar, fiyat, iskonto, vergi, geçerlilik | `QUOTED` | `quote.create` | `Quote`, items, sequence | Yok | Tahmini toplam | Teklif oluşturma |
+| Talep gönderme | Public müşteri | Ürün, miktar, ambalaj seviyesi, firma, iletişim | `NEW` | Public request submit | `QuoteRequest`, items, packaging snapshot, consent metadata | Yok | Yok | Talep oluşturma |
+| Talep inceleme | Satış | Talep, müşteri eşleştirme, ambalaj/temel miktar kontrolü, not | `REVIEWING` | `quote-request.review` | Talep sorumlu ve durum güncellemesi | Yok | Yok | İnceleme başlangıcı |
+| Teklif oluşturma | Satış | Ürün, girilen miktar + ambalaj, temel miktar, fiyat, iskonto, vergi, geçerlilik | `QUOTED` | `quote.create` | `Quote`, items, packaging snapshot, sequence | Yok | Tahmini toplam | Teklif oluşturma |
 | Teklif kabulünden sipariş | Satış | Kabul edilmiş teklif | `SalesOrder.Draft` | `order.create` | `SalesOrder`, items, source reference | Yok | Sipariş tutarı oluşur, cari oluşmaz | Dönüşüm |
 | Sipariş onaya gönderme | Satış | Taslak sipariş, teslim/ödeme bilgisi | `PendingApproval` | `order.submit` | Approval pending, order state | Yok | Yok | State transition |
 | Sipariş onayı | Yönetici/sorumlu | Stok kontrolü, risk, teslim, ödeme şartı | `Approved` | `order.approve` | Approval, order state, reservation | `StockReservation` oluşturulur | Cari borç henüz oluşmaz | Onaylayan, tarih, açıklama |
 | Sipariş reddi | Yönetici/sorumlu | Ret gerekçesi | `Rejected` | `order.approve` | Approval rejected, order state | Rezervasyon oluşmaz/varsa çözülür | Yok | Ret gerekçesi |
-| İrsaliye hazırlama | Depo | Onaylı sipariş, sevk miktarı, adres | `Prepared` | `delivery-note.create` | DeliveryNote taslağı | Henüz kesin stok çıkışı yok | Yok | Hazırlama |
-| İrsaliye kesinleştirme | Depo/yönetici | Barkod doğrulaması ve miktar | `Issued` | `delivery-note.issue` | DeliveryNote issued | `StockMovement(SalesShipment)`, reservation release | Yok veya policy'ye göre sevk geliri | Stok çıkışı |
+| İrsaliye hazırlama | Depo | Onaylı sipariş, sevk miktarı + ambalaj seviyesi, adres | `Prepared` | `delivery-note.create` | DeliveryNote taslağı, base quantity preview | Henüz kesin stok çıkışı yok | Yok | Hazırlama |
+| İrsaliye kesinleştirme | Depo/yönetici | Barkod doğrulaması, ambalaj seviyesi ve temel miktar | `Issued` | `delivery-note.issue` | DeliveryNote issued, packaging snapshot | `StockMovement(SalesShipment)` temel birimde, reservation release | Yok veya policy'ye göre sevk geliri | Stok çıkışı |
 | Sevkiyat oluşturma | Depo/sevkiyat | İrsaliye, araç, şoför | `Preparing` | `shipment.create` | Shipment ve items | İrsaliye çıkışıyla ilişkilidir | Yok | Sevkiyat hazırlığı |
 | Sevk etme | Depo/sevkiyat | Yükleme ve çıkış bilgisi | `Shipped` | `shipment.ship` | Shipment state, departure | Tekrar stok düşülmez | Yok | Sevk geçişi |
 | Teslim | Sevkiyat/satış | Teslim tarihi ve not | `Delivered` | `shipment.deliver` | Delivery state, proof metadata | Yok | Yok | Teslim kaydı |
-| Fatura oluşturma | Muhasebe | Faturalanabilir irsaliye, vergi, vade | `Issued` | `invoice.create` | Invoice, items, sequence | Yok | `CurrentTransaction(Debit)` | Fatura ve cari etkisi |
+| Fatura oluşturma | Muhasebe | Faturalanabilir irsaliye, temel miktar allocation'ı, ambalaj görünümü, vergi, vade | `Issued` | `invoice.create` | Invoice, items, allocation, packaging snapshot, sequence | Yok | `CurrentTransaction(Debit)` | Fatura ve cari etkisi |
 | Ödeme alma | Muhasebe | Müşteri, tutar, yöntem, referans | `Applied` | `payment.create` | Payment, allocation, transaction | Yok | `CurrentTransaction(Credit)`, balance update | Ödeme ve dağıtım |
 
 ### Satış invariants
 
 - Onaylanmış sipariş olmadan irsaliye kesinleştirilemez.
-- Sevk miktarı `AvailableQuantity` değerini aşamaz.
+- Her ürün kalemi için kullanıcı girişi ambalaj seviyesiyle, stok ve allocation miktarı temel birimle tutulur.
+- `quantity_base` backend tarafından ürünün geçerli packaging katsayısından hesaplanır; frontend'den gelen temel miktar doğruluk kaynağı olarak kabul edilmez.
+- Sevk miktarı `AvailableBaseQuantity` değerini aşamaz.
 - Aynı irsaliye kalemi için faturalandırılan toplam miktar sevk edilen ve faturalanmamış kalan miktarı aşamaz; aynı allocation ikinci kez uygulanamaz.
 - Ödeme idempotency/reference kontrolü olmadan ikinci kez cari hesaba uygulanamaz.
 - Sipariş ret veya iptal durumundan onaylı duruma geri dönemez.
@@ -59,13 +61,13 @@ Production Plan
 
 | Geçiş | Aktör | Girdi | State | Permission | Database etkisi | Stok etkisi | Finansal etkisi | Audit |
 |---|---|---|---|---|---|---|---|---|
-| Plan oluşturma | Üretim planlama | Ürün, hedef, tarih, öncelik | Plan | `production-order.create` | ProductionOrder | Yok | Yok | Plan oluşturma |
+| Plan oluşturma | Üretim planlama | Ürün, hedef miktar + üretim/ambalaj görünümü, tarih, öncelik | Plan | `production-order.create` | ProductionOrder, packaging snapshot | Yok | Yok | Plan oluşturma |
 | Serbest bırakma | Üretim sorumlusu | Plan doğrulama, makine uygunluğu | `Released` | `production-order.release` | Order state | Malzeme policy varsa rezervasyon | Yok | Serbest bırakma |
 | Makine atama | Üretim | Makine, vardiya | Atanmış | `production-order.assign-machine` | Assignment | Yok | Yok | Makine değişimi |
 | Personel atama | Üretim | Personel, rol, vardiya | Atanmış | `production-order.assign-personnel` | Personnel assignment | Yok | Çalışma ilişkilendirmesi | Atama |
 | Üretimi başlatma | Operatör | Başlangıç, sayaç, iş emri | `InProgress` | `production.start` | ProductionRecord başlangıç | Yok | Yok | State transition |
-| Gerçekleşme kaydı | Operatör | Miktar, süre, fire, not | `InProgress` | `production.record` | ProductionRecord, personnel time | Ara kayıt policy'ye göre yok | Yok | Kayıt |
-| Duruş/fire | Operatör/sorumlu | Neden, miktar, süre | `Paused` veya active | `production.record-downtime` | Downtime, scrap | Sağlam stok artmaz | Yok | Fire/duruş |
+| Gerçekleşme kaydı | Operatör | Temel miktar veya seçilen ambalaj girişi, süre, fire, not | `InProgress` | `production.record` | ProductionRecord, personnel time, packaging snapshot | Ara kayıt policy'ye göre yok | Yok | Kayıt |
+| Duruş/fire | Operatör/sorumlu | Neden, temel miktar veya ambalaj kırılımı, süre | `Paused` veya active | `production.record-downtime` | Downtime, scrap, base quantity | Sağlam stok artmaz | Yok | Fire/duruş |
 | Tamamlama | Üretim sorumlusu | Hedef, fire, kalite, depo | `Completed` | `production.complete` | Completion | `StockMovement(ProductionReceipt)` | Maliyet policy'ye göre | Tamamlama |
 
 ### Üretim invariants

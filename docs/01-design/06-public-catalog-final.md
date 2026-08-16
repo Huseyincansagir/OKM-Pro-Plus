@@ -44,7 +44,7 @@ Ana sayfa ziyaretçiye üç adımlı süreci de anlatır: **Ürünleri seçin �
 
 ### Ürün kartı
 
-Kartta ürün fotoğrafı, ürün adı, ürün kodu, ölçü, paket/koli bilgisi, kısa açıklama ve “Teklife Ekle” butonu bulunur. Public kullanıcıya stok miktarı, maliyet veya şirket içi fiyat gösterilmez. Fiyat yerine gerektiğinde “Teklif isteyin” açıklaması kullanılabilir.
+Kartta ürün fotoğrafı, ürün adı, ürün kodu, ölçü, temel birim, palet/koli/paket hiyerarşisi, kısa açıklama ve “Teklife Ekle” butonu bulunur. Public kullanıcıya stok miktarı, maliyet veya şirket içi fiyat gösterilmez. Fiyat yerine gerektiğinde “Teklif isteyin” açıklaması kullanılabilir. Ambalaj bilgisi örneğin `1 Koli = 20 Paket = 2.000 adet` biçiminde açıkça gösterilir.
 
 Ürün daha önce sepete eklendiyse kart üzerindeki birincil işlem “Sepette” veya “Miktarı Güncelle” durumuna geçebilir. Aynı ürün ikinci kez eklenirse yeni satır oluşturulmaz; mevcut satırın miktarı artırılır.
 
@@ -59,9 +59,9 @@ Kartta ürün fotoğrafı, ürün adı, ürün kodu, ölçü, paket/koli bilgisi
 
 ## 5. Ürün detay ekranı
 
-Ürün detay ekranı büyük ürün görseli ve teknik bilgi alanlarını yan yana gösterir. Bilgi alanında ürün adı, ürün kodu, ölçü, paket içeriği, koli içeriği, birim ve açıklama bulunur.
+Ürün detay ekranı büyük ürün görseli ve teknik bilgi alanlarını yan yana gösterir. Bilgi alanında ürün adı, ürün kodu, ölçü, temel birim, paket içeriği, koli içeriği, palet içeriği ve açıklama bulunur.
 
-Miktar alanı ürünün birimiyle birlikte gösterilir. Örneğin `10 Paket` veya `5 Koli`. Kullanıcı ürün notuna baskı, renk, özel ambalaj veya kullanım amacı gibi ayrıntıları yazabilir.
+Miktar alanında kullanıcı bir ambalaj seviyesi seçer. Örneğin `5 Koli`; sistem anında temel birim karşılığını `10.000 adet` olarak gösterir. Kullanıcı ürün notuna baskı, renk, özel ambalaj veya kullanım amacı gibi ayrıntıları yazabilir. Public teklif talebine hem kullanıcının seçtiği ifade hem de temel miktar snapshot'ı gönderilir.
 
 ```text
 [← Ürünlere Dön]
@@ -69,11 +69,14 @@ Miktar alanı ürünün birimiyle birlikte gösterilir. Örneğin `10 Paket` vey
 [ Büyük ürün görseli ]     Premium Peçete 33x33
                            Ürün Kodu: ÜRÜN-001
                            Ölçü: 33x33 cm
-                           Paket içeriği: 100 adet
-                           Koli içeriği: 20 paket
+                           Temel birim: adet
+                           Paket: 100 adet
+                           Koli: 20 paket = 2.000 adet
+                           Palet: 40 koli = 80.000 adet
                            Ürün açıklaması
 
-                           Miktar [-] [10] [+] [Paket]
+                           Miktar [-] [5] [+] [Koli]
+                           Karşılığı: 10.000 adet
                            Ürün notu [________________]
                            [Teklife Ekle]
 ```
@@ -87,9 +90,9 @@ Sepet başlığında “Teklif Sepetiniz” yazısı ve şu açıklama bulunur:
 Masaüstünde ürün satırları tablo biçiminde, mobilde dikey kart biçiminde gösterilir. Her satırda ürün fotoğrafı, ürün adı, miktar kontrolü, birim, ürün notu ve kaldırma işlemi bulunur.
 
 ```text
-Ürün                         Miktar       Birim       Ürün Notu       İşlem
-Premium Peçete 33x33         [- 10 +]     Paket       [not alanı]      Kaldır
-Kokteyl Peçete 24x24         [- 5 +]      Koli        [not alanı]      Kaldır
+Ürün                         Miktar       Ambalaj      Temel karşılık        Ürün Notu       İşlem
+Premium Peçete 33x33         [- 5 +]       Koli          10.000 adet           [not alanı]      Kaldır
+Kokteyl Peçete 24x24         [- 6 +]       Paket         600 adet              [not alanı]      Kaldır
 
 Genel Talep Notu
 [Ürünlerle ilgili genel talebinizi buraya yazabilirsiniz.]
@@ -97,7 +100,7 @@ Genel Talep Notu
 [Alışverişe Devam Et]          [Bilgilerimi Gir ve Teklif İste]
 ```
 
-Sağ tarafta “Talep Özeti” kartı bulunur. Bu kartta seçilen ürün sayısı, toplam kalem/miktar özeti ve satış ekibinin dönüş yapacağına dair güven metni gösterilir. Para toplamı gösterilmez.
+Sağ tarafta “Talep Özeti” kartı bulunur. Bu kartta seçilen ürün sayısı, kullanıcının girdiği ambalaj miktarı, temel birim karşılığı ve satış ekibinin dönüş yapacağına dair güven metni gösterilir. Örneğin `5 Koli · 10.000 adet`. Para toplamı gösterilmez.
 
 ## 7. Firma bilgileri formu
 
@@ -140,7 +143,19 @@ Form alanları büyük dokunma hedefleriyle tasarlanır. “Devam Et” butonu e
 
 ## 10. Public erişim ve abuse kontrolü (O-009)
 
-Katalog herkese açık olabilir; ancak teklif formu ve public API rate limit, bot kontrolü, veri minimizasyonu ve consent kaydıyla korunmalıdır. IP/e-posta/cihaz kombinasyonuyla gönderim sıklığı sınırlandırılır; honeypot ve davranış kontrolü riskli istekleri ayırır. Firma, yetkili, telefon, e-posta, ürün/miktar ve gerekli notlar dışında veri istenmez. Aydınlatma/onay metni ile timestamp/version bilgisi talep kaydına bağlanır. Rate-limited, başarısız veya bot olarak işaretlenen isteklerde iç ERP teklif talebi oluşturulmaz. Saklama ve silme süresi proje sahibi ile hukuk/uyum sorumlusu tarafından ayrıca onaylanır.
+Katalog herkese açık olabilir; ancak teklif formu ve public API kontrolsüz bırakılmamalıdır. Uygulama aşamasına geçmeden önce yönetim/hukuk onayıyla aşağıdaki kontroller tasarımın zorunlu parçası kabul edilmelidir:
+
+| Kontrol | Tasarım kararı |
+|---|---|
+| Rate limit | IP, e-posta ve cihaz parmak izi kombinasyonuyla teklif gönderim sıklığı sınırlandırılır; limit dolduğunda kullanıcıya tekrar deneme zamanı gösterilir. |
+| Bot kontrolü | Görünmez honeypot ve davranış kontrolü; riskli durumda CAPTCHA veya manuel doğrulama fallback'i. |
+| İletişim doğrulama | E-posta veya telefon doğrulaması, spam ve yanlış talep riskine göre seçilebilir. |
+| Veri minimizasyonu | Firma, yetkili, telefon, e-posta, ürün/miktar ve gerekli notlar dışında veri istenmez. |
+| Consent | Aydınlatma/onay metni ve timestamp/version bilgisi talep kaydıyla ilişkilendirilir. |
+| Hata/abuse logu | Başarısız, rate-limited ve bot olarak işaretlenen talepler ayrı teknik loglarda tutulur; iç ERP teklif talebi oluşturulmaz. |
+| Saklama/silme | Talep ve consent saklama süresi karar sahibi/hukuk tarafından belirlenir; süresi dolan kayıt için anonimleştirme veya silme prosedürü yazılır. |
+
+Bu bölüm teknik ve uyum kararlarının tasarım karşılığıdır; hukuki metinlerin son hali yetkili hukuk/uyum sorumlusu tarafından onaylanmalıdır.
 
 ## 11. İç ERP bağlantısı
 
@@ -148,11 +163,11 @@ Public form gönderildikten sonra şirket içi sistemde `NEW` durumunda yeni bir
 
 ## 12. Görsel mockup'lar
 
-![Public ürün kataloğu masaüstü mockup'ı](../05-assets/mockups/uretim-depo-public-catalog-desktop-mockup.png)
+![Public ürün kataloğu masaüstü mockup'ı](../docs/05-assets/mockups/uretim-depo-public-catalog-desktop-mockup.png)
 
-![Teklif sepeti masaüstü mockup'ı](../05-assets/mockups/uretim-depo-quote-cart-desktop-mockup.png)
+![Teklif sepeti masaüstü mockup'ı](../docs/05-assets/mockups/uretim-depo-quote-cart-desktop-mockup.png)
 
-![Teklif talebi mobil form mockup'ı](../05-assets/mockups/uretim-depo-quote-form-mobile-mockup.png)
+![Teklif talebi mobil form mockup'ı](../docs/05-assets/mockups/uretim-depo-quote-form-mobile-mockup.png)
 
 ## 13. Onaylanmış görsel yön
 

@@ -20,6 +20,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`grok-session-review.md`](./grok-session-review.md) | Grok notlarının karşılaştırmalı teknik ve karar incelemesi |
 | [`open-decisions-solution-matrix.md`](./open-decisions-solution-matrix.md) | O-001–O-013 için önerilen çözüm, sahip, risk ve etki matrisi |
 | [`open-decisions-workshop.md`](./open-decisions-workshop.md) | Karar atölyesi için yönetim özeti, karar formu ve Design Gate kapanış planı |
+| [`product-packaging-and-uom.md`](./product-packaging-and-uom.md) | Palet-koli-paket-temel birim hiyerarşisi ve miktar dönüşüm kuralları |
 | [`domain-model.md`](./domain-model.md) | Bounded context ve source-of-truth haritası |
 | [`business-workflows.md`](./business-workflows.md) | Sales, production ve personnel workflow'ları |
 | [`database-technical-architecture.md`](./database-technical-architecture.md) | PostgreSQL, API, transaction ve deployment ön taslağı |

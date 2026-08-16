@@ -42,6 +42,20 @@ Açık kararlar henüz kapanmamış olsa da aşağıdaki temel yönler korunmakt
 
 Ayrıntılı domain ve veri tabanı etkileri için [`domain-model.md`](./domain-model.md), [`business-workflows.md`](./business-workflows.md) ve [`database-technical-architecture.md`](./database-technical-architecture.md) dosyaları esas alınır.
 
+### Ürün miktarı ve ambalaj hiyerarşisi
+
+Ürünler tek bir `birim` alanıyla değil, ürün bazlı ambalaj hiyerarşisiyle tarif edilir:
+
+```text
+Palet → Koli → Paket → Temel Birim (adet, kg, metre, litre)
+```
+
+Her ürünün bir `base_uom` değeri bulunur. Palet, koli ve paket seviyeleri aynı ürün altında `ProductPackaging` kayıtları olarak tanımlanır. Bu seviyeler ayrı ürün kartları değildir; her biri temel birime dönüşüm katsayısı ve gerekirse ayrı barkod taşır.
+
+Örneğin `1 Paket = 100 adet`, `1 Koli = 20 Paket = 2.000 adet` ise kullanıcı `5 Koli` girdiğinde sistem yeni bir ürün oluşturmaz. İşlem `entered_quantity = 5`, `entered_packaging = Koli`, `quantity_base = 10.000 adet` olarak kaydedilir ve ekranda **`5 Koli (10.000 adet)`** gösterilir. Ağırlıkla yönetilen bir ürün için aynı mantık geçerlidir: `1 Koli = 60 kg` ise `5 Koli = 300 kg` olur.
+
+Stok, rezervasyon, sevkiyat, fatura allocation ve üretim hareketlerinin doğruluk kaynağı temel birim miktarıdır. Kullanıcının girdiği ambalaj ve belge tarihindeki dönüşüm snapshot'ı da saklanır. Açılmış ambalajlarda `0,5 Koli` gibi belirsiz bir gösterim yerine `4 Koli + 6 Paket` gibi açık kırılım kullanılır.
+
 ---
 
 ## 3. Karar haritası

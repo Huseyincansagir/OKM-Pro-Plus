@@ -76,12 +76,41 @@ flowchart LR
 | `customer_contacts` | Yetkili, telefon ve e-posta bilgileri |
 | `customer_notes` | Kullanıcı notları ve operasyon notları |
 | `product_categories` | Ürün sınıflandırması |
-| `products` | Ürün kodu, ad, birim, paket/koli, fiyat ve minimum stok |
-| `product_barcodes` | Bir ürüne bağlı birden fazla barkod |
+| `units_of_measure` | `Piece`, `Kilogram`, `Meter`, `Liter` gibi temel ölçü birimleri |
+| `products` | Ürün kodu, ad, `base_uom_id`, fiyat ve minimum stok |
+| `product_packagings` | Ürün bazlı palet/koli/paket dönüşüm hiyerarşisi ve satış birimleri |
+| `product_barcodes` | Bir ürüne ve gerekirse ambalaj seviyesine bağlı barkod |
 | `product_images` | Ürün görseli ve dosya metadata'sı |
 | `product_prices` | Fiyat listesi, müşteri grubu veya geçerlilik dönemi |
 
-Ürün kodu ve barkod benzersiz olmalıdır. Public katalog yalnızca `is_active = true` olan ve public görünürlüğü açık ürünleri döndürür.
+Ürün kodu ve barkod benzersiz olmalıdır. Public katalog yalnızca `is_active = true` olan ve public görünürlüğü açık ürünleri döndürür. `product_packagings` aynı ürünün farklı ambalajlarını temsil eder; `5 Koli` için ayrı ürün kartı oluşturulmaz.
+
+#### Ambalaj dönüşüm şeması
+
+`product_packagings` için önerilen alanlar:
+
+| Alan | Açıklama |
+|---|---|
+| `id`, `product_id` | Ambalaj kaydı ve bağlı ürün |
+| `level` | `BaseUnit`, `Package`, `Case`, `Pallet` |
+| `name` | Kullanıcı etiketi: `Adet`, `Paket`, `Koli`, `Palet` |
+| `parent_packaging_id` | Bir üst ambalaj kaydı; örneğin Koli → Paket |
+| `units_per_parent` | Üst seviyedeki alt ambalaj adedi |
+| `quantity_in_base_uom` | Bir ambalajın temel ölçü birimindeki kesin karşılığı |
+| `is_sellable`, `allow_partial` | Satış/sevk seçimi ve parçalı ambalaj izni |
+| `effective_from`, `effective_to` | Dönüşüm değişikliklerinde versiyonlama |
+
+Sipariş, irsaliye, stok hareketi, rezervasyon ve üretim kaydında aşağıdaki alanlar birlikte değerlendirilmelidir:
+
+```text
+entered_quantity          = Kullanıcının girdiği sayı, örn. 5
+entered_packaging_id      = Koli
+quantity_base              = Backend dönüşümü, örn. 10.000 adet
+packaging_snapshot         = Belge tarihindeki ad, katsayı ve hiyerarşi
+packaging_breakdown        = Gerekirse 4 Koli + 6 Paket gibi görünüm
+```
+
+`quantity_base` stok ve miktar doğruluğunun kaynağıdır. Ambalaj tanımı sonradan değişse bile belge üzerindeki `packaging_snapshot` geçmişteki `5 Koli (10.000 adet)` ifadesini korur.
 
 ### 4.3 Depo ve stok
 
@@ -90,34 +119,37 @@ flowchart LR
 | `warehouses` | Depo ana kartı |
 | `warehouse_locations` | Depo içi raf/konum |
 | `stocks` | `product_id + warehouse_id + location_id` miktar özeti |
-| `stock_movements` | Giriş, çıkış, transfer, sayım, iade ve düzeltme kayıtları |
-| `stock_reservations` | Sipariş veya belge bazlı rezerve miktar |
+| `stock_movements` | Giriş, çıkış, transfer, sayım, iade ve düzeltme kayıtları; temel miktar ve ambalaj snapshot'ı |
+| `stock_reservations` | Sipariş veya belge bazlı rezerve temel miktar |
+| `stock_movement_packaging` | İsteğe bağlı hareket kırılımı: 5 Koli, 6 Paket gibi kapalı/parçalı ambalaj detayı |
 | `stock_counts` | Sayım başlıkları |
 | `stock_count_items` | Sistem, sayılan, fark ve gerekçe |
 | `warehouse_transfers` | Kaynak/hedef depo transfer başlığı |
 | `warehouse_transfer_items` | Transfer ürünleri ve miktarlar |
 
-`stock_movements` silinemez ledger olarak tasarlanmalıdır. Hatalı hareket iptal veya ters hareketle düzeltilir. Kullanılabilir stok için temel hesap:
+`stock_movements` silinemez ledger olarak tasarlanmalıdır. Hatalı hareket iptal veya ters hareketle düzeltilir. Tüm hareketler ürünün `base_uom` değerinde tutulur; kullanıcıya gösterilen koli/paket kırılımı ayrıca saklanır veya snapshot'tan yeniden üretilebilir. Kullanılabilir stok için temel hesap:
 
 ```text
-AvailableQuantity = Quantity - ReservedQuantity
+AvailableBaseQuantity = OnHandBaseQuantity - ReservedBaseQuantity
 ```
 
-İrsaliye kesinleştirme, üretim tamamlama, transfer ve sayım düzeltmesi transaction içinde hareket ve özet stok tablosunu birlikte güncellemelidir.
+Örnek: Ürünün bir kolisi 2.000 adet ise `5 Koli` çıkış hareketi `quantity_base = 10.000` olarak kaydedilir; arayüzde `5 Koli (10.000 adet)` gösterilir. `0,5 Koli` gibi belirsiz bir gösterim yerine parçalı ambalaj gerekiyorsa `10 Paket` veya `4 Koli + 6 Paket` kırılımı kullanılır.
+
+İrsaliye kesinleştirme, üretim tamamlama, transfer ve sayım düzeltmesi transaction içinde hareket ve özet stok tablosunu birlikte güncellemelidir. Dönüşüm hesabı backend'de yapılmalı; frontend'den gelen `quantity_base` tek başına güvenilir kabul edilmemelidir.
 
 ### 4.4 Teklif, sipariş ve satış belgeleri
 
 | Tablo | Ana ilişki |
 |---|---|
 | `quote_requests` | Public veya iç kaynaklı teklif talebi |
-| `quote_request_items` | Talep edilen ürün ve miktarlar |
-| `quotes` | Satış teklifi başlığı |
-| `quote_items` | Teklif kalemleri, fiyat, iskonto, vergi |
+| `quote_request_items` | Talep edilen ürün, `entered_quantity`, `entered_packaging_id`, `quantity_base` |
+| `quotes` | Teklif başlığı |
+| `quote_items` | Teklif kalemi, girilen ambalaj, temel miktar, fiyat, iskonto, vergi ve snapshot |
 | `sales_orders` | Tekliften veya iç kaynaktan oluşan sipariş |
-| `sales_order_items` | Sipariş kalemleri |
+| `sales_order_items` | Sipariş kalemi; ordered/reserved/shipped/remaining temel miktarları ve giriş ambalajı |
 | `sales_order_approvals` | Onay kararı, açıklama, onaylayan kullanıcı |
 | `delivery_notes` | İrsaliye başlığı |
-| `delivery_note_items` | Sevk miktarları |
+| `delivery_note_items` | Sevk miktarı, barkod doğrulaması, `quantity_base` ve ambalaj görünümü |
 | `shipments` | Araç, şoför, yükleme ve teslim durumu |
 | `shipment_items` | İrsaliye/sevkiyat ürün bağlantısı |
 | `invoices` | Fatura başlığı |

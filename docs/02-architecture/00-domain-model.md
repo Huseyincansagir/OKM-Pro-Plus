@@ -5,7 +5,7 @@
 | Bounded context | Ana kavramlar | Sahip olduğu davranış |
 |---|---|---|
 | Identity & Access | User, Role, Permission, Session | Kimlik, RBAC, oturum ve erişim |
-| Products | Product, Category, ProductBarcode, ProductImage, ProductPrice, PriceList, CustomerPriceGroup | Ürün ana verisi, katalog görünürlüğü ve karar verilirse müşteri bazlı fiyatlandırma |
+| Products | Product, Category, UnitOfMeasure, ProductPackaging, ProductBarcode, ProductImage, ProductPrice, PriceList, CustomerPriceGroup | Ürün ana verisi, palet-koli-paket hiyerarşisi, katalog görünürlüğü ve karar verilirse müşteri bazlı fiyatlandırma |
 | Customers | Customer, Address, Contact, Note | Müşteri kimliği, iletişim ve adres |
 | Sales | QuoteRequest, Quote, SalesOrder, Approval | Talep, teklif, sipariş ve onay |
 | Warehouse | Warehouse, Location, Stock, StockMovement, Reservation, Count, Transfer | Fiziksel stok ve depo hareketleri |
@@ -26,7 +26,7 @@
 
 | Kavram | Tek kaynak | Türetilen / okuma modeli | Kopyalanmaması gereken alan |
 |---|---|---|---|
-| Ürün | `Product` | Public product card, stock lookup | Ürün adı/kodu farklı modülde tekrar edilmemeli |
+| Ürün | `Product` + `UnitOfMeasure` + `ProductPackaging` | Public product card, stock lookup, packaging breakdown | Ürün adı/kodu, temel birim veya ambalaj dönüşümü başka modülde tekrar edilmemeli |
 | Fiyat politikası | `PriceList` + `CustomerPriceGroup` (O-012 seçilirse) | Quote/Order price snapshot | Fiyat, sipariş veya ürün ekranlarında sessizce çoğaltılmamalı |
 | Barkod | `ProductBarcode` | Barcode scanner result | Barkod ürün ve stoktan bağımsız tutulmamalı |
 | Stok | `Stock` + `StockMovement` | Dashboard KPI, warehouse view | Mevcut miktar UI state olarak saklanmamalı |
@@ -48,6 +48,8 @@
 
 ```mermaid
 flowchart TD
+  Product --> ProductPackaging
+  UnitOfMeasure --> ProductPackaging
   Product --> Stock
   Product --> QuoteRequestItem
   Product --> QuoteItem
@@ -121,7 +123,75 @@ ProductionPlan
 - Yetkisiz state transition backend tarafından reddedilir.
 - Kritik state transition'lar AuditLog oluşturur.
 
-## 6. Karar bağımlı genişlemeler
+## 6. Ambalaj ve miktar hiyerarşisi
+
+Ürün miktarı tek bir serbest metin veya tek bir `unit` alanıyla tutulmaz. Her ürün için temel ölçü birimi ve buna bağlı ambalaj seviyeleri tanımlanır. Önerilen hiyerarşi:
+
+```text
+Palet
+  └─ Koli
+      └─ Paket
+          └─ Temel Birim (adet, kg, metre, litre vb.)
+```
+
+`ProductPackaging` ürünün ambalaj tanımını, `UnitOfMeasure` ise ölçü tipini temsil eder. Aynı fiziksel ürün için farklı ambalajlar ayrı ürün kartı değildir; aynı `Product` altında tanımlı paketleme seviyeleridir.
+
+| Alan | Anlam |
+|---|---|
+| `Product.base_uom_id` | Stok ledger'ının temel ölçü birimi; örneğin `Adet` veya `kg` |
+| `ProductPackaging.level` | `BaseUnit`, `Package`, `Case`, `Pallet` gibi seviye |
+| `ProductPackaging.name` | Kullanıcıya gösterilen ad; `Paket`, `Koli`, `Palet` |
+| `ProductPackaging.parent_packaging_id` | Bir üst ambalajın alt ambalajı; örneğin Koli → Paket |
+| `ProductPackaging.units_per_parent` | Üst ambalajda kaç alt ambalaj olduğu |
+| `ProductPackaging.quantity_in_base_uom` | Bir ambalajın temel birimdeki kesin karşılığı |
+| `ProductPackaging.barcode` | O ambalaj seviyesine ait barkod; varsa `ProductBarcode` üzerinden yönetilir |
+| `ProductPackaging.is_sellable` | Teklif/sipariş/sevkiyat ekranında seçilebilir mi |
+| `ProductPackaging.allow_partial` | Ambalajın açılmış/parçalı olarak işlem görmesine izin var mı |
+
+### Örnek: 5 koli ürünün tarifi
+
+Örneğin bir peçete ürünü için aşağıdaki tanımlar yapılmış olsun:
+
+| Seviye | Tanım | Temel birim karşılığı |
+|---|---:|---:|
+| Temel birim | 1 adet | 1 adet |
+| Paket | 100 adet | 100 adet |
+| Koli | 20 paket | 2.000 adet |
+| Palet | 40 koli | 80.000 adet |
+
+Bu durumda kullanıcı **5 koli** seçtiğinde yeni bir ürün veya `5 Koli` isimli ayrı stok kartı açılmaz. İşlem şu şekilde kaydedilir:
+
+```text
+Product: Premium Napkin 33x33
+Girilen miktar: 5
+Girilen ambalaj: Koli
+Temel birim miktarı: 5 × 2.000 = 10.000 adet
+Ekran özeti: 5 Koli (10.000 adet)
+```
+
+Ürün ağırlıkla yönetiliyorsa aynı model geçerlidir. Örneğin bir koli 60 kg ise `5 Koli` işlemi `300 kg` temel miktar olarak ledger'a yazılır. **Stok, rezervasyon, sevkiyat, fatura allocation ve üretim hareketlerinde kaynak doğruluk temel birim miktarıdır; kullanıcı girişi ve belge görünümü ambalaj birimiyle birlikte saklanır.**
+
+### Karma ve parçalı ambalaj
+
+Açılmış kolilerde kullanıcıya yalnızca ondalıklı koli göstermek yerine açık bir kırılım gösterilir:
+
+```text
+4 Koli + 6 Paket = 8.600 adet
+```
+
+Bu değerlerin toplamı yine temel birimde tutulur. `quantity_base` doğruluk kaynağıdır; `entered_quantity`, `entered_packaging_id` ve ambalaj snapshot'ı ise kullanıcının işlemi nasıl girdiğini ve belge üzerinde nasıl gösterileceğini korur. Ambalaj tanımı sonradan değişse bile geçmiş belge `5 Koli (10.000 adet)` olarak bozulmadan görüntülenir.
+
+### Miktar invariants
+
+- Her ürünün tek bir `base_uom` değeri vardır; stok ledger'ı bu birim üzerinden tutulur.
+- Ambalaj dönüşüm katsayısı ürün bazlıdır; global `1 koli = X` varsayımı yapılmaz.
+- `quantity_base = entered_quantity × packaging.quantity_in_base_uom` dönüşümü backend'de yapılır ve frontend'e güvenilmez.
+- Kapalı koli/paket hareketleri yalnızca tam sayı adet kabul eder; parçalı işlem yalnızca `allow_partial = true` olan seviyelerde açılır.
+- Farklı ambalaj seviyelerine ait barkodlar aynı ürüne bağlanır; barkodun hangi ambalajı temsil ettiği kaybolmaz.
+- Ambalaj tanımı değişirse yeni effective-from sürümleme veya yeni packaging kaydı oluşturulur; geçmiş stok ve belgeler geriye dönük yeniden yorumlanmaz.
+- Kullanılabilir stok hesabı temel birimde yapılır: `AvailableBaseQuantity = OnHandBaseQuantity - ReservedBaseQuantity`.
+
+## 7. Karar bağımlı genişlemeler
 
 Aşağıdaki model genişlemeleri `/design/open-decisions-solution-matrix.md` içindeki öneriler seçildiğinde etkinleştirilir; karar sahibi onayı olmadan baseline entity veya state olarak kabul edilmez:
 
@@ -133,6 +203,6 @@ Aşağıdaki model genişlemeleri `/design/open-decisions-solution-matrix.md` i�
 | O-004 BOM | `ProductionMaterial` ve hammadde hareketleri; MVP kapalı tutulursa migration dışı |
 | O-005 Lot/seri | `Lot`/`SerialNumber`, son kullanma ve traceability; MVP kapalı tutulursa migration dışı |
 
-## 7. Tasarım sonucu
+## 8. Tasarım sonucu
 
 Source of truth haritası `/design` altındaki canonical ekran, workflow ve teknik dokümanların ortak referansıdır. Numaralı `docs/00`–`docs/06` dosyaları senkronize arşiv olarak korunur. Aynı kavram için farklı modüllerde ikinci bir ana kayıt tasarlanırsa bu durum `/design/decision-log.md` içinde açıkça değerlendirilmeden Design Gate geçilmez.

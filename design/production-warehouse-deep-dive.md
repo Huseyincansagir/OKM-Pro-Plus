@@ -60,7 +60,7 @@ Kanban sütunları Planned, Released, InProgress, Paused, Completed ve Cancelled
 |---|---|---|
 | İş Emri No | Sistem üretir | `URE-2026-000021` gibi sequence |
 | Ürün | Zorunlu | Ürün kartından seçilir |
-| Hedef Miktar | Zorunlu | Birimle birlikte girilir |
+| Hedef Miktar | Zorunlu | Üretim birimiyle birlikte girilir; `base_uom` ve gerekiyorsa palet/koli/paket görünümü gösterilir |
 | Planlanan Tarih | Zorunlu | Vardiya/takvim kontrolü yapılır |
 | Makine | Başlangıçta opsiyonel | İş serbest bırakılmadan önce atanabilir |
 | Öncelik | Zorunlu | Düşük, normal, yüksek, kritik |
@@ -70,7 +70,7 @@ Kanban sütunları Planned, Released, InProgress, Paused, Completed ve Cancelled
 
 ### Üst özet
 
-Üstte iş emri numarası, ürün adı, durum rozeti, planlanan tarih, makine, sorumlu ve ilerleme çubuğu bulunur. İlerleme çubuğu yalnızca yüzde değil, `32.400 / 50.000 adet` biçiminde mutlak değerle de gösterilir.
+Üstte iş emri numarası, ürün adı, durum rozeti, planlanan tarih, makine, sorumlu ve ilerleme çubuğu bulunur. İlerleme çubuğu yalnızca yüzde değil, `32.400 / 50.000 adet` biçiminde temel birimle; gerekiyorsa `16,2 Koli / 25 Koli` gibi ambalaj görünümüyle de gösterilir. Üretim kaydının doğruluk kaynağı temel birim miktarıdır.
 
 ### Sekmeler
 
@@ -91,12 +91,14 @@ Formun üstünde iş emri ve makine kilitli özet olarak görünür. Kullanıcı
 Form kapanmadan önce canlı özet gösterilir:
 
 ```text
-Hedef miktar: 50.000 adet
-Yeni kayıt: 6.200 adet
-Toplam gerçekleşen: 32.400 adet
-Kalan: 17.600 adet
+Hedef miktar: 50.000 adet (25 Koli)
+Yeni kayıt: 6.200 adet (3 Koli + 200 adet)
+Toplam gerçekleşen: 32.400 adet (16 Koli + 400 adet)
+Kalan: 17.600 adet (8 Koli + 1.600 adet)
 Fire: 150 adet / %2,4
 ```
+
+Ekran, kullanıcıya ambalaj kırılımını gösterse de backend'e temel birim miktarı gönderir. Ambalaj dönüşüm katsayısı üretim kaydı tarihindeki packaging snapshot'ından alınır.
 
 ## 6. Makine ve duruş yönetimi
 
@@ -151,10 +153,11 @@ Kritik stok listesinde ürün, depo, kullanılabilir miktar, minimum stok, son h
 | Ürün | Ürün kodu, ad, görsel ve barkod |
 | Depo | Ürünün bulunduğu depo |
 | Konum | Raf veya depo lokasyonu |
-| Mevcut | Fiziksel sistem miktarı |
-| Rezerve | Sipariş/işlem için ayrılmış miktar |
-| Kullanılabilir | Mevcut eksi rezerve |
-| Minimum Stok | Uyarı eşiği |
+| Mevcut | Temel birimde fiziksel sistem miktarı; ambalaj kırılımı ayrıca gösterilebilir |
+| Rezerve | Temel birimde sipariş/işlem için ayrılmış miktar |
+| Kullanılabilir | Temel mevcut eksi temel rezerve |
+| Ambalaj görünümü | `5 Koli`, `10 Paket` veya `4 Koli + 6 Paket` gibi açıklanabilir kırılım |
+| Minimum Stok | Uyarı eşiği, temel birimle tanımlanır |
 | Durum | Normal, düşük, kritik, stokta yok |
 
 ### Stok detay sekmeleri
@@ -163,7 +166,7 @@ Kritik stok listesinde ürün, depo, kullanılabilir miktar, minimum stok, son h
 
 ## 10. Stok hareketleri
 
-Stok hareket tipleri üretim girişi, satış çıkışı, transfer, sayım, iade ve düzeltmedir. Her hareket için ürün, depo, konum, miktar, yön, belge, kullanıcı, tarih ve açıklama saklanır.
+Stok hareket tipleri üretim girişi, satış çıkışı, transfer, sayım, iade ve düzeltmedir. Her hareket için ürün, depo, konum, temel birim miktarı, yön, belge, kullanıcı, tarih ve açıklama saklanır. Kullanıcının girdiği ambalaj seviyesi ve belge tarihindeki dönüşüm snapshot'ı da korunur; örneğin `5 Koli (10.000 adet)`.
 
 Bir hareketin yanlış olması durumunda eski satır silinmez. Yetkili kullanıcı ters hareket veya düzeltme hareketi oluşturur. Arayüzde ters kayıt ilişkisi görünür:
 
@@ -206,7 +209,7 @@ Farklılık yüksekse kullanıcı işlemi tamamlayamaz; sayım sorumlusuna veya 
 
 ## 12. Depo transferi
 
-Transfer ekranında kaynak depo, hedef depo, kaynak konum, hedef konum, ürün ve miktar bulunur. Transfer tamamlanırken kaynakta kullanılabilir stok kontrol edilir. İki hareket aynı transaction içinde oluşturulur: kaynak çıkışı ve hedef girişi.
+Transfer ekranında kaynak depo, hedef depo, kaynak konum, hedef konum, ürün, miktar ve ambalaj seviyesi bulunur. Kullanıcı `5 Koli` girebilir; sistem temel miktarı önizler ve kaynakta temel kullanılabilir stoğu kontrol eder. İki hareket aynı transaction içinde oluşturulur: kaynak çıkışı ve hedef girişi. Transferin doğruluk kaynağı temel birim, operasyon görünümü ambalaj kırılımıdır.
 
 Transfer durumları `Taslak`, `Hazırlanıyor`, `Yolda`, `Tamamlandı`, `İptal` olarak tasarlanabilir. “Yolda” durumunda kaynak miktar düşmüş, hedef miktar henüz kullanılabilir stoğa eklenmemiş olarak gösterilebilir.
 
@@ -232,7 +235,7 @@ Ağ yoksa kamera okuması ürün kodunu geçici olarak gösterebilir; stok harek
 
 ## 14. Sevkiyat hazırlama ile depo bağlantısı
 
-Sevkiyat ekranı irsaliyeden gelen beklenen kalemleri gösterir. Her kalemde sipariş miktarı, daha önce sevk edilen, sevk edilecek ve barkodla doğrulanan miktar bulunur.
+Sevkiyat ekranı irsaliyeden gelen beklenen kalemleri gösterir. Her kalemde sipariş miktarı, daha önce sevk edilen, sevk edilecek ve barkodla doğrulanan miktar; hem temel birimde hem de seçilen ambalaj seviyesinde gösterilir. Örneğin `5 Koli (10.000 adet)`.
 
 ```text
 İrsaliye aç

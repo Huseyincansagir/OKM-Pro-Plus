@@ -69,7 +69,7 @@ Tara sekmesi
 
 Tarama ekranında kamera görüntüsü, çerçeve, flaş, manuel kod girişi ve “Barkodu okutun” açıklaması bulunur. Barkod bulunamazsa kullanıcı manuel ürün aramasına geçebilir. Aynı barkodun art arda okutulması duplicate hareket oluşturmayacak şekilde kısa süreli kilitlenir.
 
-Ürün sonuç ekranında ürün görseli, ürün adı, ürün kodu, barkod, toplam stok, seçili depo, rezerve miktar ve kullanılabilir miktar gösterilir. Hızlı işlemler role göre değişir:
+Ürün sonuç ekranında ürün görseli, ürün adı, ürün kodu, barkod, temel birimde toplam stok, seçili depo, rezerve miktar ve kullanılabilir miktar gösterilir. Ambalaj görünümü de ayrıca sunulur; örneğin `5 Koli (10.000 adet)`. Hızlı işlemler role göre değişir:
 
 | Rol | İşlemler |
 |---|---|
@@ -80,7 +80,7 @@ Tarama ekranında kamera görüntüsü, çerçeve, flaş, manuel kod girişi ve 
 
 ## 6. Stok sorgu ve hareket geçmişi
 
-Stok detayında depo bazlı kartlar, konum, mevcut, rezerve ve kullanılabilir miktar görünür. Hareket geçmişi son giriş/çıkışları tarih, tip, miktar, belge ve kullanıcı ile listeler.
+Stok detayında depo bazlı kartlar, konum, temel birimde mevcut/rezerve/kullanılabilir miktar ve seçilebilir ambalaj kırılımı görünür. Hareket geçmişi son giriş/çıkışları tarih, tip, temel miktar, `5 Koli` gibi giriş görünümü, belge ve kullanıcı ile listeler.
 
 Mobil tablolar yerine dikey hareket kartları kullanılacaktır. Kullanıcı hareket kartına dokunarak bağlı üretim, irsaliye, transfer veya sayım belgesine gider.
 
@@ -101,13 +101,13 @@ Fark oluştuğunda sistem miktarı, sayılan miktar ve fark büyük puntolarla g
 
 ## 8. Transfer akışı
 
-Transfer ekranında kaynak depo, hedef depo ve konum seçilir. Ürün barkodla eklenir, miktar girilir ve transfer özeti gösterilir. Kaynakta kullanılabilir stok yeterli değilse işlem tamamlanmaz. Transfer kayıt numarası, kaynak çıkışı ve hedef giriş durumu başarılı sonuç ekranında gösterilir.
+Transfer ekranında kaynak depo, hedef depo ve konum seçilir. Ürün barkodla eklenir, miktar ve ambalaj seviyesi girilir; temel miktar önizlemesi gösterilir. Kullanıcı `5 Koli` seçerse sistem ilgili temel miktarı hesaplar. Kaynakta temel kullanılabilir stok yeterli değilse işlem tamamlanmaz. Transfer kayıt numarası, kaynak çıkışı ve hedef giriş durumu başarılı sonuç ekranında gösterilir.
 
 ## 9. Sevkiyat operasyonu
 
 İşlerim ekranında sevke hazır ve hazırlanmakta olan sevkiyatlar kart halinde listelenir. Kartta sevkiyat no, müşteri, irsaliye, teslim tarihi, ürün adedi ve öncelik bulunur.
 
-Sevkiyat detayı ürün doğrulama ekranına açılır. Her satırda beklenen, okutulan ve kalan miktar gösterilir. Barkod okutuldukça okutulan miktar artar. Fark varsa sistem uyarır ve sevkiyatı tamamlamadan önce açıklama ister.
+Sevkiyat detayı ürün doğrulama ekranına açılır. Her satırda beklenen, okutulan ve kalan miktar hem temel birimde hem de ambalaj görünümünde gösterilir. Örneğin `5 Koli (10.000 adet)`. Barkod okutuldukça okutulan temel miktar artar. Fark varsa sistem uyarır ve sevkiyatı tamamlamadan önce açıklama ister.
 
 ```text
 Sevkiyat seç
@@ -129,7 +129,7 @@ Kullanıcı makineyi doğrular ve “Üretimi Başlat” butonuna basar. Başlan
 
 ### Üretim kaydı
 
-Büyük sayısal giriş alanları üretilen miktar ve fire için kullanılır. Duruş nedeni seçilebilir, açıklama girilebilir, personeller ve çalışma süreleri eklenebilir. Kullanıcı üretimi kaydeder veya hedef tamamlandıysa “Üretimi Tamamla” ile sonlandırır.
+Büyük sayısal giriş alanları üretilen temel miktar ve fire için kullanılır; gerekiyorsa kullanıcı ambalaj seviyesi seçerek `5 Koli` girişi yapar ve sistem temel miktarı gösterir. Duruş nedeni seçilebilir, açıklama girilebilir, personeller ve çalışma süreleri eklenebilir. Kullanıcı üretimi kaydeder veya hedef tamamlandıysa “Üretimi Tamamla” ile sonlandırır.
 
 ```text
 İş emri seç
