@@ -180,6 +180,25 @@ Her belge state'i explicit enum veya state machine ile tanımlanır. Frontend du
 | ProductionOrder | Planned → Released → InProgress/Paused → Completed | Cancelled sonrası geri dönüş yok |
 | LeaveRequest | Pending → Approved/Rejected | Geri çekme yalnızca policy ile |
 
+### O-002/O-003 state geçiş güvenliği
+
+`SalesOrder`, `DeliveryNote` ve `Invoice` ayrı state machine'lerdir. Kısmi sevkiyat ve kısmi fatura geçişleri ilgili allocation ve ledger transaction'ı ile aynı transaction içinde tamamlanır; frontend badge'i tek başına state değişikliği yapamaz.
+
+```text
+SalesOrderItem
+  ordered_qty - shipped_qty - cancelled_qty = remaining_qty
+
+DeliveryNoteItem
+  shipped_qty - invoiced_qty - waived_qty = remaining_to_invoice
+
+InvoiceItemAllocation toplamı ≤ DeliveryNoteItem shipped_qty
+DeliveryNoteItemAllocation toplamı ≤ SalesOrderItem ordered_qty - cancelled_qty
+```
+
+Kesinleşmiş `DeliveryNoteItem` veya `InvoiceItem` miktarı doğrudan edit edilemez. Hatalı miktar reversal/return/credit akışıyla düzeltilir. Aynı `Idempotency-Key` ve aynı payload tekrarında ilk sonuç döndürülür; aynı key farklı payload ile gelirse işlem reddedilir. Yarışan iki sevk veya fatura işleminde kaynak kalem kilitlenir, güncel kalan miktar tekrar okunur ve üst sınır yeniden doğrulanır.
+
+Ayrıntılı miktar alanları, precision, allocation, permission ve geçiş tabloları [`partial-shipment-invoicing-workflow.md`](./partial-shipment-invoicing-workflow.md) içinde canonical olarak tutulur.
+
 ## 6. Karar bağımlı workflow dalları
 
 Aşağıdaki geçişler çözüm matrisi önerileridir; karar sahibi onayı ve ilgili artefact yayılımı tamamlanmadan baseline state machine'e zorunlu geçiş olarak alınmaz:

@@ -189,8 +189,11 @@ AvailableBaseQuantity = OnHandBaseQuantity - ReservedBaseQuantity
 | `load_unit_stop_allocations` | Karışık palet/yük birimi içindeki miktarın hangi route stop'a gittiği ve boşaltma sırası |
 | `load_plan_validation_results` | Hard error, soft warning, kural kodu, etkilenen entity ve çözüm durumu |
 | `load_plan_manual_changes` | Algoritma önerisi ile kullanıcı değişikliğinin eski/yeni ataması ve gerekçesi |
-| `invoices` | Fatura başlığı |
-| `invoice_items` | Fatura kalemleri |
+| `invoices` | Fatura başlığı; `Draft`, `ReadyToIssue`, `Issued`, `PartiallyPaid`, `Paid`, `Reversed` state'leri |
+| `invoice_items` | Fatura kalemleri; `entered_quantity`, `entered_packaging_id`, `quantity_base`, fiyat/vergi snapshot |
+| `delivery_note_item_allocations` | `SalesOrderItem` → `DeliveryNoteItem` sevk allocation'ı; kesinleşmiş temel miktar, ambalaj snapshot ve reversal referansı |
+| `invoice_item_allocations` | `DeliveryNoteItem` → `InvoiceItem` fatura allocation'ı; faturalanan temel miktar, snapshot ve credit/reversal referansı |
+| `quantity_operation_snapshots` | Sipariş/irsaliye/fatura miktarının işlem anı görünümü, hesaplanan temel miktarı ve idempotency bilgisi |
 
 Belge bağlantıları doğrudan foreign key ile kurulmalıdır. Örnek ilişki:
 
@@ -321,7 +324,11 @@ Belge ve ledger tablolarında fiziksel silme yapılmamalıdır. Master data tabl
 | Vehicle-fit candidate | LoadPlan + CandidateStatus + FitScore index |
 | Vehicle capacity effective | Vehicle/VehicleType + EffectiveFrom + EffectiveTo index |
 | Route stop package | RouteStop + Status + PlannedArrival index |
-| Shipment package barcode | Shipment + Barcode unique aktif index |
+| Shipment package barcode | `Shipment + Barcode unique aktif index` |
+| Delivery allocation | `SalesOrderItem + TargetDeliveryNoteItem` unique aktif index; source total upper-bound validation |
+| Invoice allocation | `DeliveryNoteItem + TargetInvoiceItem` unique aktif index; active invoice total upper-bound validation |
+| Quantity source projection | `SalesOrderItem`, `DeliveryNoteItem` için non-negative check constraints ve row-version concurrency |
+| Idempotency | `Company + Endpoint + IdempotencyKey` unique index; payload hash mismatch rejection |
 | Vehicle availability | Vehicle + Status + MaintenanceUntil index |
 | Bildirim | RecipientUser + IsRead + CreatedAt index |
 | Public talep | CreatedAt + Status index |
@@ -354,6 +361,39 @@ Begin transaction
 → audit log
 Commit
 ```
+
+### Kısmi sevkiyat kesinleştirme
+
+```text
+Begin transaction
+→ Idempotency-Key ve payload hash kontrolü
+→ SalesOrderItem + StockReservation + Stock satırlarını kilitle
+→ Güncel remaining/available miktarı yeniden oku
+→ DeliveryNoteItem + DeliveryNoteItemAllocation yaz
+→ StockMovement(SalesShipment) yaz
+→ Reservation consume/release
+→ shipped_qty, remaining_qty ve SalesOrder state projection güncelle
+→ audit + idempotency result yaz
+Commit
+```
+
+Kilit altında miktar sınırı tekrar doğrulanır. Transaction rollback olmadan `DeliveryNote.Issued`, stok çıkışı, reservation değişimi ve sipariş projection'ı kısmi bırakılamaz.
+
+### Kısmi fatura kesinleştirme
+
+```text
+Begin transaction
+→ Idempotency-Key ve payload hash kontrolü
+→ DeliveryNoteItem allocation satırlarını kilitle
+→ Issued kaynak belge ve remaining_to_invoice değerini yeniden oku
+→ Invoice + InvoiceItem + InvoiceItemAllocation yaz
+→ CurrentTransaction(Debit) yaz
+→ DeliveryNote/Invoice state projection güncelle
+→ audit + idempotency result yaz
+Commit
+```
+
+Fatura transaction'ı stok hareketi üretmez. `invoice_item_allocations` toplamı aktif `DeliveryNoteItem.shipped_qty` değerini aşarsa transaction rollback edilir.
 
 ### Ödeme
 
@@ -477,8 +517,8 @@ Aşağıdaki maddeler `/design/open-decisions-solution-matrix.md` içindeki öne
 
 | Karar | Şema/API etkisi | Gate koşulu |
 |---|---|---|
-| O-002 Kısmi sevkiyat | `SalesOrderItem` üzerinde ordered/reserved/shipped/remaining miktarları; bir siparişten birden fazla `DeliveryNote` | Domain, workflow, screen inventory ve allocation testleri birlikte güncellenmiş olmalı |
-| O-003 Kısmi fatura | `InvoiceItem`–`DeliveryNoteItem` allocation; invoiced/remaining miktarları; duplicate allocation constraint/idempotency | Fatura toplamı sevk edilenden ve kalan miktardan büyük olamaz |
+| O-002 Kısmi sevkiyat | `SalesOrderItem` üzerinde ordered/reserved/shipped/remaining miktarları; bir siparişten birden fazla `DeliveryNote`; `delivery_note_item_allocations`; quantity snapshot ve row-lock | Domain, workflow, screen inventory, allocation ve concurrency testleri birlikte güncellenmiş olmalı |
+| O-003 Kısmi fatura | `InvoiceItem`–`DeliveryNoteItem` allocation; invoiced/remaining miktarları; duplicate allocation constraint/idempotency; `CurrentTransaction(Debit)` | Fatura toplamı sevk edilenden ve kalan miktardan büyük olamaz; fatura stok hareketi üretmez |
 | O-012 Fiyat listesi | `PriceList`, `CustomerPriceGroup`, `ProductPrice` geçerlilik ve sipariş/teklif fiyat snapshot | Fiyat yetkileri ve public fiyat gizliliği doğrulanmalı |
 | O-004 BOM | `ProductionMaterial` ve hammadde `StockMovement OUT`; MVP’de kapalıysa tablolar ilk migration’a girmez | Üretim maliyet ve stok etkisi seçilmeli |
 | O-005 Lot/seri | Lot/serial master, movement bağlantısı ve traceability index’leri; MVP’de kapalıysa kapsam dışı | Kalite/iade/mevzuat sahibi kararı gerekli |

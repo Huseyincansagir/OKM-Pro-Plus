@@ -89,7 +89,45 @@ flowchart TD
   AuditLog -.tracks.- Payment
 ```
 
-## 4. Entity ve belge sınırları
+## 4. O-002/O-003 miktar ve allocation domain sözleşmesi
+
+`SalesOrderItem`, `DeliveryNoteItem` ve `InvoiceItem` aynı miktar alanlarını paylaşan tek bir kayıt değildir. Her context kendi kaydını tutar; aradaki fiziksel ve ticari miktar ilişkisi allocation entity'leriyle kurulur.
+
+```text
+SalesOrderItem
+  └─ DeliveryNoteItemAllocation
+       └─ DeliveryNoteItem
+            └─ InvoiceItemAllocation
+                 └─ InvoiceItem
+```
+
+| Entity | Kaynak doğruluk | Temel miktarlar | State sorumluluğu |
+|---|---|---|---|
+| `SalesOrderItem` | Sipariş taahhüdü | `ordered_qty`, `reserved_qty`, `shipped_qty`, `cancelled_qty`, türetilmiş `remaining_qty` | Satırın açık, kısmi sevk, tamamlanmış veya kalan kapatılmış olması |
+| `DeliveryNoteItemAllocation` | Sipariş kaleminden irsaliyeye sevk bağlantısı | `quantity_base`, packaging/quantity snapshot | Hangi sipariş miktarının hangi irsaliyeye aktarıldığını kanıtlar |
+| `DeliveryNoteItem` | Kesinleşmiş sevk belgesi | `quantity_base`, `shipped_qty`, `invoiced_qty`, `remaining_to_invoice` | İrsaliyenin hazırlanmış, kesinleşmiş, kısmi faturalanmış veya kapanmış olması |
+| `InvoiceItemAllocation` | İrsaliye kaleminden faturaya ticari bağlantı | `quantity_base`, fiyat/vergi snapshot, `credited_qty` | Hangi sevk miktarının hangi faturaya borç olarak yansıtıldığını kanıtlar |
+| `InvoiceItem` | Fatura belgesi | `quantity_base`, `line_amount`, `tax_amount`, `total_amount` | Taslak, kesinleşmiş, terslenmiş fatura kapsamı |
+
+Aşağıdaki kurallar domain invariant olarak uygulanır:
+
+```text
+Σ active DeliveryNoteItemAllocation.quantity_base
+  ≤ SalesOrderItem.ordered_qty - SalesOrderItem.cancelled_qty
+
+SalesOrderItem.remaining_qty
+  = ordered_qty - shipped_qty - cancelled_qty
+
+Σ active InvoiceItemAllocation.quantity_base
+  ≤ DeliveryNoteItem.shipped_qty - credited_qty
+
+DeliveryNoteItem.remaining_to_invoice
+  = shipped_qty - invoiced_qty - waived_qty
+```
+
+Allocation satırları kesinleşmiş belgelerde doğrudan düzenlenmez. Hatalı sevk veya faturalama için reversal/return/credit use-case'i çalıştırılır. Özet miktarlar yalnızca ilgili allocation ve ledger transaction'larıyla birlikte güncellenen projection değerleridir.
+
+## 5. Entity ve belge sınırları
 
 Bir ekranın başka bir context'in verisini göstermek için read model veya kontrollü application query kullanması gerekir. Başka context'in entity'sini sahiplenerek güncellememelidir. Örneğin depo sevkiyat hazırlarken `SalesOrder` durumunu doğrudan değiştirmez; sevk gerçekleşmesi `DeliveryNote` ve `Shipment` use-case'leri üzerinden sipariş durumunu etkiler.
 
@@ -120,7 +158,7 @@ ProductionPlan
   → StockMovement(ProductionReceipt)
 ```
 
-## 5. Domain invariant özeti
+## 6. Domain invariant özeti
 
 - Onaylanmamış veya iptal edilmiş sipariş irsaliyeye dönüşemez.
 - Sevk miktarı kullanılabilir stoktan büyük olamaz.
@@ -133,7 +171,7 @@ ProductionPlan
 - Yetkisiz state transition backend tarafından reddedilir.
 - Kritik state transition'lar AuditLog oluşturur.
 
-## 6. Ambalaj ve miktar hiyerarşisi
+## 7. Ambalaj ve miktar hiyerarşisi
 
 Ürün miktarı tek bir serbest metin veya tek bir `unit` alanıyla tutulmaz. Her ürün için temel ölçü birimi ve buna bağlı ambalaj seviyeleri tanımlanır. Önerilen hiyerarşi:
 
@@ -201,19 +239,19 @@ Bu değerlerin toplamı yine temel birimde tutulur. `quantity_base` doğruluk ka
 - Ambalaj tanımı değişirse yeni effective-from sürümleme veya yeni packaging kaydı oluşturulur; geçmiş stok ve belgeler geriye dönük yeniden yorumlanmaz.
 - Kullanılabilir stok hesabı temel birimde yapılır: `AvailableBaseQuantity = OnHandBaseQuantity - ReservedBaseQuantity`.
 
-## 7. Karar bağımlı genişlemeler
+## 8. Karar bağımlı genişlemeler
 
 Aşağıdaki model genişlemeleri `/design/open-decisions-solution-matrix.md` içindeki öneriler seçildiğinde etkinleştirilir; karar sahibi onayı olmadan baseline entity veya state olarak kabul edilmez:
 
 | Karar | Domain etkisi |
 |---|---|
-| O-002 Kısmi sevkiyat | `SalesOrderItem` için ordered/shipped/remaining miktarları, bir siparişten birden fazla `DeliveryNote` |
-| O-003 Kısmi fatura | `InvoiceItem` ile sevk/irsaliye kalemi allocation'ı, invoiced/remaining miktarları ve miktar sınırı |
+| O-002 Kısmi sevkiyat | `SalesOrderItem` için ordered/reserved/shipped/cancelled/remaining miktarları, bir siparişten birden fazla `DeliveryNote` ve `DeliveryNoteItemAllocation` |
+| O-003 Kısmi fatura | `InvoiceItemAllocation` ile `DeliveryNoteItem` bağlantısı, invoiced/credited/remaining miktarları ve miktar sınırı |
 | O-012 Fiyat listesi | `PriceList`, `CustomerPriceGroup`, geçerlilik ve order/quote price snapshot |
 | O-004 BOM | `ProductionMaterial` ve hammadde hareketleri; MVP kapalı tutulursa migration dışı |
 | O-005 Lot/seri | `Lot`/`SerialNumber`, son kullanma ve traceability; MVP kapalı tutulursa migration dışı |
 
-## 8. Fiziksel lojistik ve karışık palet domain modeli
+## 9. Fiziksel lojistik ve karışık palet domain modeli
 
 Ambalaj miktarı ile fiziksel yükleme farklı sorumluluklardır. `5 Koli` ürün miktarını ifade eder; koli boyutu, brüt ağırlığı, hacmi ve hangi palete yerleştirildiği `Shipping` bounded context'inde yönetilir.
 

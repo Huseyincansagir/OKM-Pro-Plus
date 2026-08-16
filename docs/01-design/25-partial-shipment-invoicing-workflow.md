@@ -26,6 +26,105 @@ Bu belge, çözüm matrisindeki önerilen MVP davranışını diyagramlaştırı
 
 Miktarlar sistem içinde `quantity_base` ile hesaplanır. Kullanıcı koli/paket/palet görünümüyle giriş yapabilir; backend ambalaj snapshot’ı üzerinden temel miktarı yeniden hesaplar. Aynı allocation ikinci kez sevk veya fatura işlemine dönüştürülemez.
 
+### 2.1 Miktar alanlarının teknik sözleşmesi
+
+Her işlem miktarı, kullanıcı girişini, hesaplanan temel miktarı ve işlem anındaki ambalaj tanımını birlikte taşır. `quantity_base` doğruluk kaynağıdır; kullanıcıya gösterilen ambalaj değeri hesap sonucunun yerine geçmez.
+
+| Alan | Tip/öneri | Zorunluluk | Kaynak veya kural |
+|---|---|---:|---|
+| `entered_quantity` | `numeric(18,6)` | Evet | Kullanıcının seçtiği ambalaj seviyesindeki miktar |
+| `entered_packaging_id` | UUID | Evet | Kullanıcının işlem seviyesinde seçtiği `ProductPackaging` |
+| `quantity_base` | `numeric(18,6)` | Evet | Backend hesabı; `entered_quantity × quantity_in_base_uom` |
+| `base_uom_id` | UUID | Evet | Ürün ana kaydından alınır; işlem snapshot’ında da saklanır |
+| `quantity_operation_id` | UUID | İşleme göre | Count/transfer/delivery/invoice allocation’ın hangi operasyon miktarına ait olduğunu belirtir |
+| `packaging_snapshot` | JSONB | Evet | İsim, seviye, katsayı, UOM, boyut/ağırlık ve effective version |
+| `quantity_operation_snapshot` | JSONB | Commit’te | İşlem anındaki girilen/görünen/hesaplanan miktarların değişmez kopyası |
+| `view_mode_at_entry` | Enum | Mobil işlemlerde | `BaseUnit`, `Packaging` veya `Breakdown`; ledger miktarını değiştirmez |
+| `allocation_source_type` | Enum | Allocation’da | `SalesOrderItem` veya `DeliveryNoteItem` |
+| `allocation_source_id` | UUID | Allocation’da | Kaynak kalemin kimliği |
+| `idempotency_key` | String/UUID | Commit endpoint’inde | Aynı istemin ikinci hareket üretmesini engeller |
+
+Frontend’den gelen `quantity_base`, `display` veya `packaging_snapshot` doğruluk kaynağı olarak kabul edilmez. Backend, `entered_packaging_id` için ürünün geçerli packaging version’ını bulur, katsayıyı yeniden hesaplar ve gönderilen temel miktar farklıysa işlemi reddeder veya server sonucunu kullanır. Önerilen MVP davranışı, kesinleştirme endpoint’inde tutarsız temel miktarı `QUANTITY_BASE_MISMATCH` ile reddetmektir.
+
+### 2.2 Kaynak kayıt ve türetilmiş miktar kuralları
+
+`SalesOrderItem` ve `DeliveryNoteItem` üzerinde özet alanların bulunması sorgu performansı için kabul edilebilir; ancak bu alanlar allocation ve ledger kayıtlarıyla aynı transaction içinde güncellenen kontrollü projection değerleridir. Tek doğruluk kaynağı olarak serbestçe düzenlenemezler.
+
+```text
+remaining_order_qty
+  = ordered_qty - shipped_qty - cancelled_qty
+
+available_to_ship_qty
+  = min(remaining_order_qty, available_stock_for_order_qty)
+
+reserved_open_qty
+  = max(0, reserved_qty - shipped_qty - released_qty)
+
+shipped_qty
+  = Σ active DeliveryNoteItemAllocation.quantity_base
+
+invoice_allocated_qty
+  = Σ active InvoiceItemAllocation.quantity_base
+
+remaining_to_invoice
+  = shipped_qty - invoice_allocated_qty - waived_qty
+```
+
+Bütün değerler aynı ürün, depo, sipariş kalemi ve temel UOM bağlamında hesaplanır. `remaining_order_qty`, `reserved_open_qty` veya `remaining_to_invoice` negatif olamaz. Kısmi fatura için varsayılan öneri `waived_qty = 0` değerini korumaktır; faturalanmayan miktarın kapatılması ayrıca yetkili bir close/waiver işlemiyle yapılmalıdır.
+
+Aşağıdaki eşitsizlikler her kesinleştirme öncesi server-side doğrulanır:
+
+```text
+0 ≤ shipped_qty ≤ ordered_qty - cancelled_qty
+0 ≤ reserved_open_qty ≤ remaining_order_qty
+0 ≤ new_shipment_qty ≤ remaining_order_qty
+0 ≤ new_shipment_qty ≤ available_to_ship_qty
+0 ≤ invoice_allocated_qty ≤ shipped_qty
+0 ≤ new_invoice_qty ≤ remaining_to_invoice
+```
+
+### 2.3 Allocation modeli
+
+Kısmi işlemler doğrudan belge toplamını azaltarak değil, kaynak kalem ile hedef belge arasındaki allocation kayıtlarıyla yönetilir.
+
+| Allocation | Kaynak | Hedef | Commit olayı | İzin verilen toplam |
+|---|---|---|---|---:|
+| `DeliveryNoteItemAllocation` | `SalesOrderItem` | `DeliveryNoteItem` | `DeliveryNote.Issued` | `ordered_qty - cancelled_qty` |
+| `InvoiceItemAllocation` | `DeliveryNoteItem` | `InvoiceItem` | `Invoice.Issued` | `DeliveryNoteItem.shipped_qty` |
+| `PaymentAllocation` | `Invoice` veya current account | `Payment` | `Payment.Applied` | Açık cari/fatura bakiyesi |
+
+Her allocation kaydında `source_id`, `target_id`, `quantity_base`, ambalaj snapshot’ı, oluşturulma zamanı, aktör, idempotency key ve gerekiyorsa reversal/credit referansı bulunur. Aynı kaynak kalem ile aynı hedef belge arasında duplicate allocation unique constraint ile engellenir. Bir kaynağın toplam aktif allocation’ı üst sınırı aşarsa transaction rollback edilir.
+
+Allocation oluşturma taslak aşamasında yalnızca preview olabilir. Stok, rezervasyon veya cari hareketi yalnızca ilgili belge kesinleştirme transaction’ı üretir. Bu nedenle taslakta değiştirilen miktarların yeniden hesaplanması güvenlidir; kesinleşmiş allocation doğrudan edit edilmez, reversal veya düzeltme akışı kullanılır.
+
+### 2.4 Ambalaj, kırılım ve precision kuralları
+
+`quantity_base` için ürünün temel UOM’ına uygun precision tanımlanmalıdır. Adetle takip edilen ürünlerde temel miktar genellikle tam sayı, kg/metre/litre gibi ürünlerde ise ürün politikasının izin verdiği ondalık hassasiyettedir. Finansal tutarlar miktardan ayrı olarak currency precision ile yuvarlanır.
+
+| Durum | Kural |
+|---|---|
+| Kapalı koli/paket | `allow_partial = false` ise yalnızca tam ambalaj miktarı kabul edilir. |
+| Açılmış koli/paket | `allow_partial = true` ise kırılım satırlarıyla temel miktar girilebilir. |
+| Palet/koli/paket görünümü | Sadece giriş ve görüntüleme biçimidir; ledger ve allocation `quantity_base` ile tutulur. |
+| Ambalaj katsayısı değişikliği | Eski işlem snapshot’ı korunur; yeni effective version ile yeni işlem açılır. |
+| Ondalık miktar | Ürünün UOM precision kuralını aşarsa `QUANTITY_PRECISION_EXCEEDED` döner. |
+| Fatura tutarı | Satır ve belge yuvarlama kuralı O-001 ile birlikte uygulanır; miktar yuvarlamasıyla karıştırılmaz. |
+| Mixed packaging | `4 Koli + 6 Paket` gibi kırılımın toplamı backend’de temel miktara çevrilir ve tek allocation olarak veya açık breakdown satırlarıyla saklanır. |
+
+### 2.5 Miktar örneği
+
+Bir sipariş kaleminde 10 koli ve her kolide 2.000 adet bulunduğu varsayılsın:
+
+| Olay | `quantity_base` | Sipariş durumu |
+|---|---:|---|
+| Sipariş | 20.000 adet | `ordered_qty = 20.000`, `shipped_qty = 0`, `remaining_qty = 20.000` |
+| İlk irsaliye | 6 koli = 12.000 adet | `shipped_qty = 12.000`, `remaining_qty = 8.000`, `PartiallyShipped` |
+| İkinci irsaliye | 4 koli = 8.000 adet | `shipped_qty = 20.000`, `remaining_qty = 0`, `Fulfilled` |
+| İlk fatura | 5.000 adet | `invoice_allocated_qty = 5.000`, `remaining_to_invoice = 15.000`, `PartiallyInvoiced` |
+| İkinci fatura | 15.000 adet | `invoice_allocated_qty = 20.000`, `remaining_to_invoice = 0`, `Invoiced` |
+
+Kullanıcı ikinci faturayı `7,5 Koli` olarak görse bile sistem bunu ilgili packaging katsayısı ile temel miktara çevirir; kapalı koli `allow_partial = false` ise bu giriş reddedilir veya `7 Koli + 1000 adet` gibi izin verilen kırılım istenir.
+
 ## 3. O-002 — Kısmi sevkiyat ana iş akışı
 
 ```mermaid
@@ -200,7 +299,91 @@ Validate invoice allocation
 
 Fatura kesinleştirme stok hareketi oluşturmaz. Cari borç yalnızca fatura kesinleştirildiğinde oluşur; fatura taslağı oluşturulması cari hareket üretmez.
 
-## 7. Permission ve audit matrisi
+## 7. State transition sözleşmesi
+
+O-002 ve O-003 için belge state’leri birbirinden ayrıdır. `SalesOrder`, `DeliveryNote` ve `Invoice` kendi yaşam döngüsünü yönetir; bir belgenin state’i diğer belgenin state alanına doğrudan yazılmaz. İlişkili use-case başarılı olduğunda kaynak belge için kontrollü aggregate transition çalışır.
+
+### 7.1 SalesOrder ve SalesOrderItem
+
+| Mevcut state | Olay | Guard | Yeni state | Yan etkiler |
+|---|---|---|---|---|
+| `Draft` | `SubmitForApproval` | Zorunlu müşteri, kalem, miktar, adres ve fiyat snapshot tamam | `PendingApproval` | Approval task/audit |
+| `PendingApproval` | `Approve` | Yetki, risk/override ve sipariş doğrulaması geçerli | `Approved` | Reservation create/update |
+| `PendingApproval` | `Reject` | Ret gerekçesi | `Rejected` | Reservation yok/varsa release |
+| `Approved` | `PrepareShipment` | Kalan miktar > 0, teslimat mümkün | `Preparing` | DeliveryNote draft açılabilir |
+| `Preparing` | `IssuePartialShipment` | Yeni sevk miktarı tüm hard quantity kontrollerinden geçer ve `0 < shipped < ordered-cancelled` | `PartiallyShipped` | Delivery allocation, stock movement, reservation consume/release |
+| `Preparing` veya `PartiallyShipped` | `IssueFinalShipment` | `remaining_order_qty = 0` | `Fulfilled` veya `Completed` | Son allocation ve state projection |
+| `PartiallyShipped` | `CancelRemainder` | Yetkili rol, gerekçe, kalan miktar açık | `CompletedWithRemainderCancelled` | `cancelled_qty` artar, açık reservation release |
+| `Approved`/`Preparing`/`PartiallyShipped` | `CancelOrder` | Sevk edilmiş miktar yok veya reversal policy izin veriyor | `Cancelled` | Açık reservation release |
+| `Fulfilled`/`Completed` | `ReverseShipment` | Reversal/return yetkisi ve kaynak belge | `Exception` veya policy state | Ters stock movement; shipped projection yeniden hesaplanır |
+
+`SalesOrderItem` state’i satır bazında `Open`, `PartiallyShipped`, `Fulfilled`, `Cancelled` veya `ClosedWithRemainder` olabilir. Sipariş üst state’i satırların aggregate durumundan türetilir. Bir siparişin bazı kalemleri tamamlanmış, bazıları kısmi sevk edilmişse sipariş `PartiallyShipped` olarak kalır.
+
+### 7.2 DeliveryNote ve DeliveryNoteItem
+
+| Mevcut state | Olay | Guard | Yeni state | Yan etkiler |
+|---|---|---|---|---|
+| `Draft` | `Prepare` | Kaynak sipariş onaylı, miktar > 0 | `Prepared` | Base quantity preview, paket/ambalaj snapshot |
+| `Prepared` | `Validate` | Barkod, depo, adres, stock/reservation ve quantity guard geçerli | `ReadyToIssue` | Validation result |
+| `Prepared`/`ReadyToIssue` | `Correct` | Kesinleşmemiş belge | Aynı state | Taslak miktar yeniden hesaplanır |
+| `ReadyToIssue` | `Issue` | Permission, concurrency lock, tüm item allocation guard’ları geçerli | `Issued` | StockMovement, reservation update, order shipped projection |
+| `Issued` | `CreateShipment` | Paket/rota/araç kuralları geçerli | `Shipped` veya shipment bağımsız state | Shipment reference |
+| `Issued` | `Reverse` | Reversal yetkisi, teslim/finans policy’si uygun | `Reversed` veya `Exception` | Ters stok hareketi, audit |
+| `Issued` | `Close` | Kalan quantity policy ile kapatılmış | `Closed` | Açık kalan miktar için close/waiver kaydı |
+
+`DeliveryNoteItem` kesinleştikten sonra miktarı doğrudan edit edilemez. Yanlış miktar için taslak aşamasında düzeltme, kesinleşmiş belgede ise reversal ve yeni irsaliye/adjustment akışı uygulanır. `DeliveryNote` üst state’i bütün kalemlerin state ve remaining allocation durumundan türetilir; tek bir kısmi kalem varsa belge `PartiallyShipped`/`IssuedWithRemainder` benzeri rapor durumu taşıyabilir.
+
+### 7.3 Invoice ve InvoiceItem
+
+| Mevcut state | Olay | Guard | Yeni state | Yan etkiler |
+|---|---|---|---|---|
+| `Draft` | `Validate` | Kaynak irsaliye `Issued`, invoice allocation miktarı kalan miktarı aşmıyor | `ReadyToIssue` | Vergi/fiyat/document validation |
+| `Draft`/`ReadyToIssue` | `Correct` | Cari hareket henüz yok | Aynı state | Allocation taslağı yeniden hesaplanır |
+| `ReadyToIssue` | `Issue` | Permission, document sequence, concurrency ve allocation guard geçerli | `Issued` | Invoice allocation consume, CurrentTransaction Debit |
+| `Issued` | `ApplyPayment` | Payment idempotency ve açık bakiye > 0 | `PartiallyPaid` veya `Paid` | CurrentTransaction Credit |
+| `Issued`/`PartiallyPaid` | `Reverse` | Reversal/credit permission ve gerekçe | `Reversed` veya `Credited` | Ters cari transaction, active allocation yeniden hesaplanır |
+| `Draft` | `CancelDraft` | Cari hareket ve belge numarası policy’ye göre henüz kesinleşmemiş | `Cancelled` | Allocation tüketilmez |
+
+`InvoiceItem` miktarı `DeliveryNoteItem` üzerinde kalan aktif faturalanabilir miktarı aşamaz. `Invoice.Issued` sonrasında satır miktarı, fiyat, vergi ve kaynak allocation doğrudan değiştirilemez. Düzeltme, iptal/credit/reversal belgeleriyle gerçekleştirilir.
+
+### 7.4 Geçişlerin aggregate ve transaction kuralı
+
+State transition, miktar projection ve audit tek transaction içinde ele alınır. Örneğin `IssuePartialShipment` yalnızca `SalesOrder.state = PartiallyShipped` yazıp stok hareketi üretmeden başarılı sayılamaz; `IssueInvoice` de yalnızca `Invoice.Issued` yazıp cari transaction oluşturmadan başarılı sayılamaz.
+
+```text
+Command
+→ Permission + state guard
+→ Row/application lock
+→ Re-read current quantity projection
+→ Validate allocation upper bound
+→ Write source/target allocation
+→ Write stock or current-account ledger if required
+→ Recalculate line and aggregate state
+→ Write audit + idempotency result
+→ Commit
+```
+
+### 7.5 Geçersiz state geçişleri
+
+| Geçersiz işlem | Reddetme nedeni |
+|---|---|
+| `Draft → Issued` sipariş approval olmadan | Onaysız sipariş sevk edilemez. |
+| `Rejected/Cancelled → Approved` | Yeni sipariş/yeniden açma policy’si olmadan eski kayıt canlandırılamaz. |
+| `Approved → Fulfilled` sevk allocation olmadan | Sipariş tamamlanması fiziksel sevk kanıtı olmadan yapılamaz. |
+| `DeliveryNote.Prepared → Invoice.Issued` | İrsaliye kesinleşmeden faturalanabilir miktar oluşmaz. |
+| `Invoice.Draft → Paid` | Kesinleşmemiş fatura cari borç üretemez. |
+| `Issued → Draft` | Kesinleşmiş belge geriye dönük edit edilemez; reversal gerekir. |
+| `PartiallyInvoiced → Invoiced` kalan allocation kapanmadan | Kalan miktar faturalandırılmalı veya yetkili close/waiver kaydı oluşturulmalı. |
+| Yeni shipment/invoice miktarı üst sınırı aşarken commit | Concurrency ve allocation guard ihlalidir; rollback gerekir. |
+| Aynı idempotency key ile farklı payload gönderme | `IDEMPOTENCY_PAYLOAD_MISMATCH` döndürülür; ikinci işlem yapılmaz. |
+
+### 7.6 Idempotency ve concurrency sözleşmesi
+
+Kısmi sevk ve kısmi fatura kesinleştirme komutları `Idempotency-Key` ile gönderilir. Key, tenant/company, endpoint, actor ve payload hash bağlamında unique tutulur. Aynı key ve aynı payload tekrar gelirse ilk commit sonucu döndürülür. Aynı key farklı miktar, kaynak veya hedef allocation ile gelirse işlem reddedilir.
+
+Kapasite/stok veya fatura allocation yarışında son yazan kazanmaz. Transaction kaynak kalemi kilitler, güncel projection’ı yeniden okur ve üst sınır kontrolünü kilit altında tekrarlar. İki kullanıcı aynı kalan 600 adedi 400 + 400 olarak kesinleştirmeye çalışırsa yalnızca ilk geçerli transaction commit edilir; ikinci işlem `QUANTITY_CONCURRENCY_CONFLICT` veya güncel kalan miktarı içeren kontrollü hata döndürür.
+
+## 8. Permission ve audit matrisi
 
 | İşlem | Minimum permission | Gerekli audit bilgisi |
 |---|---|---|
