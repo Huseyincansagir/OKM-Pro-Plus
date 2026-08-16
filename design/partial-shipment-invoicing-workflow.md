@@ -3,6 +3,7 @@
 **Kapsam:** O-002 Kısmi sevkiyat ve O-003 kısmi fatura
 **Durum:** Tasarım önerisi; karar sahibi onayı olmadan `DECIDED` değildir.
 **İlgili akış:** `SalesOrder → StockReservation → DeliveryNote → Shipment → Invoice → CurrentAccount`
+**Hata ve SQL eki:** [`quantity-error-handling-and-allocation-sql.md`](./quantity-error-handling-and-allocation-sql.md)
 
 ## 1. Tasarım yaklaşımı
 

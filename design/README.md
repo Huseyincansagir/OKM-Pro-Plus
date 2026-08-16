@@ -30,6 +30,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`domain-model.md`](./domain-model.md) | Bounded context ve source-of-truth haritası |
 | [`business-workflows.md`](./business-workflows.md) | Sales, production ve personnel workflow'ları |
 | [`partial-shipment-invoicing-workflow.md`](./partial-shipment-invoicing-workflow.md) | O-002/O-003 kısmi sevkiyat ve kısmi fatura diyagramları, state, transaction ve audit akışı |
+| [`quantity-error-handling-and-allocation-sql.md`](./quantity-error-handling-and-allocation-sql.md) | Quantity mismatch/concurrency API hata sözleşmesi, allocation DDL ve PostgreSQL sorguları |
 | [`o002-partial-shipment-workflow.mmd`](./o002-partial-shipment-workflow.mmd) | O-002 editable Mermaid iş akışı kaynağı |
 | [`o003-partial-invoice-workflow.mmd`](./o003-partial-invoice-workflow.mmd) | O-003 editable Mermaid iş akışı kaynağı |
 | [`database-technical-architecture.md`](./database-technical-architecture.md) | PostgreSQL, API, transaction ve deployment ön taslağı |

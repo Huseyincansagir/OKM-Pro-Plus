@@ -525,6 +525,10 @@ Aşağıdaki maddeler `/design/open-decisions-solution-matrix.md` içindeki öne
 | O-001 e-Belge | Vergi alanları + `IInvoiceIntegrationService` adapter/stub; gerçek sağlayıcı entegrasyonu ayrı | Mali müşavir ve entegrasyon sahibi onayı gerekli |
 | O-010/O-011 Operasyon | Backup job/retention/restore runbook; Docker Compose, reverse proxy, HTTPS ve health-check seçimi | RPO/RTO, OS, LAN ve sertifika kararı yazılı olmalı |
 
-## 14. Kodlama öncesi çıkış kriteri
+## 14. Quantity error ve allocation SQL referansı
+
+`QUANTITY_BASE_MISMATCH`, `QUANTITY_CONCURRENCY_CONFLICT`, standart `application/problem+json` hata yanıtları, idempotency davranışı, allocation DDL'leri ve örnek PostgreSQL sorguları [`quantity-error-handling-and-allocation-sql.md`](./quantity-error-handling-and-allocation-sql.md) içinde canonical olarak tutulur. Bu belge, burada tanımlanan tablo grupları, transaction sınırları ve O-002/O-003 gate koşullarıyla birlikte okunmalıdır.
+
+## 15. Kodlama öncesi çıkış kriteri
 
 Bu ön taslak; migration yazmadan önce entity ilişkilerinin, belge yaşam döngülerinin, transaction sınırlarının, permission modelinin ve deployment bileşenlerinin gözden geçirilmesi için kullanılmalıdır. Proje yönetimi ekibinin özellikle sipariş onayı, irsaliye stok çıkışı, ödeme-cari hareket ve üretim-stok girişi işlemlerini onaylamasından sonra şema detaylandırılıp migration planına geçilmelidir.

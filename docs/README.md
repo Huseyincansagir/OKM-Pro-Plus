@@ -32,6 +32,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 14. [`../design/vehicle-capacity-matching.md`](../design/vehicle-capacity-matching.md) — Araç kapasite eşleştirme, aday eleme, fit skoru ve yük dağılımı detayları.
 15. [`../design/shipment-logistics-ui-design.md`](../design/shipment-logistics-ui-design.md) — Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı.
 16. [`../design/partial-shipment-invoicing-workflow.md`](../design/partial-shipment-invoicing-workflow.md) — O-002/O-003 kısmi sevkiyat ve kısmi fatura iş akışı, state, transaction ve audit tasarımı.
+17. [`../design/quantity-error-handling-and-allocation-sql.md`](../design/quantity-error-handling-and-allocation-sql.md) — Quantity mismatch/concurrency API hata sözleşmesi, allocation DDL ve PostgreSQL sorguları.
 
 ## Arşiv okuma sırası
 
