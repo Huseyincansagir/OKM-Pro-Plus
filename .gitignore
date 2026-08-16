@@ -15,3 +15,7 @@ Desktop.ini
 *.njsproj
 *.sln
 *.sw?
+
+# .NET build outputs
+**/bin/
+**/obj/

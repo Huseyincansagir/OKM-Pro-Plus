@@ -8,9 +8,9 @@ READY FOR ARCHITECTURE
 ARCHITECTURE:
 ACCEPTED FOR MVP HANDOFF
 IMPLEMENTATION:
-READY FOR SCAFFOLD — CONDITIONAL
-NEXT SKILL:
-factory-erp-implementation
+DOMAIN SLICE COMPLETE — NEXT: INFRASTRUCTURE/PERSISTENCE
+NEXT SLICE:
+FactoryErp.Infrastructure + PostgreSQL migration/integration
 ```
 
 Proje sahibinin 2026-08-16 tarihli kabulüyle O-001–O-014 karar blokajı kaldırılmış; araştırma sonrası ADR-001–ADR-011 teknik baseline’ı da kabul edilmiştir. Bu dosya artık **sınırlı MVP scaffold ve test implementation’ına geçiş izni** verir; tüm ERP feature’larının aynı anda kodlanabileceği anlamına gelmez.
@@ -70,16 +70,18 @@ Architecture aşamasının MVP çıktıları tamamlanmış ve ADR-001–ADR-011 
 - Docker Compose, network, HTTPS, backup/restore ve health-check ayrıntıları.
 - O-001–O-014 ve ADR-001–ADR-011 kararlarına karşı acceptance checklist.
 
-## 4. Implementation’a geçiş kriteri
+## 4. Implementation slice kabulü
 
-Implementation gate **READY FOR SCAFFOLD** durumundadır. İlk implementation slice yalnızca Domain ve test altyapısıdır:
+İlk implementation slice tamamlanmış ve sonraki persistence slice’ına devredilmeye hazırdır. Gerçekleştirilen kapsam şudur:
 
-1. `FactoryErp.Domain` common types.
-2. `PositiveQuantity`, `NonNegativeQuantity`, `PackagingSnapshot` ve `QuantitySnapshot`.
-3. `SalesOrderItem`, `DeliveryNoteItem` ve allocation invariant’ları.
-4. Domain unit test project’i.
-5. Architecture dependency testleri.
+1. `FactoryErp.Domain` common types ve framework bağımsız aggregate temeli.
+2. `PositiveQuantity`, `NonNegativeQuantity`, `UomCode`, `PackagingSnapshot` ve `QuantitySnapshot`.
+3. `SalesOrder`/`SalesOrderItem` state geçişleri, reservation ve partial shipment invariant’ları.
+4. `DeliveryNoteItem` invoiceable quantity ve source-scoped allocation invariant’ları.
+5. Pozitif reversal kaydı ve `reversed_from_id` semantiği.
+6. Domain event collection ve typed `DomainError`/`DomainException` sözleşmesi.
+7. xUnit Domain unit testleri ve NetArchTest dependency boundary testleri.
 
-Bu slice’ın build, unit test, architecture test ve documentation acceptance kanıtları alınmadan API, EF migration, web, mobile, production worker veya external adapter feature’ları başlatılmayacaktır. Ayrıntılı kontrol listesi ve test planı [`pre-implementation-readiness-review.md`](./pre-implementation-readiness-review.md) içinde tutulur.
+Kabul kanıtı olarak Release build başarılıdır; 28 Domain unit testi ve 2 architecture testi geçmiştir. Domain projesinde ASP.NET Core, EF Core, PostgreSQL, Dapper veya `System.Data` bağımlılığı bulunmamaktadır. API, EF migration, web, mobile, Worker ve external adapter kapsamı bilinçli olarak sonraki slice’a bırakılmıştır. Ayrıntılı kanıt ve kapsam [`implementation-domain-slice.md`](./implementation-domain-slice.md) içinde tutulur.
 
 Production implementation devam ederken karar değişirse ilgili ADR yeniden açılır, implementation durdurulur ve canonical artefact’lar güncellenir.
