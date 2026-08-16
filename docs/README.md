@@ -28,7 +28,8 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 10. [`../design/mobile-toggle-api-and-schema.md`](../design/mobile-toggle-api-and-schema.md) — Mobil Palet/Koli/Paket toggle database, API ve idempotency sözleşmesi.
 11. [`../design/mobile-toggle-screen-by-screen-review.md`](../design/mobile-toggle-screen-by-screen-review.md) — Toggle'ın ekran bazlı görünürlük, varsayılan ve aksiyon UX incelemesi.
 12. [`../design/logistics-planning-rules-and-algorithms.md`](../design/logistics-planning-rules-and-algorithms.md) — Hard/soft lojistik kuralları, araç kapasite eşleştirme ve karışık palet algoritması.
-13. [`../design/shipment-logistics-ui-design.md`](../design/shipment-logistics-ui-design.md) — Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı.
+13. [`../design/vehicle-capacity-matching.md`](../design/vehicle-capacity-matching.md) — Araç kapasite eşleştirme, aday eleme, fit skoru ve yük dağılımı detayları.
+14. [`../design/shipment-logistics-ui-design.md`](../design/shipment-logistics-ui-design.md) — Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı.
 
 ## Arşiv okuma sırası
 
@@ -47,6 +48,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 13. [`01-design/20-logistics-planning-rules-and-algorithms.md`](./01-design/20-logistics-planning-rules-and-algorithms.md)
 14. [`01-design/21-mobile-toggle-api-and-schema.md`](./01-design/21-mobile-toggle-api-and-schema.md)
 15. [`01-design/22-mobile-toggle-screen-by-screen-review.md`](./01-design/22-mobile-toggle-screen-by-screen-review.md)
+16. [`01-design/23-vehicle-capacity-matching.md`](./01-design/23-vehicle-capacity-matching.md)
 
 ## Aşama sonucu
 
