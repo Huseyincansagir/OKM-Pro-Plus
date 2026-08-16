@@ -78,6 +78,14 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "production.record"));
     options.AddPolicy(PermissionPolicies.ProductionComplete, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "production.complete"));
+    options.AddPolicy(PermissionPolicies.StockTransferCreate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-transfer.create"));
+    options.AddPolicy(PermissionPolicies.StockTransferRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-transfer.read"));
+    options.AddPolicy(PermissionPolicies.StockTransferComplete, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-transfer.complete"));
+    options.AddPolicy(PermissionPolicies.StockTransferCancel, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-transfer.cancel"));
 });
 
 var app = builder.Build();

@@ -159,3 +159,23 @@ public sealed class ProductionRecord
     public string? PackagingSnapshot { get; set; }
     public DateTimeOffset CompletedAt { get; set; }
 }
+
+public sealed class StockTransferRecord
+{
+    public Guid Id { get; set; }
+    public Guid ProductId { get; set; }
+    public Guid SourceWarehouseId { get; set; }
+    public Guid SourceLocationId { get; set; }
+    public Guid TargetWarehouseId { get; set; }
+    public Guid TargetLocationId { get; set; }
+    public decimal EnteredQuantity { get; set; }
+    public Guid? EnteredPackagingId { get; set; }
+    public string ViewMode { get; set; } = string.Empty;
+    public decimal QuantityBase { get; set; }
+    public string PackagingSnapshot { get; set; } = string.Empty;
+    public string Status { get; set; } = "Draft";
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+    public DateTimeOffset? CancelledAt { get; set; }
+    public long RowVersion { get; set; }
+}

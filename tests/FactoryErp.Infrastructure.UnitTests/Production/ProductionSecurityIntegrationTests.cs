@@ -112,6 +112,108 @@ public sealed class ProductionSecurityIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Login_enforces_stock_transfer_permission_boundary()
+    {
+        var suffix = Guid.NewGuid().ToString("N");
+        var fullUserName = $"g62-full-{suffix}";
+        var readUserName = $"g62-read-{suffix}";
+        var readRoleCode = $"g62_read_only_{suffix}";
+        var fullUserId = Guid.NewGuid();
+        var readUserId = Guid.NewGuid();
+        var readRoleId = Guid.NewGuid();
+        var targetLocationId = Guid.NewGuid();
+        Guid? transferId = null;
+        var transferKey = $"g62-security-transfer-{suffix}";
+        var connectionString = GetConnectionString();
+        var previousConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__FactoryErp");
+        Environment.SetEnvironmentVariable("ConnectionStrings__FactoryErp", connectionString);
+
+        await SeedSecurityFixtureAsync(
+            fullUserId,
+            fullUserName,
+            readUserId,
+            readUserName,
+            readRoleId,
+            readRoleCode);
+
+        await using (var setupContext = CreateContext())
+        {
+            var warehouse = await setupContext.Warehouses.SingleAsync(x => x.Code == "MAIN");
+            setupContext.WarehouseLocations.Add(new WarehouseLocationRecord
+            {
+                Id = targetLocationId,
+                WarehouseId = warehouse.Id,
+                Code = $"G62-{suffix[..6]}",
+                Name = "G6.2 security target",
+                IsActive = true,
+            });
+            await setupContext.SaveChangesAsync();
+        }
+
+        await using var factory = new ApiFactory(connectionString);
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+        });
+
+        try
+        {
+            using var anonymousGet = await client.GetAsync($"/api/v1/warehouse-transfers/{Guid.NewGuid()}");
+            anonymousGet.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+            var fullToken = await LoginAsync(client, fullUserName);
+            fullToken.Permissions.Should().Contain(new[]
+            {
+                "stock-transfer.create",
+                "stock-transfer.read",
+                "stock-transfer.complete",
+                "stock-transfer.cancel",
+            });
+
+            using var fullClient = CreateAuthenticatedClient(factory, fullToken.AccessToken);
+            fullClient.DefaultRequestHeaders.Remove("Idempotency-Key");
+            fullClient.DefaultRequestHeaders.Add("Idempotency-Key", transferKey);
+            using var createResponse = await fullClient.PostAsJsonAsync(
+                "/api/v1/warehouse-transfers",
+                new
+                {
+                    productId = "30000000-0000-0000-0000-000000000201",
+                    sourceWarehouseId = "30000000-0000-0000-0000-000000000301",
+                    sourceLocationId = "30000000-0000-0000-0000-000000000302",
+                    targetWarehouseId = "30000000-0000-0000-0000-000000000301",
+                    targetLocationId,
+                    enteredQuantity = 1m,
+                    enteredPackagingId = "30000000-0000-0000-0000-000000000213",
+                    viewMode = "Packaging",
+                },
+                new JsonSerializerOptions(JsonSerializerDefaults.Web),
+                new CancellationToken());
+            createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+            transferId = (await ReadJsonAsync(createResponse)).GetProperty("id").GetGuid();
+
+            var readToken = await LoginAsync(client, readUserName);
+            readToken.Permissions.Should().NotContain("stock-transfer.read");
+            using var readClient = CreateAuthenticatedClient(factory, readToken.AccessToken);
+            using var forbiddenRead = await readClient.GetAsync($"/api/v1/warehouse-transfers/{transferId}");
+            forbiddenRead.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        }
+        finally
+        {
+            await CleanupSecurityFixtureAsync(
+                fullUserId,
+                readUserId,
+                readRoleId,
+                readRoleCode,
+                null,
+                string.Empty,
+                transferId,
+                targetLocationId,
+                transferKey);
+            Environment.SetEnvironmentVariable("ConnectionStrings__FactoryErp", previousConnectionString);
+        }
+    }
+
     private static async Task<AuthResponse> LoginAsync(HttpClient client, string userName)
     {
         using var response = await client.PostAsJsonAsync(
@@ -227,7 +329,10 @@ public sealed class ProductionSecurityIntegrationTests
         Guid readRoleId,
         string readRoleCode,
         Guid? productionOrderId,
-        string idempotencyKey)
+        string idempotencyKey,
+        Guid? stockTransferId = null,
+        Guid? stockTransferLocationId = null,
+        string? stockTransferKey = null)
     {
         await using var context = CreateContext();
         if (productionOrderId.HasValue)
@@ -240,6 +345,29 @@ public sealed class ProductionSecurityIntegrationTests
                 .ExecuteDeleteAsync();
             await context.ProductionOrders
                 .Where(x => x.Id == productionOrderId.Value)
+                .ExecuteDeleteAsync();
+        }
+
+        if (stockTransferId.HasValue)
+        {
+            await context.AuditLogs
+                .Where(x => x.EntityId == stockTransferId.Value)
+                .ExecuteDeleteAsync();
+            if (!string.IsNullOrWhiteSpace(stockTransferKey))
+            {
+                await context.IdempotencyRecords
+                    .Where(x => x.Key == stockTransferKey)
+                    .ExecuteDeleteAsync();
+            }
+            await context.StockTransfers
+                .Where(x => x.Id == stockTransferId.Value)
+                .ExecuteDeleteAsync();
+        }
+
+        if (stockTransferLocationId.HasValue)
+        {
+            await context.WarehouseLocations
+                .Where(x => x.Id == stockTransferLocationId.Value)
                 .ExecuteDeleteAsync();
         }
 

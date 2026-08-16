@@ -249,3 +249,40 @@ public sealed class ProductionRecordConfiguration : IEntityTypeConfiguration<Pro
         builder.HasOne<ProductionOrderRecord>().WithMany().HasForeignKey(x => x.ProductionOrderId).OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public sealed class StockTransferRecordConfiguration : IEntityTypeConfiguration<StockTransferRecord>
+{
+    public void Configure(EntityTypeBuilder<StockTransferRecord> builder)
+    {
+        builder.ToTable("stock_transfers", table =>
+        {
+            table.HasCheckConstraint("ck_stock_transfers_entered_quantity_positive", "entered_quantity > 0");
+            table.HasCheckConstraint("ck_stock_transfers_quantity_positive", "quantity_base > 0");
+        });
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Property(x => x.ProductId).HasColumnName("product_id");
+        builder.Property(x => x.SourceWarehouseId).HasColumnName("source_warehouse_id");
+        builder.Property(x => x.SourceLocationId).HasColumnName("source_location_id");
+        builder.Property(x => x.TargetWarehouseId).HasColumnName("target_warehouse_id");
+        builder.Property(x => x.TargetLocationId).HasColumnName("target_location_id");
+        builder.Property(x => x.EnteredQuantity).HasColumnName("entered_quantity").HasPrecision(18, 6);
+        builder.Property(x => x.EnteredPackagingId).HasColumnName("entered_packaging_id");
+        builder.Property(x => x.ViewMode).HasColumnName("view_mode").HasMaxLength(30).IsRequired();
+        builder.Property(x => x.QuantityBase).HasColumnName("quantity_base").HasPrecision(18, 6);
+        builder.Property(x => x.PackagingSnapshot).HasColumnName("packaging_snapshot").HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).IsRequired();
+        builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("timestamptz");
+        builder.Property(x => x.CompletedAt).HasColumnName("completed_at").HasColumnType("timestamptz");
+        builder.Property(x => x.CancelledAt).HasColumnName("cancelled_at").HasColumnType("timestamptz");
+        builder.Property(x => x.RowVersion).HasColumnName("row_version").HasColumnType("bigint").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate().HasDefaultValue(1L);
+        builder.HasIndex(x => new { x.Status, x.CreatedAt });
+        builder.HasIndex(x => new { x.ProductId, x.SourceWarehouseId, x.TargetWarehouseId, x.CreatedAt });
+        builder.HasOne<ProductRecord>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<WarehouseRecord>().WithMany().HasForeignKey(x => x.SourceWarehouseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<WarehouseRecord>().WithMany().HasForeignKey(x => x.TargetWarehouseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<WarehouseLocationRecord>().WithMany().HasForeignKey(x => x.SourceLocationId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<WarehouseLocationRecord>().WithMany().HasForeignKey(x => x.TargetLocationId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ProductPackagingRecord>().WithMany().HasForeignKey(x => x.EnteredPackagingId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

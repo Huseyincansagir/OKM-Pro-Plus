@@ -24,4 +24,8 @@ public static class PermissionPolicies
     public const string ProductionStart = "permission:production.start";
     public const string ProductionRecord = "permission:production.record";
     public const string ProductionComplete = "permission:production.complete";
+    public const string StockTransferCreate = "permission:stock-transfer.create";
+    public const string StockTransferRead = "permission:stock-transfer.read";
+    public const string StockTransferComplete = "permission:stock-transfer.complete";
+    public const string StockTransferCancel = "permission:stock-transfer.cancel";
 }

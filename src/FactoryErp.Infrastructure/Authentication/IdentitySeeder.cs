@@ -78,6 +78,10 @@ public sealed class IdentitySeeder(
             ("10000000-0000-0000-0000-000000000027", "production.start", "production", "start"),
             ("10000000-0000-0000-0000-000000000028", "production.record", "production", "record"),
             ("10000000-0000-0000-0000-000000000029", "production.complete", "production", "complete"),
+            ("10000000-0000-0000-0000-000000000030", "stock-transfer.create", "warehouse", "create"),
+            ("10000000-0000-0000-0000-000000000031", "stock-transfer.read", "warehouse", "read"),
+            ("10000000-0000-0000-0000-000000000032", "stock-transfer.complete", "warehouse", "complete"),
+            ("10000000-0000-0000-0000-000000000033", "stock-transfer.cancel", "warehouse", "cancel"),
         };
 
         foreach (var definition in definitions)

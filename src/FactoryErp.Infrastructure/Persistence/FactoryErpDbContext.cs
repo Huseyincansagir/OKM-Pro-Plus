@@ -28,6 +28,7 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<WarehouseLocationRecord> WarehouseLocations => Set<WarehouseLocationRecord>();
     public DbSet<StockRecord> Stocks => Set<StockRecord>();
     public DbSet<StockMovementRecord> StockMovements => Set<StockMovementRecord>();
+    public DbSet<StockTransferRecord> StockTransfers => Set<StockTransferRecord>();
     public DbSet<ProductionOrderRecord> ProductionOrders => Set<ProductionOrderRecord>();
     public DbSet<ProductionRecord> ProductionRecords => Set<ProductionRecord>();
     public DbSet<CustomerRecord> Customers => Set<CustomerRecord>();
