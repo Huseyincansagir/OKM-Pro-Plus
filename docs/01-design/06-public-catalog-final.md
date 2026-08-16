@@ -138,11 +138,15 @@ Teklif formunda üç aşamalı ilerleme göstergesi kullanılır:
 
 Form alanları büyük dokunma hedefleriyle tasarlanır. “Devam Et” butonu ekranın altında sabit kalır; klavye açıldığında buton form alanlarının üzerine binmez.
 
-## 10. İç ERP bağlantısı
+## 10. Public erişim ve abuse kontrolü (O-009)
+
+Katalog herkese açık olabilir; ancak teklif formu ve public API rate limit, bot kontrolü, veri minimizasyonu ve consent kaydıyla korunmalıdır. IP/e-posta/cihaz kombinasyonuyla gönderim sıklığı sınırlandırılır; honeypot ve davranış kontrolü riskli istekleri ayırır. Firma, yetkili, telefon, e-posta, ürün/miktar ve gerekli notlar dışında veri istenmez. Aydınlatma/onay metni ile timestamp/version bilgisi talep kaydına bağlanır. Rate-limited, başarısız veya bot olarak işaretlenen isteklerde iç ERP teklif talebi oluşturulmaz. Saklama ve silme süresi proje sahibi ile hukuk/uyum sorumlusu tarafından ayrıca onaylanır.
+
+## 11. İç ERP bağlantısı
 
 Public form gönderildikten sonra şirket içi sistemde `NEW` durumunda yeni bir Teklif Talebi oluşur. Satış kullanıcısına “Yeni teklif talebi geldi” bildirimi gönderilir. Talep detayında firma, yetkili, telefon, e-posta, seçilen ürünler, miktarlar ve notlar eksiksiz korunur.
 
-## 11. Görsel mockup'lar
+## 12. Görsel mockup'lar
 
 ![Public ürün kataloğu masaüstü mockup'ı](../05-assets/mockups/uretim-depo-public-catalog-desktop-mockup.png)
 
@@ -150,10 +154,10 @@ Public form gönderildikten sonra şirket içi sistemde `NEW` durumunda yeni bir
 
 ![Teklif talebi mobil form mockup'ı](../05-assets/mockups/uretim-depo-quote-form-mobile-mockup.png)
 
-## 12. Onaylanmış görsel yön
+## 13. Onaylanmış görsel yön
 
 Görsel dilde derin lacivert üst navigasyon, açık arka plan, teal birincil CTA, sade ürün fotoğraf kartları ve düşük görsel gürültü tercih edilmiştir. Public taraf iç ERP'ye göre daha sıcak ve ürün odaklıdır; ancak aynı renk ailesi ve durum dili korunarak şirket içi sistemle marka bütünlüğü sağlanır.
 
-## 13. Sonraki tasarım adımı
+## 14. Sonraki tasarım adımı
 
 Bu ekranlardan sonra aynı public görsel sistemle ürün detay ekranının yüksek çözünürlüklü versiyonu, boş sepet, form doğrulama hataları ve başarılı gönderim ekranı hazırlanabilir. Tasarım onayından sonra bu sayfalar için route listesi ve component listesi çıkarılarak frontend implementasyonuna geçilebilir.

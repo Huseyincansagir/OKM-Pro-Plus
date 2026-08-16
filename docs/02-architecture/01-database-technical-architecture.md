@@ -371,6 +371,20 @@ Finansal ve stok kayıtları fiziksel olarak silinmemeli; kritik işlem yapan ku
 | Dosya | Metadata DB, dosya filesystem veya S3 uyumlu storage |
 | Rapor | Read model/projection ve server-side filtre |
 
-## 13. Kodlama öncesi çıkış kriteri
+## 13. Karar bağımlı şema ve deployment genişlemeleri
+
+Aşağıdaki maddeler `/design/open-decisions-solution-matrix.md` içindeki öneriler seçildiğinde migration ve API tasarımına yansıtılır. Önerinin bulunması, seçimin yapılmış olduğu anlamına gelmez.
+
+| Karar | Şema/API etkisi | Gate koşulu |
+|---|---|---|
+| O-002 Kısmi sevkiyat | `SalesOrderItem` üzerinde ordered/reserved/shipped/remaining miktarları; bir siparişten birden fazla `DeliveryNote` | Domain, workflow, screen inventory ve allocation testleri birlikte güncellenmiş olmalı |
+| O-003 Kısmi fatura | `InvoiceItem`–`DeliveryNoteItem` allocation; invoiced/remaining miktarları; duplicate allocation constraint/idempotency | Fatura toplamı sevk edilenden ve kalan miktardan büyük olamaz |
+| O-012 Fiyat listesi | `PriceList`, `CustomerPriceGroup`, `ProductPrice` geçerlilik ve sipariş/teklif fiyat snapshot | Fiyat yetkileri ve public fiyat gizliliği doğrulanmalı |
+| O-004 BOM | `ProductionMaterial` ve hammadde `StockMovement OUT`; MVP’de kapalıysa tablolar ilk migration’a girmez | Üretim maliyet ve stok etkisi seçilmeli |
+| O-005 Lot/seri | Lot/serial master, movement bağlantısı ve traceability index’leri; MVP’de kapalıysa kapsam dışı | Kalite/iade/mevzuat sahibi kararı gerekli |
+| O-001 e-Belge | Vergi alanları + `IInvoiceIntegrationService` adapter/stub; gerçek sağlayıcı entegrasyonu ayrı | Mali müşavir ve entegrasyon sahibi onayı gerekli |
+| O-010/O-011 Operasyon | Backup job/retention/restore runbook; Docker Compose, reverse proxy, HTTPS ve health-check seçimi | RPO/RTO, OS, LAN ve sertifika kararı yazılı olmalı |
+
+## 14. Kodlama öncesi çıkış kriteri
 
 Bu ön taslak; migration yazmadan önce entity ilişkilerinin, belge yaşam döngülerinin, transaction sınırlarının, permission modelinin ve deployment bileşenlerinin gözden geçirilmesi için kullanılmalıdır. Proje yönetimi ekibinin özellikle sipariş onayı, irsaliye stok çıkışı, ödeme-cari hareket ve üretim-stok girişi işlemlerini onaylamasından sonra şema detaylandırılıp migration planına geçilmelidir.

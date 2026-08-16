@@ -40,7 +40,7 @@ Public Quote Request
 
 - Onaylanmış sipariş olmadan irsaliye kesinleştirilemez.
 - Sevk miktarı `AvailableQuantity` değerini aşamaz.
-- Aynı irsaliye için birden fazla fatura ilişkisi policy tarafından engellenir.
+- Aynı irsaliye kalemi için faturalandırılan toplam miktar sevk edilen ve faturalanmamış kalan miktarı aşamaz; aynı allocation ikinci kez uygulanamaz.
 - Ödeme idempotency/reference kontrolü olmadan ikinci kez cari hesaba uygulanamaz.
 - Sipariş ret veya iptal durumundan onaylı duruma geri dönemez.
 
@@ -105,14 +105,24 @@ Her belge state'i explicit enum veya state machine ile tanımlanır. Frontend du
 
 | Belge | İzin verilen ana geçiş | Geri dönüş |
 |---|---|---|
-| SalesOrder | Draft → PendingApproval → Approved/Rejected → Preparing → PartiallyShipped/Completed | İptal dışı geri dönüş yok |
-| DeliveryNote | Draft → Prepared → Issued → Shipped → Invoiced | Issued sonrası reversal/cancel policy |
+| SalesOrder | Draft → PendingApproval → Approved/Rejected → Preparing → PartiallyShipped/Completed | İptal dışı geri dönüş yok; PartiallyShipped O-002 seçilirse aktifleşir |
+| DeliveryNote | Draft → Prepared → Issued → Shipped → PartiallyInvoiced/Invoiced | Issued sonrası reversal/cancel policy; PartiallyInvoiced O-003 seçilirse aktifleşir |
 | Shipment | Preparing → Ready → Shipped → Delivered | Teslim sonrası düzeltme kaydı |
 | Invoice | Draft → Issued → PartiallyPaid/Paid/Overdue | İptal veya credit/reversal |
 | ProductionOrder | Planned → Released → InProgress/Paused → Completed | Cancelled sonrası geri dönüş yok |
 | LeaveRequest | Pending → Approved/Rejected | Geri çekme yalnızca policy ile |
 
-## 6. Audit kapsamı
+## 6. Karar bağımlı workflow dalları
+
+Aşağıdaki geçişler çözüm matrisi önerileridir; karar sahibi onayı ve ilgili artefact yayılımı tamamlanmadan baseline state machine'e zorunlu geçiş olarak alınmaz:
+
+| Karar | Workflow dalı | Gerekli kontroller |
+|---|---|---|
+| O-002 | `Approved → Preparing → PartiallyShipped → Completed` | Kalem bazında ordered/shipped/remaining, rezervasyon serbest bırakma ve tekrar sevk idempotency |
+| O-003 | `Issued → PartiallyInvoiced → Invoiced` | DeliveryNoteItem allocation, invoiced/remaining miktarı ve duplicate invoice kontrolü |
+| O-012 | Quote/Order oluşturulurken `PriceList + CustomerPriceGroup` seçimi | Geçerlilik tarihi, fiyat snapshot, yetki ve para/vergi politikası |
+
+## 7. Audit kapsamı
 
 Aşağıdaki geçişler audit olmadan tamamlanamaz:
 
@@ -124,6 +134,6 @@ Aşağıdaki geçişler audit olmadan tamamlanamaz:
 - Üretim tamamlama, fire, duruş ve makine değişimi.
 - Personel, maaş, izin ve yetki değişiklikleri.
 
-## 7. Workflow kabul ölçütü
+## 8. Workflow kabul ölçütü
 
 Bir workflow tasarımı; actor, input, state, transition, permission, database effect, stock effect, financial effect ve audit requirement alanlarının tamamı dolu değilse Design Gate'ten geçmez.

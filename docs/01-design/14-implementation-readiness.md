@@ -29,7 +29,9 @@ Bu sonuç production code kalitesiyle değil, bootstrap promptunun istediği Des
 
 ## 2. Blocking open decisions
 
-Aşağıdaki kararlar schema ve domain davranışını değiştirebileceği için Architecture aşamasına geçişi bloke eder:
+Çözüm önerileri ve varsayılan MVP paketi `/design/open-decisions-solution-matrix.md` içinde tanımlıdır; bunlar proje sahibi kararı yerine geçmez.
+
+Aşağıdaki kararlar schema ve domain davranışını değiştirebileceği için Architecture aşamasına geçişi bloke eder. Grok/ChatGPT önerilerinin bulunması tek başına karar kapatma kanıtı değildir; her satır için karar sahibi, karar tarihi ve etkilenen artefact listesi gerekir:
 
 1. Vergi/VAT ve e-belge entegrasyonu.
 2. Kısmi sevkiyat ve kısmi fatura kuralları.
@@ -42,7 +44,7 @@ Aşağıdaki kararlar schema ve domain davranışını değiştirebileceği içi
 9. Şirket içi server işletim sistemi, HTTPS/LAN modeli ve RPO/RTO hedefleri.
 10. Final marka adı, logo, favicon, renk token'ları ve ürün görseli lisans/placeholder politikası.
 
-Bu kararlar `/design/decision-log.md` içinde `OPEN DECISION` olarak tutulmaktadır.
+Bu kararlar `/design/decision-log.md` içinde `OPEN DECISION` olarak tutulmaktadır; önerilen çözüm seçenekleri `/design/open-decisions-solution-matrix.md` içindedir.
 
 ## 3. Architecture'a geçiş kriteri
 

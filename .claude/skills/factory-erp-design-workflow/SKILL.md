@@ -19,6 +19,8 @@ Bu skill, ürünün kodunu yazmadan önce iş akışını, kullanıcı deneyimin
 - Finansal ve stok hareketlerinde silme yerine iptal/ters kayıt yaklaşımını koru.
 - Gereksiz kullanıcı onayı istemeden makul varsayımlar yap.
 - Belirsiz veya iş riski oluşturan kararları `/design/decision-log.md` içinde tut.
+- Agent, Grok, ChatGPT veya başka bir yardımcı tarafından üretilen öneriyi proje sahibi onayı olmadan `DECIDED` yapma.
+- Açık kararlar için `/design/open-decisions-solution-matrix.md` içinde seçenek, varsayılan MVP, sahip, risk ve etki zinciri yaz.
 
 ## Uygulanacak sıra
 
@@ -92,7 +94,7 @@ Aynı veriyi bağımsız kopyalayan modeller üretme.
 En az aşağıdakileri tasarımda görünür kıl:
 
 - Onaylanmamış sipariş sevke dönüşemez.
-- Aynı irsaliye ikinci kez faturalanamaz.
+- Aynı irsaliye kalemi için faturalandırılan toplam miktar, sevk edilen ve faturalanmamış kalan miktarı aşamaz; aynı miktar allocation'ı ikinci kez yapılamaz.
 - Stok hareketlerinin geçmişi izlenebilir olmalıdır.
 - Finansal hareketler fiziksel olarak silinmemelidir.
 - Üretim tamamlanması, stoğa giriş davranışı tanımlanmadan geçerli sayılmaz.
@@ -110,6 +112,8 @@ Kodlama başlamadan önce şu dosyalar mevcut olmalı:
 - `/design/public-catalog-design.md`
 - `/design/visual-design-system.md`
 - `/design/decision-log.md`
+- `/design/open-decisions-solution-matrix.md`
+- `/design/grok-session-review.md`
 
 Aşağıdaki tutarsızlıklardan biri varsa implementation'a geçme:
 
@@ -120,6 +124,8 @@ Aşağıdaki tutarsızlıklardan biri varsa implementation'a geçme:
 - Belgenin önceki/sonraki ilişkisi belli değil.
 - Stok/cari etkisi belirtilmemiş.
 - Kritik ağ kesintisi veya hata durumu tanımlanmamış.
+- Açık karar seçildikten sonra domain, workflow, database, screen inventory ve skill-impact artefact'larına yayılmamış.
+- Kararın sahibi, tarihi ve kanıtı yok.
 
 Gate başarılıysa `/design/implementation-ready.md` oluştur.
 

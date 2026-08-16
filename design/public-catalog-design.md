@@ -138,11 +138,27 @@ Teklif formunda üç aşamalı ilerleme göstergesi kullanılır:
 
 Form alanları büyük dokunma hedefleriyle tasarlanır. “Devam Et” butonu ekranın altında sabit kalır; klavye açıldığında buton form alanlarının üzerine binmez.
 
-## 10. İç ERP bağlantısı
+## 10. Public erişim ve abuse kontrolü (O-009)
+
+Katalog herkese açık olabilir; ancak teklif formu ve public API kontrolsüz bırakılmamalıdır. Uygulama aşamasına geçmeden önce yönetim/hukuk onayıyla aşağıdaki kontroller tasarımın zorunlu parçası kabul edilmelidir:
+
+| Kontrol | Tasarım kararı |
+|---|---|
+| Rate limit | IP, e-posta ve cihaz parmak izi kombinasyonuyla teklif gönderim sıklığı sınırlandırılır; limit dolduğunda kullanıcıya tekrar deneme zamanı gösterilir. |
+| Bot kontrolü | Görünmez honeypot ve davranış kontrolü; riskli durumda CAPTCHA veya manuel doğrulama fallback'i. |
+| İletişim doğrulama | E-posta veya telefon doğrulaması, spam ve yanlış talep riskine göre seçilebilir. |
+| Veri minimizasyonu | Firma, yetkili, telefon, e-posta, ürün/miktar ve gerekli notlar dışında veri istenmez. |
+| Consent | Aydınlatma/onay metni ve timestamp/version bilgisi talep kaydıyla ilişkilendirilir. |
+| Hata/abuse logu | Başarısız, rate-limited ve bot olarak işaretlenen talepler ayrı teknik loglarda tutulur; iç ERP teklif talebi oluşturulmaz. |
+| Saklama/silme | Talep ve consent saklama süresi karar sahibi/hukuk tarafından belirlenir; süresi dolan kayıt için anonimleştirme veya silme prosedürü yazılır. |
+
+Bu bölüm teknik ve uyum kararlarının tasarım karşılığıdır; hukuki metinlerin son hali yetkili hukuk/uyum sorumlusu tarafından onaylanmalıdır.
+
+## 11. İç ERP bağlantısı
 
 Public form gönderildikten sonra şirket içi sistemde `NEW` durumunda yeni bir Teklif Talebi oluşur. Satış kullanıcısına “Yeni teklif talebi geldi” bildirimi gönderilir. Talep detayında firma, yetkili, telefon, e-posta, seçilen ürünler, miktarlar ve notlar eksiksiz korunur.
 
-## 11. Görsel mockup'lar
+## 12. Görsel mockup'lar
 
 ![Public ürün kataloğu masaüstü mockup'ı](../docs/05-assets/mockups/uretim-depo-public-catalog-desktop-mockup.png)
 
@@ -150,10 +166,10 @@ Public form gönderildikten sonra şirket içi sistemde `NEW` durumunda yeni bir
 
 ![Teklif talebi mobil form mockup'ı](../docs/05-assets/mockups/uretim-depo-quote-form-mobile-mockup.png)
 
-## 12. Onaylanmış görsel yön
+## 13. Onaylanmış görsel yön
 
 Görsel dilde derin lacivert üst navigasyon, açık arka plan, teal birincil CTA, sade ürün fotoğraf kartları ve düşük görsel gürültü tercih edilmiştir. Public taraf iç ERP'ye göre daha sıcak ve ürün odaklıdır; ancak aynı renk ailesi ve durum dili korunarak şirket içi sistemle marka bütünlüğü sağlanır.
 
-## 13. Sonraki tasarım adımı
+## 14. Sonraki tasarım adımı
 
 Bu ekranlardan sonra aynı public görsel sistemle ürün detay ekranının yüksek çözünürlüklü versiyonu, boş sepet, form doğrulama hataları ve başarılı gönderim ekranı hazırlanabilir. Tasarım onayından sonra bu sayfalar için route listesi ve component listesi çıkarılarak frontend implementasyonuna geçilebilir.

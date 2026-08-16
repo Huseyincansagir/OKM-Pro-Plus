@@ -11,7 +11,7 @@ description: Tasarımı kodlayan ana geliştirme skill'i. Backend, web, mobile, 
 
 ## Başlangıç koşulu
 
-`/design/implementation-ready.md` yoksa veya Design Gate başarısızsa yeni business feature implement etmeye başlama. Mevcut küçük altyapı düzeltmeleri gerekiyorsa yap, ancak domain tasarımını varsayarak gizlice değiştirme.
+`/design/implementation-ready.md` yoksa, `READY` değilse veya canonical artefact'lar arasında karar yayılımı doğrulanmamışsa yeni business feature implement etmeye başlama. Bir agent'ın dosyayı READY yazmış olması tek başına yeterli kanıt değildir; `/design/decision-log.md`, solution matrix, domain, workflow, database, screen inventory ve skill-impact review birlikte kontrol edilmelidir. Mevcut küçük altyapı düzeltmeleri gerekiyorsa yap, ancak domain tasarımını varsayarak gizlice değiştirme.
 
 ## Teknoloji
 

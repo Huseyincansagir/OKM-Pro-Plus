@@ -5,7 +5,7 @@
 | Bounded context | Ana kavramlar | Sahip olduğu davranış |
 |---|---|---|
 | Identity & Access | User, Role, Permission, Session | Kimlik, RBAC, oturum ve erişim |
-| Products | Product, Category, ProductBarcode, ProductImage, ProductPrice | Ürün ana verisi ve katalog görünürlüğü |
+| Products | Product, Category, ProductBarcode, ProductImage, ProductPrice, PriceList, CustomerPriceGroup | Ürün ana verisi, katalog görünürlüğü ve karar verilirse müşteri bazlı fiyatlandırma |
 | Customers | Customer, Address, Contact, Note | Müşteri kimliği, iletişim ve adres |
 | Sales | QuoteRequest, Quote, SalesOrder, Approval | Talep, teklif, sipariş ve onay |
 | Warehouse | Warehouse, Location, Stock, StockMovement, Reservation, Count, Transfer | Fiziksel stok ve depo hareketleri |
@@ -27,6 +27,7 @@
 | Kavram | Tek kaynak | Türetilen / okuma modeli | Kopyalanmaması gereken alan |
 |---|---|---|---|
 | Ürün | `Product` | Public product card, stock lookup | Ürün adı/kodu farklı modülde tekrar edilmemeli |
+| Fiyat politikası | `PriceList` + `CustomerPriceGroup` (O-012 seçilirse) | Quote/Order price snapshot | Fiyat, sipariş veya ürün ekranlarında sessizce çoğaltılmamalı |
 | Barkod | `ProductBarcode` | Barcode scanner result | Barkod ürün ve stoktan bağımsız tutulmamalı |
 | Stok | `Stock` + `StockMovement` | Dashboard KPI, warehouse view | Mevcut miktar UI state olarak saklanmamalı |
 | Rezervasyon | `StockReservation` | Available quantity | Sipariş kaleminde bağımsız rezerve miktar tutulmamalı |
@@ -61,6 +62,8 @@ flowchart TD
   DeliveryNote --> Shipment
   DeliveryNote --> Invoice
   Invoice --> CurrentTransaction
+  PriceList --> ProductPrice
+  CustomerPriceGroup --> PriceList
   Payment --> CurrentTransaction
   ProductionOrder --> ProductionRecord
   Machine --> ProductionRecord
@@ -109,7 +112,7 @@ ProductionPlan
 
 - Onaylanmamış veya iptal edilmiş sipariş irsaliyeye dönüşemez.
 - Sevk miktarı kullanılabilir stoktan büyük olamaz.
-- Aynı irsaliye ikinci kez faturalanamaz.
+- Aynı irsaliye kalemi için faturalandırılan toplam miktar, sevk edilen ve faturalanmamış kalan miktarı aşamaz; aynı allocation ikinci kez uygulanamaz.
 - İptal edilmiş belge tekrar aktif duruma dönemez; reversal oluşturulur.
 - Stok miktarı yalnızca StockMovement veya rezervasyon use-case'i ile değişebilir.
 - Cari bakiye transaction hareketlerinin sonucudur.
@@ -118,6 +121,18 @@ ProductionPlan
 - Yetkisiz state transition backend tarafından reddedilir.
 - Kritik state transition'lar AuditLog oluşturur.
 
-## 6. Tasarım sonucu
+## 6. Karar bağımlı genişlemeler
+
+Aşağıdaki model genişlemeleri `/design/open-decisions-solution-matrix.md` içindeki öneriler seçildiğinde etkinleştirilir; karar sahibi onayı olmadan baseline entity veya state olarak kabul edilmez:
+
+| Karar | Domain etkisi |
+|---|---|
+| O-002 Kısmi sevkiyat | `SalesOrderItem` için ordered/shipped/remaining miktarları, bir siparişten birden fazla `DeliveryNote` |
+| O-003 Kısmi fatura | `InvoiceItem` ile sevk/irsaliye kalemi allocation'ı, invoiced/remaining miktarları ve miktar sınırı |
+| O-012 Fiyat listesi | `PriceList`, `CustomerPriceGroup`, geçerlilik ve order/quote price snapshot |
+| O-004 BOM | `ProductionMaterial` ve hammadde hareketleri; MVP kapalı tutulursa migration dışı |
+| O-005 Lot/seri | `Lot`/`SerialNumber`, son kullanma ve traceability; MVP kapalı tutulursa migration dışı |
+
+## 7. Tasarım sonucu
 
 Source of truth haritası `/design` altındaki canonical ekran, workflow ve teknik dokümanların ortak referansıdır. Numaralı `docs/00`–`docs/06` dosyaları senkronize arşiv olarak korunur. Aynı kavram için farklı modüllerde ikinci bir ana kayıt tasarlanırsa bu durum `/design/decision-log.md` içinde açıkça değerlendirilmeden Design Gate geçilmez.

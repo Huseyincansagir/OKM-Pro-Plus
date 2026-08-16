@@ -22,6 +22,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 4. [`../design/implementation-readiness.md`](../design/implementation-readiness.md)
 5. [`../design/ui-mockup-review.md`](../design/ui-mockup-review.md)
 6. [`../design/grok-session-review.md`](../design/grok-session-review.md) — Grok notlarının karşılaştırmalı incelemesi.
+7. [`../design/open-decisions-solution-matrix.md`](../design/open-decisions-solution-matrix.md) — O-001–O-013 çözüm önerileri ve karar sahipleri.
 
 ## Arşiv okuma sırası
 

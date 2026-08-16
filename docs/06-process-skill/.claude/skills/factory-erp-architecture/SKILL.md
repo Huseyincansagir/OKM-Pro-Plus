@@ -9,6 +9,12 @@ description: Fabrika ERP sisteminin domain modelini, PostgreSQL veritabanını, 
 
 Tasarım çıktısını üretime hazır teknik mimariye dönüştür.
 
+## Design kararlarını tüketme kuralı
+
+`/design/decision-log.md` ve `/design/open-decisions-solution-matrix.md` birlikte okunmalıdır. Solution matrix içindeki öneri, owner/date/evidence bulunmadan `DECIDED` kabul edilemez. Architecture skill'i açık kararları sessizce kapatamaz; seçilmemiş bir öneri şema, migration veya API sözleşmesine zorunlu kural olarak işlenmemelidir.
+
+Architecture başlamadan önce kararın `/design/domain-model.md`, `/design/business-workflows.md`, `/design/database-technical-architecture.md`, `/design/master-screen-inventory.md` ve ilgili skill-impact review'a yayıldığı doğrulanmalıdır.
+
 ## Mimari yaklaşım
 
 Varsayılan mimari:
@@ -68,6 +74,9 @@ Temel entity grupları:
 - Tarih/saat database'de UTC; UI Türkiye lokal zamanı.
 - Büyük tablolarda server-side pagination/filtering planla.
 - N+1 sorgularına karşı projection ve uygun eager loading kullan.
+- Kısmi sevkiyat veya fatura kararı seçilmişse ordered/shipped/invoiced/remaining miktarlarını kalem seviyesinde modelle; allocation toplamının sevk edilen/faturalanmamış miktarı aşmasını engelle.
+- `PriceList` / `CustomerPriceGroup` yalnızca karar logunda seçilmişse zorunlu schema kapsamına al; seçilmemişse karar olarak kaydet.
+- BOM, lot/seri, e-belge adapter ve local deployment gibi konuları seçilen karara göre migration kapsamına al; öneriyi karar yerine koyma.
 
 ## Transaction sınırları
 
@@ -153,4 +162,4 @@ En az:
 - PostgreSQL
 - Reverse proxy
 
-Backup, restore, health check ve log rotation planı oluştur.
+Backup, restore, health check ve log rotation planı oluştur. Local-first veya ücretsiz deployment önerisi, işletim sistemi, HTTPS, reverse proxy ve RPO/RTO sahibi tarafından onaylanmadan kesin deployment kararı sayılmaz.

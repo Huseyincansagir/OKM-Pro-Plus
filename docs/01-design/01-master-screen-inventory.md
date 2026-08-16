@@ -74,6 +74,8 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 | Teklif talebi detayı | Firma, yetkili, telefon, e-posta, ürünler, miktarlar, notlar, kaynak | İncele, müşteri oluştur, teklif oluştur |
 | Teklifler listesi | Teklif no, müşteri, tarih, geçerlilik, toplam, durum | Filtrele, PDF al, siparişe dönüştür |
 | Teklif oluştur/düzenle | Müşteri, ürün, miktar, birim fiyat, iskonto, vergi, toplam, geçerlilik, not | Kaydet, PDF üret, gönder, kabul/ret |
+| Fiyat listeleri (O-012 seçilirse) | Liste, geçerlilik, para birimi, ürün fiyatları, müşteri grubu | Oluştur, kopyala, yayına al, pasifleştir |
+| Müşteri fiyat grupları (O-012 seçilirse) | Grup, müşteri bağlantıları, varsayılan liste, geçerlilik | Ata, kaldır, geçmişi gör |
 | Siparişler listesi | Sipariş no, müşteri, tarih, toplam, onay, sevk, fatura durumu | Filtrele, toplu dışa aktar, detay |
 | Sipariş oluştur | Müşteri, teslimat adresi, ürünler, ödeme şartı, teslim tarihi, not | Taslak kaydet, onaya gönder |
 | Sipariş detayı | Genel, ürünler, stok rezervasyonu, belgeler, onay geçmişi, aktivite | Onayla, reddet, iptal et, irsaliye oluştur |
@@ -136,7 +138,8 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 
 | Ekran | Temel içerik | Ana işlemler |
 |---|---|---|
-| Faturalar listesi | Fatura no, müşteri, tarih, irsaliye, toplam, vade, ödeme durumu | Oluştur, PDF, filtrele |
+| Faturalar listesi | Fatura no, müşteri, tarih, irsaliye, toplam, vade, ödeme durumu, faturalanan/kalan miktar | Oluştur, PDF, filtrele |
+| Faturalandırma allocation ekranı (O-003 seçilirse) | İrsaliye kalemi, sevk edilen, faturalanan, kalan, seçilen miktar | Miktar seç, doğrula, faturaya aktar |
 | Fatura detayı | Kalemler, ara toplam, iskonto, vergi, genel toplam, vade, bağlı belgeler, cari etkisi | PDF, iptal yetkisi, ödeme ekle |
 | Fatura oluştur | İrsaliye/sipariş, müşteri, kalemler, vergi, iskonto, vade | Ön izleme, oluştur |
 | Cari hesaplar listesi | Müşteri, borç, alacak, bakiye, geciken, risk | Detaya git, risk filtresi |
@@ -200,6 +203,7 @@ Ortak rapor araçları tarih aralığı, müşteri, ürün, depo, makine, person
 | Teklif sepeti | Ürün, miktar, birim, ürün notu, genel not |
 | Firma bilgileri | Firma, yetkili, telefon, e-posta |
 | Talep özeti | Ürünler, miktarlar, iletişim onayı, gönder |
+| Public erişim/anti-abuse durumu | Rate limit, bot kontrolü, doğrulama, privacy consent ve hata mesajı (O-009) | Doğrula, yeniden dene, destek mesajı göster |
 | Başarı ekranı | Talep numarası, tarih, şirket dönüş açıklaması |
 
 ## 5. Mobil ekran envanteri
@@ -224,7 +228,7 @@ Ortak rapor araçları tarih aralığı, müşteri, ürün, depo, makine, person
 | Teklif talebi | NEW, REVIEWING, QUOTED, ACCEPTED, REJECTED, EXPIRED |
 | Sipariş | Taslak, Onay Bekliyor, Onaylandı, Reddedildi, Hazırlanıyor, Kısmi Sevk, Tamamlandı, İptal |
 | Onay | Pending, Approved, Rejected |
-| İrsaliye | Draft, Prepared, Issued, Shipped, Invoiced, Cancelled |
+| İrsaliye | Draft, Prepared, Issued, Shipped, PartiallyInvoiced (O-003 seçilirse), Invoiced, Cancelled |
 | Sevkiyat | Hazırlanıyor, Sevk Edilecek, Sevk Edildi, Teslim Edildi, İptal |
 | Fatura | Ödenmedi, Kısmi Ödendi, Ödendi, Gecikmiş |
 | Üretim iş emri | Planned, Released, InProgress, Paused, Completed, Cancelled |

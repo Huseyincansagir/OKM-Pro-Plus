@@ -66,4 +66,4 @@
 
 ## 5. Karar yönetimi kuralları
 
-`OPEN DECISION` maddeleri çözülmeden riskli domain implementasyonuna geçilmez. Bir karar çözüldüğünde bu dosyadaki sınıf, gerekçe, etkilenen tasarım dosyaları ve gerekiyorsa workflow state'leri güncellenir. Design Gate sırasında tüm açık kararlar `BLOCKED` veya `ASSUMED WITH RISK` olarak değerlendirilir.
+`OPEN DECISION` maddeleri çözülmeden riskli domain implementasyonuna geçilmez. Öneri seçenekleri ve MVP çözüm paketi `/design/open-decisions-solution-matrix.md` içinde tutulur; yalnızca karar sahibi onayı, karar tarihi ve etkilenen artefact listesi ile desteklenen kararlar `DECIDED` sınıfına taşınabilir. Bir karar çözüldüğünde bu dosyadaki sınıf, gerekçe, etkilenen tasarım dosyaları ve gerekiyorsa workflow state'leri güncellenir. Design Gate sırasında tüm açık kararlar `BLOCKED` veya `ASSUMED WITH RISK` olarak değerlendirilir.
