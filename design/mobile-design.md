@@ -152,7 +152,7 @@ Durakta kullanıcı yalnızca o adrese atanmış paketleri görür. Kısmi tesli
 
 ### Mobil barkod ve miktar UX referansı
 
-Barkod okuma, toggle ve işlem seviyesi davranışının ayrıntılı canonical tanımı `mobile-barcode-and-quantity-ux.md` dosyasındadır. Bu dosya; bilinmeyen barkod, duplicate tarama, yanlış depo/rota, kapalı ambalaj, offline işlem, kısmi teslim ve sayım farkı kabul kriterlerini içerir.
+Barkod okuma, toggle ve işlem seviyesi davranışının ayrıntılı canonical tanımı `mobile-barcode-and-quantity-ux.md` dosyasındadır. Bu dosya; bilinmeyen barkod, duplicate tarama, yanlış depo/rota, kapalı ambalaj, offline işlem, kısmi teslim ve sayım farkı kabul kriterlerini içerir. Database snapshot, `viewMode`/`operationPackagingId` ayrımı, `quantity-previews`, barkod resolve, yükleme/teslim, idempotency ve hata sözleşmesi ise `mobile-toggle-api-and-schema.md` içinde tanımlıdır.
 
 ## 10. Üretim operasyonu
 

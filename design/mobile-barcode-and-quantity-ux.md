@@ -4,7 +4,7 @@
 **Durum:** Kodlama öncesi canonical mobil UX tasarımı
 **Kapsam:** Barkod tarama, ürün doğrulama, miktar girişi, üçlü görünüm toggle'ı, sayım/transfer/sevkiyat ve teslimat
 **Arayüz dili:** Türkçe; entity, property, API ve state isimleri İngilizce
-**İlgili belgeler:** `mobile-design.md`, `product-packaging-and-uom.md`, `shipment-logistics-ui-design.md`
+**İlgili belgeler:** `mobile-design.md`, `product-packaging-and-uom.md`, `shipment-logistics-ui-design.md`, `mobile-toggle-api-and-schema.md`
 
 ## 1. İnceleme sonucu ve ana UX kararı
 
@@ -111,7 +111,7 @@ Miktar görünümü
 [ Temel Birim ] [ Ambalaj ] [ Kırılım ]
 ```
 
-Seçili segment teal zemin ve beyaz metinle; seçili olmayan segmentler açık zemin ve koyu metinle gösterilir. Seçim yalnızca görsel sunumu değiştirir; backend'e gönderilen `quantity_base` değişmez.
+Seçili segment teal zemin ve beyaz metinle; seçili olmayan segmentler açık zemin ve koyu metinle gösterilir. Seçim yalnızca görsel sunumu değiştirir; backend'e gönderilen veya backend tarafından hesaplanan `quantity_base` değişmez. API sözleşmesinde bu seçim `viewMode` olarak taşınır; işlem seviyesi `operationPackagingId` ile ayrıca gönderilir. `quantityBase`, `display` ve `packagingSnapshot` backend tarafından yeniden üretilir.
 
 ### 4.2 Görünümler
 
@@ -247,7 +247,11 @@ Son kullanılan görünüm cihazda kalabilir; ancak farklı kullanıcı/işlem b
 **Hazırlayan:** Manus AI
 **Tarih:** 16 Ağustos 2026
 
-## 11. Görsel mockup referansı
+## 11. Database ve API sözleşmesi referansı
+
+Mobil toggle'ın `product_packagings`, `product_barcodes`, `quantity_operation_snapshots` ve opsiyonel `user_mobile_preferences` şeması; barkod resolve, miktar preview, sayım, transfer, yükleme ve teslim endpoint'leri `mobile-toggle-api-and-schema.md` dosyasında tanımlıdır. Toggle değişikliği transaction başlatmaz; yalnızca işlem önizlemesinin görünümünü değiştirir. İşlem yapan endpoint'ler `Idempotency-Key`, server-side ambalaj dönüşümü, context/permission kontrolü ve hata kodu sözleşmesini kullanır.
+
+## 12. Görsel mockup referansı
 
 Barkod sonucu, üçlü görünüm toggle'ı, ayrı işlem seviyesi seçimi ve temel birim önizlemesini birlikte gösteren referans ekran:
 

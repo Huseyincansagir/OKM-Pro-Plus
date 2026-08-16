@@ -115,7 +115,7 @@ packaging_snapshot         = Belge tarihindeki ad, katsayı ve hiyerarşi
 packaging_breakdown        = Gerekirse 4 Koli + 6 Paket gibi görünüm
 ```
 
-`quantity_base` stok ve miktar doğruluğunun kaynağıdır. Ambalaj tanımı sonradan değişse bile belge üzerindeki `packaging_snapshot` geçmişteki `5 Koli (10.000 adet)` ifadesini korur.
+`quantity_base` stok ve miktar doğruluğunun kaynağıdır. Ambalaj tanımı sonradan değişse bile belge üzerindeki `packaging_snapshot` geçmişteki `5 Koli (10.000 adet)` ifadesini korur. Mobil toggle'ın schema, snapshot, preview, idempotency ve endpoint sözleşmesi `mobile-toggle-api-and-schema.md` dosyasında canonical olarak tanımlıdır.
 
 ### 4.3 Depo ve stok
 
@@ -127,10 +127,28 @@ packaging_breakdown        = Gerekirse 4 Koli + 6 Paket gibi görünüm
 | `stock_movements` | Giriş, çıkış, transfer, sayım, iade ve düzeltme kayıtları; temel miktar ve ambalaj snapshot'ı |
 | `stock_reservations` | Sipariş veya belge bazlı rezerve temel miktar |
 | `stock_movement_packaging` | İsteğe bağlı hareket kırılımı: 5 Koli, 6 Paket gibi kapalı/parçalı ambalaj detayı |
+| `quantity_operation_snapshots` | Mobil toggle görünümü, işlem ambalajı, girilen miktar, backend hesaplı temel miktar, packaging snapshot ve client request id |
+| `user_mobile_preferences` | Kullanıcının varsayılan miktar görünümü; operasyon doğruluğunun kaynağı değildir |
 | `stock_counts` | Sayım başlıkları |
 | `stock_count_items` | Sistem, sayılan, fark ve gerekçe |
 | `warehouse_transfers` | Kaynak/hedef depo transfer başlığı |
 | `warehouse_transfer_items` | Transfer ürünleri ve miktarlar |
+
+Mobil miktar işlemleri için `quantity_operation_snapshots` önerilen alanlar:
+
+| Alan | Açıklama |
+|---|---|
+| `operation_type`, `operation_id` | Sayım, transfer, yükleme, teslim veya irsaliye işlemi |
+| `product_id`, `barcode_id` | Ürün ve okutulan barkod |
+| `operation_packaging_id` | İşlem yapılan Palet/Koli/Paket seviyesi |
+| `view_mode_at_entry` | `BaseUnit`, `Packaging`, `Breakdown`; yalnızca görünüm |
+| `entered_quantity`, `quantity_base` | Kullanıcı girişi ve backend hesaplı temel miktar |
+| `base_uom_id` | Temel ölçü birimi |
+| `packaging_snapshot`, `packaging_breakdown` | Tarihsel ambalaj ve kırılım |
+| `warehouse_id`, `route_stop_id`, `load_unit_id` | İşlem bağlamı |
+| `client_request_id` | Idempotency anahtarı |
+
+`quantity_base` frontend'den gelen değerle değil, geçerli `ProductPackaging` katsayısı ile server-side hesaplanır. Aynı operation + client request id tekrarında ikinci ledger hareketi üretilmez.
 
 `stock_movements` silinemez ledger olarak tasarlanmalıdır. Hatalı hareket iptal veya ters hareketle düzeltilir. Tüm hareketler ürünün `base_uom` değerinde tutulur; kullanıcıya gösterilen koli/paket kırılımı ayrıca saklanır veya snapshot'tan yeniden üretilebilir. Kullanılabilir stok için temel hesap:
 
@@ -294,6 +312,9 @@ Belge ve ledger tablolarında fiziksel silme yapılmamalıdır. Master data tabl
 | Sipariş | Customer + Status + CreatedAt index |
 | Fatura | Customer + DueDate + PaymentStatus index |
 | Audit | EntityType + EntityId + CreatedAt index |
+| Quantity operation snapshot | OperationType + OperationId + ClientRequestId unique index |
+| Product packaging effective | Product + Level + EffectiveFrom index |
+| Barcode active | Barcode + IsActive unique filtered index |
 | Load plan validation | LoadPlan + Severity + IsResolved index |
 | Route stop package | RouteStop + Status + PlannedArrival index |
 | Shipment package barcode | Shipment + Barcode unique aktif index |

@@ -91,6 +91,8 @@ PDF ve Excel çıktılarında aynı domain verisini kullan. Rapor ekranı ile ex
 - `Temel Birim / Ambalaj / Kırılım` toggle'ı yalnızca görünümü değiştirmeli; işlem seviyesi ayrı state ve `quantity_base` önizlemesiyle yönetilmeli.
 - Kargo planı ekranında hard constraint, soft warning, vehicle-fit gerekçesi, algorithm/version ve manuel değişiklik açıklaması görünür olmalı.
 - First Fit Decreasing veya seçilen heuristik deterministik input snapshot ile çalışmalı; matematiksel optimalite garanti ediliyorsa ayrıca kanıtlanmadan böyle sunulmamalı.
+- Mobil toggle API'sinde `viewMode` ile `operationPackagingId` ayrı request alanları olmalı; `quantityBase`, `display` ve `packagingSnapshot` server-side hesaplanmalı.
+- Miktar preview transaction oluşturmamalı; sayım, transfer, load scan ve delivery endpoint'leri `Idempotency-Key`, context/permission ve concurrency kontrolü olmadan kesinleşmemeli.
 - Araç, sevkiyat, durak ve paket durumları ayrı badge/state olarak gösterilmeli; kapasite ve ambalaj görünümü toggle ile değişebilmeli.
 
 ## Mobile
@@ -123,6 +125,9 @@ Aşağıdaki hatalar kabul edilmez:
 - hard/soft constraint severity not preserved
 - algorithm version or input snapshot missing for a generated load plan
 - manual replan without reason/audit/version
+- client-supplied quantityBase accepted without recalculation
+- duplicate mobile operation without Idempotency-Key
+- missing packaging snapshot on a committed quantity movement
 - negative unintended stock
 - duplicate payment
 - double invoicing

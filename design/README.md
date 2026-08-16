@@ -15,6 +15,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`production-warehouse-deep-dive.md`](./production-warehouse-deep-dive.md) | Üretim ve depo detaylı ekran/veri incelemesi |
 | [`mobile-design.md`](./mobile-design.md) | Mobil operasyon ve barkod akışları |
 | [`mobile-barcode-and-quantity-ux.md`](./mobile-barcode-and-quantity-ux.md) | Mobil barkod, üçlü miktar toggle'ı ve işlem seviyesi UX akışı |
+| [`mobile-toggle-api-and-schema.md`](./mobile-toggle-api-and-schema.md) | Mobil Palet/Koli/Paket toggle database, API ve idempotency sözleşmesi |
 | [`public-catalog-design.md`](./public-catalog-design.md) | Public katalog ve teklif sepeti |
 | [`visual-design-system.md`](./visual-design-system.md) | Görsel tasarım standardı |
 | [`ui-mockup-review.md`](./ui-mockup-review.md) | Mockup UX, marka ve görsel varlık kabul incelemesi |

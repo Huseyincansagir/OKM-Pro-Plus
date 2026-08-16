@@ -54,6 +54,9 @@ Public Quote Request
 - Onaylanmış sipariş olmadan irsaliye kesinleştirilemez.
 - Her ürün kalemi için kullanıcı girişi ambalaj seviyesiyle, stok ve allocation miktarı temel birimle tutulur.
 - `quantity_base` backend tarafından ürünün geçerli packaging katsayısından hesaplanır; frontend'den gelen temel miktar doğruluk kaynağı olarak kabul edilmez.
+- Mobil `viewMode` (`BaseUnit`, `Packaging`, `Breakdown`) yalnızca görünümü belirler; işlem seviyesi `operationPackagingId` olarak ayrı taşınır.
+- `quantity-previews` endpoint'i transaction oluşturmaz; sayım, transfer, yükleme ve teslim endpoint'leri `Idempotency-Key` ile korunur.
+- Commit edilmiş mobil miktar hareketinde `quantity_operation_snapshot`, `packaging_snapshot`, `view_mode_at_entry` ve client request id saklanır.
 - Sevk miktarı `AvailableBaseQuantity` değerini aşamaz.
 - Aynı irsaliye kalemi için faturalandırılan toplam miktar sevk edilen ve faturalanmamış kalan miktarı aşamaz; aynı allocation ikinci kez uygulanamaz.
 - Ödeme idempotency/reference kontrolü olmadan ikinci kez cari hesaba uygulanamaz.
@@ -86,6 +89,20 @@ Shipment oluştur
   → Araç çıkışı
   → Durak bazlı teslimat ve teslim kanıtı
   → Sevkiyatı kapat
+```
+
+### Mobil miktar ve barkod workflow'u
+
+```text
+Barkod çözümle
+  → Ürün/ambalaj/yük birimi ve işlem context'ini doğrula
+  → viewMode seçimini uygula (yalnızca görünüm)
+  → operationPackagingId ve enteredQuantity al
+  → Server-side quantityBase + packagingSnapshot preview üret
+  → Kullanıcıya temel/ambalaj/kırılım karşılığını göster
+  → Idempotency-Key ile sayım/transfer/load/delivery işlemini commit et
+  → quantity_operation_snapshot + audit yaz
+  → Aynı request tekrarında ilk sonucu döndür
 ```
 
 İlk sürümde sistemin otomatik önerisi **uygunluk ön kontrolü ve manuel düzenleme desteği** olarak kabul edilir; matematiksel olarak optimal yükleme garantisi verilmez. Depo sorumlusu planı onaylar, gerçek yükleme barkodlarla doğrulanır.

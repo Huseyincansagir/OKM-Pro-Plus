@@ -85,6 +85,9 @@ Temel entity grupları:
 - Kargo planlamada hard constraint ile soft constraint ayrımını açıkça modelle; `Infeasible`, `FeasibleWithWarnings` ve `Feasible` sonuçlarını sakla.
 - Vehicle-fit ve LoadPlan önerisinin `algorithm_name`, `algorithm_version`, input/capacity snapshot, score, validation summary ve manual change audit bilgilerini koru; optimalite iddiası yoksa UI/API bunu açıkça belirtmeli.
 - Plan değişikliği shipment miktarı, araç/rota, fiziksel profil, palet veya gerçek yük değiştiğinde versioned replan üretmeli; locked plan sessizce güncellenmemeli.
+- Mobil `viewMode` (`BaseUnit`, `Packaging`, `Breakdown`) yalnızca görünüm sözleşmesidir; `operationPackagingId` işlem seviyesidir ve `quantityBase` backend'de yeniden hesaplanır.
+- Mobil miktar işlemleri için barkod resolve, quantity preview, count, transfer, load scan ve delivery endpoint'leri aynı context/permission/idempotency/hata sözleşmesini kullanmalıdır.
+- `Idempotency-Key` ve `quantity_operation_snapshots` olmadan ikinci stok, transfer, yükleme veya teslim hareketi kabul edilmemeli.
 - BOM, lot/seri, e-belge adapter ve local deployment gibi konuları seçilen karara göre migration kapsamına al; öneriyi karar yerine koyma.
 
 ## Transaction sınırları
@@ -139,6 +142,14 @@ DTO + validation + authorization + consistent error model kullan.
 /api/shipments/{shipmentId}/vehicle-fit
 /api/shipments/{shipmentId}/load-plan/validate
 /api/shipments/{shipmentId}/load-plan/replan
+/api/mobile/barcodes/resolve
+/api/mobile/products/{productId}/quantity-options
+/api/mobile/quantity-previews
+/api/mobile/stock-counts/{stockCountId}/items
+/api/mobile/warehouse-transfers/{transferId}/items
+/api/mobile/shipments/{shipmentId}/load-scans
+/api/mobile/shipments/{shipmentId}/route-stops/{routeStopId}/deliveries
+/api/mobile/preferences/quantity-view
 /api/vehicles
 /api/vehicle-types
 /api/invoices
@@ -161,7 +172,7 @@ Role yalnızca başlangıç seviyesi olmalı; gerçek erişim permission seviyes
 
 Örnek:
 
-`order.read`, `order.create`, `order.approve`, `invoice.create`, `payment.create`, `stock.adjust`, `production.complete`, `shipment.read`, `shipment.create`, `shipment.load-plan`, `shipment.vehicle-fit`, `shipment.plan-suggest`, `shipment.route-manage`, `shipment.package-assign`, `shipment.plan-replan`, `shipment.plan-override`, `shipment.deliver`, `vehicle.manage`, `vehicle.status-update`
+`order.read`, `order.create`, `order.approve`, `invoice.create`, `payment.create`, `stock.read`, `stock.count`, `stock.transfer`, `stock.adjust`, `production.complete`, `shipment.read`, `shipment.create`, `shipment.load-plan`, `shipment.vehicle-fit`, `shipment.plan-suggest`, `shipment.route-manage`, `shipment.package-assign`, `shipment.plan-replan`, `shipment.plan-override`, `shipment.load-verify`, `shipment.deliver`, `vehicle.manage`, `vehicle.status-update`
 
 ## Security architecture
 

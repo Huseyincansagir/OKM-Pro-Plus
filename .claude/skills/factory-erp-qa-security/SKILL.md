@@ -61,6 +61,11 @@ Ana akış:
 - Hard constraint ihlalleri ile soft warning'ler farklı sonuç ve yetki davranışı üretmeli.
 - Araç adayları bakım, zaman çakışması, kg, m³, palet, ölçü ve kapı açıklığı kurallarına göre doğru elenmeli.
 - First Fit Decreasing önerisi aynı input snapshot ve algorithm version ile tekrarlanabilir olmalı.
+- `viewMode` değişimi `operationPackagingId` veya `quantityBase` değerini değiştirmemeli.
+- İstemciden gelen `quantityBase` değiştirildiğinde backend bunu reddetmeli veya kendi hesabıyla değiştirmeli.
+- Aynı `Idempotency-Key` ile tekrar gönderilen sayım, transfer, load scan veya delivery isteği ikinci hareket üretmemeli.
+- Commit edilmiş miktar hareketinde `packaging_snapshot`, `operation_packaging_id` ve `view_mode_at_entry` bulunmalı.
+- Bilinmeyen/ambiguous barkod ve aktif durak dışı paket için endpoint güvenli hata sözleşmesi döndürmeli.
 - Karışık palet uyumluluk, istifleme ve durak erişim kurallarını ihlal ederse bloke veya açıklanabilir warning üretmeli.
 - Plan kilitlendikten sonra yapılan manuel değişiklik yeni version, audit ve validation sonucu üretmeli.
 
@@ -120,6 +125,9 @@ En az şu roller için pozitif ve negatif test yap:
 - mixed-pallet constraint validation
 - route stop access validation
 - load-plan replan and validation result query
+- mobile barcode resolve and context filtering
+- quantity preview response and packaging conversion
+- mobile count/transfer/load/delivery endpoint idempotency
 - concurrent document creation
 
 N+1, missing indexes ve full-table scan risklerini ara.
