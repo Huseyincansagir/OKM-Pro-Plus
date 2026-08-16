@@ -392,7 +392,23 @@ PUT /api/mobile/preferences/quantity-view
 
 `PUT` yalnızca `defaultViewMode` ve cihaz tercihini değiştirir; stok, sevkiyat veya teslim hareketi üretmez.
 
-## 6. Yetki ve güvenlik
+## 6. Ekran bağlamı ve varsayılan görünüm
+
+API, `operationType` ve ekran bağlamına göre varsayılan `viewMode` döndürmelidir. Kullanıcının cihaz tercihi yalnızca başlangıç önerisidir; işlem bağlamının güvenlik ve doğruluk varsayılanını sessizce geçersiz kılamaz.
+
+| `operationType` / ekran | Varsayılan `viewMode` | `operationPackagingId` |
+|---|---|---|
+| `StockLookup` / stok detayı | `Packaging` | İşlem başlatılana kadar yok |
+| `StockCount` / sayım | `Breakdown` | Kullanıcı ayrıca seçer |
+| `WarehouseTransfer` / transfer | `Packaging` | Kullanıcı ayrıca seçer |
+| `ShipmentLoad` / sevkiyat yükleme | `Packaging` | Okunan barkod ve işlem policy'sine göre |
+| `ShipmentDelivery` / rota teslimatı | `Breakdown` | Öncelik barkod paketindedir |
+| `DeliveryNoteIssue` / irsaliye kesinleştirme | `BaseUnit` | Belge/policy tarafından belirlenir |
+| `ProductionOutput` / üretim çıktısı | `BaseUnit` | Kullanıcı gerekiyorsa ambalaj seçer |
+
+Response içinde `defaultViewMode`, `allowedViewModes` ve `allowedOperationPackagings` birlikte dönmelidir. Liste/dashboard endpoint'leri toggle seçeneklerini taşımak zorunda değildir; detay veya işlem endpoint'i bu sözleşmeyi sağlar.
+
+## 7. Yetki ve güvenlik
 
 | Endpoint grubu | Örnek permission | Ek kontrol |
 |---|---|---|
@@ -486,6 +502,7 @@ Idempotency key kontrolü
 Bu belge harici veri kullanmaz; repository içindeki canonical tasarım kararlarını API ve schema sözleşmesine dönüştürür:
 
 - [`mobile-barcode-and-quantity-ux.md`](./mobile-barcode-and-quantity-ux.md)
+- [`mobile-toggle-screen-by-screen-review.md`](./mobile-toggle-screen-by-screen-review.md)
 - [`product-packaging-and-uom.md`](./product-packaging-and-uom.md)
 - [`database-technical-architecture.md`](./database-technical-architecture.md)
 - [`business-workflows.md`](./business-workflows.md)
