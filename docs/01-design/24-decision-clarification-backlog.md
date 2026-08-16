@@ -1,12 +1,12 @@
 # Factory ERP — Karar Netleştirme Gündemi
 
-**Aşama:** DISCOVER → DESIGN / Design Gate hazırlığı
-**Durum:** Proje sahibi onayı bekleyen netleştirme listesi
-**Kural:** Bu belge öneri ve soru üretir; hiçbir madde proje sahibi onayı olmadan `DECIDED` yapılamaz.
+**Aşama:** DESIGN → DESIGN GATE / READY FOR ARCHITECTURE hazırlığı
+**Durum:** O-001–O-014 proje sahibi tarafından 2026-08-16 tarihinde kabul edildi; backlog artık kapanış kanıtı ve artefact yayılımı izleme listesidir.
+**Kural:** O-001–O-014 için karar sahibi, tarih, seçilen değer ve kapsam kaydedildi. Yeni kapsam değişikliği gelirse ilgili O-ID yeniden OPEN DECISION yapılır; mevcut kararlar `DECIDED` durumundadır.
 
 ## 1. Kullanım amacı
 
-Açık kararlar yalnızca konu başlığı olarak bırakıldığında karar toplantısında farklı kişiler aynı kavramı farklı yorumlayabilir. Bu belge, O-001–O-014 maddelerini uygulanabilir alt sorulara dönüştürür. Her karar için toplantıda tek bir değer seçilmeli veya gerekçeli biçimde ertelenmelidir.
+Açık kararlar yalnızca konu başlığı olarak bırakıldığında karar toplantısında farklı kişiler aynı kavramı farklı yorumlayabilir. Bu belge, O-001–O-014 maddelerini uygulanabilir alt sorulara dönüştürmüştür. 2026-08-16 kabulü sonrasında alt sorular, seçilen değerlerin domain/workflow/database/UI/QA/operations belgelerine yayıldığını doğrulamak için kullanılacaktır.
 
 Bir kararın kapatılabilmesi için **seçilen değer**, **karar sahibi**, **karar tarihi**, **gerekçe**, **etkilenen belgeler** ve **uygulamaya aktarılacak kısıtlar** birlikte kaydedilmelidir.
 
@@ -121,9 +121,11 @@ Açık kararların yanında aşağıdaki ortak davranışlar da tüm modüllerde
 
 ## 5. Design Gate çıkış kriteri
 
-Design Gate’in `READY FOR ARCHITECTURE` olabilmesi için P0 maddeleri proje sahibi ve ilgili iş sahipleri tarafından kapatılmalı; P1 maddeleri ise ya karara bağlanmalı ya da açıkça `ASSUMED WITH RISK` olarak kabul edilmelidir. Her kararın etkilediği domain, workflow, database, UI, skill ve test belgeleri güncellenmeden gate açılmamalıdır.
+O-001–O-014 için karar blokajı kaldırılmıştır. Gate değerlendirmesinde artık kararların varlığı değil, kabul edilen değerlerin ilgili canonical artefact’lara eksiksiz yayıldığı ve Architecture aşamasının başlayabileceği doğrulanır.
 
-Production code yazılmadan önce minimum kapanış kanıtı şunlardır: karar sahibi onayı, güncellenmiş decision log, çözüm matrisi, etkilenen canonical tasarım dosyaları, permission/state değişiklikleri, migration etkisi, QA test etkisi ve operasyon/backup etkisi.
+Design Gate’in `READY FOR ARCHITECTURE` kararı O-001–O-014 kabulüyle açılmıştır. Architecture başlamadan önce kabul edilen değerlerin domain, workflow, database, UI, skill ve test belgelerine yayıldığı doğrulanmalıdır.
+
+Production code yazılmadan önce minimum Design/Architecture kapanış kanıtı şunlardır: kabul edilmiş decision log, çözüm matrisi, etkilenen canonical tasarım dosyaları, permission/state değişiklikleri, migration etkisi, QA test etkisi ve operasyon/backup etkisi. Bu kanıtlar Architecture acceptance ile tamamlanmadan implementation gate açılmaz.
 
 ## 6. Toplantı formatı
 

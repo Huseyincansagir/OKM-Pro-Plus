@@ -199,9 +199,9 @@ Kesinleşmiş `DeliveryNoteItem` veya `InvoiceItem` miktarı doğrudan edit edil
 
 Ayrıntılı miktar alanları, precision, allocation, permission ve geçiş tabloları [`partial-shipment-invoicing-workflow.md`](./partial-shipment-invoicing-workflow.md) içinde canonical olarak tutulur.
 
-## 6. Karar bağımlı workflow dalları
+## 6. Kabul edilen karar workflow dalları
 
-Aşağıdaki geçişler çözüm matrisi önerileridir; karar sahibi onayı ve ilgili artefact yayılımı tamamlanmadan baseline state machine'e zorunlu geçiş olarak alınmaz:
+Aşağıdaki geçişler proje sahibinin 2026-08-16 kabul ettiği baseline state machine’in parçasıdır. Architecture aşamasında API, permission, migration ve acceptance test sözleşmelerine dönüştürülecektir.
 
 | Karar | Workflow dalı | Gerekli kontroller |
 |---|---|---|
@@ -209,7 +209,7 @@ Aşağıdaki geçişler çözüm matrisi önerileridir; karar sahibi onayı ve i
 | O-003 | `Issued → PartiallyInvoiced → Invoiced` | DeliveryNoteItem allocation, invoiced/remaining miktarı ve duplicate invoice kontrolü |
 | O-012 | Quote/Order oluşturulurken `PriceList + CustomerPriceGroup` seçimi | Geçerlilik tarihi, fiyat snapshot, yetki ve para/vergi politikası |
 
-O-002 ve O-003 için ayrıntılı ana akış, istisna dalları, state ayrımı, transaction sınırları, permission ve audit matrisi [`partial-shipment-invoicing-workflow.md`](./partial-shipment-invoicing-workflow.md) içinde tutulur. Bu belge önerilen MVP akışıdır; karar sahibi onayı olmadan baseline state machine'e zorunlu kural olarak taşınmaz.
+O-002 ve O-003 için ayrıntılı ana akış, istisna dalları, state ayrımı, transaction sınırları, permission ve audit matrisi [`partial-shipment-invoicing-workflow.md`](./partial-shipment-invoicing-workflow.md) içinde tutulur. Bu belge kabul edilen MVP baseline’ıdır; Architecture aşamasında teknik contract’lara yayılır.
 
 ## 7. Audit kapsamı
 

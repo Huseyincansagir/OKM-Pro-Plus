@@ -1,7 +1,7 @@
 # Factory ERP — O-002/O-003 Kısmi Sevkiyat ve Kısmi Fatura İş Akışı
 
 **Kapsam:** O-002 Kısmi sevkiyat ve O-003 kısmi fatura
-**Durum:** Tasarım önerisi; karar sahibi onayı olmadan `DECIDED` değildir.
+**Durum:** O-002/O-003 proje sahibi tarafından 2026-08-16 tarihinde kabul edilmiş `DECIDED` MVP baseline’ıdır; Architecture aşamasında teknik sözleşmeye aktarılacaktır.
 **İlgili akış:** `SalesOrder → StockReservation → DeliveryNote → Shipment → Invoice → CurrentAccount`
 **Hata ve SQL eki:** [`quantity-error-handling-and-allocation-sql.md`](./quantity-error-handling-and-allocation-sql.md)
 
@@ -11,7 +11,7 @@ Bu tasarımda kısmi sevkiyat ve kısmi fatura birbirinden bağımsız miktar ak
 
 > **Önemli ayrım:** Kısmi sevkiyat, stok ve sipariş miktarlarını etkiler. Kısmi fatura, daha önce sevk edilmiş ve irsaliyeye bağlanmış miktarın cari hesapta borçlandırılmasını etkiler. Fatura oluşturmak tekrar stok çıkışı üretmez.
 
-Bu belge, çözüm matrisindeki önerilen MVP davranışını diyagramlaştırır: kısmi sevkiyata ve kısmi faturaya izin verilir; hard quantity kontrolü, idempotency, allocation ve audit zorunludur.
+Bu belge, kabul edilen MVP davranışını diyagramlaştırır: kısmi sevkiyata ve kısmi faturaya izin verilir; hard quantity kontrolü, idempotency, allocation ve audit zorunludur.
 
 ## 2. Ortak miktar sözleşmesi
 
@@ -396,24 +396,24 @@ Kapasite/stok veya fatura allocation yarışında son yazan kazanmaz. Transactio
 | Kalan miktarı kapatma | `order.close-remainder` veya `invoice.close-remainder` | Gerekçe, yetkili kullanıcı, kapanan miktar |
 | Reversal/credit | `delivery-note.reverse` / `invoice.reverse` | Kaynak belge, ters hareket, gerekçe ve onay |
 
-## 8. Karar sahiplerinin onaylaması gereken noktalar
+## 8. Architecture doğrulama ve acceptance kapsamı
 
-Bu diyagramlar önerilen MVP akışıdır. O-002 için satış/depo yöneticisi; O-003 için muhasebe aşağıdaki noktaları onaylamalıdır:
+O-002 ve O-003 kararları kabul edilmiştir. Aşağıdaki maddeler yeni karar bekleyen sorular değil; Architecture/API, migration ve acceptance testlerinde seçilmiş baseline’ın doğru uygulandığını doğrulayan kontrol noktalarıdır. İlgili iş sahipleri uygulama ayrıntılarını doğrular; farklı bir kapsam isterse karar değişikliği süreci açılır:
 
-1. Kısmi sevkiyat her sipariş ve kalem için serbest mi, yoksa müşteri/ürün bazında kısıtlanacak mı?
-2. Kısmi sevkiyatta kalan rezervasyon korunacak mı, otomatik serbest mi bırakılacak?
-3. Kalan sipariş miktarı backorder olarak mı, açık sipariş kalemi olarak mı izlenecek?
-4. Bir irsaliye birden fazla sevkiyat veya paket planına bağlanabilecek mi?
-5. Aynı irsaliye birden fazla faturaya bölünecek mi?
-6. Fatura kaynağı irsaliye mi, sipariş mi, teslim edilen gerçek miktar mı olacak?
-7. İrsaliyede kalan faturalanabilir miktar hangi koşulda kapatılabilecek?
-8. Kısmi fatura sonrası cari bakiye ve risk hesabı hangi snapshot üzerinden çalışacak?
-9. İrsaliye/fatura iptalinde yalnızca reversal mı kullanılacak, yoksa yetkili cancel state’i de olacak mı?
-10. Kısmi sevkiyat ve kısmi fatura raporlarında tarih, miktar ve durum hangi ana göre hesaplanacak?
+1. Kısmi sevkiyat varsayılan olarak serbesttir; müşteri/ürün bazlı blokaj yalnızca açık policy ile uygulanır.
+2. Sevk edilen miktar rezervasyondan tüketilir; kalan rezervasyon korunur veya release policy ile açıkça serbest bırakılır.
+3. Kalan miktar aynı sipariş kaleminde remainder/backorder olarak izlenir; yeni müşteri siparişi zorunlu değildir.
+4. Bir siparişten birden fazla irsaliye ve sevkiyat açılabilir; fiziksel shipment/load plan bağlantısı ayrı tutulur.
+5. Aynı irsaliye birden fazla faturaya bölünebilir.
+6. Fatura kaynağı `DeliveryNote.Issued` olmuş sevk kalemidir; allocation `quantity_base` ile yapılır.
+7. Kalan faturalanabilir miktar açık bırakılır; yalnızca yetkili `close-remainder` veya waiver/credit policy ile kapatılır.
+8. Cari bakiye ve risk hesabı kesinleşmiş fatura/current transaction snapshot’ı üzerinden çalışır.
+9. Kesinleşmiş irsaliye/fatura doğrudan edit veya fiziksel delete edilmez; reversal/return/credit akışı kullanılır.
+10. Raporlar belge state’i, işlem tarihi ve temel miktar (`quantity_base`) üzerinden; timezone Türkiye yerel gösterimiyle hesaplanır.
 
-## 9. Design Gate etkisi
+## 9. Design Gate ve Architecture etkisi
 
-O-002 ve O-003 kararları onaylandığında aşağıdaki artefact'lar aynı karar kaydıyla güncellenmelidir:
+O-002 ve O-003 kararları kabul edilerek aşağıdaki artefact’lara yayıldı ve Architecture aşamasında teknik sözleşme olarak tüketilecektir:
 
 - `decision-log.md`
 - `open-decisions-solution-matrix.md`
@@ -424,4 +424,4 @@ O-002 ve O-003 kararları onaylandığında aşağıdaki artefact'lar aynı kara
 - architecture, implementation ve QA/security skill mirror’ları
 - ilgili integration/E2E test senaryoları
 
-Karar sahibi onayı olmadan bu belge `DECIDED` değildir ve Design Gate `BLOCKED` durumu korunur.
+Bu belge `DECIDED` MVP baseline’ını temsil eder. Design Gate karar blokajı kaldırılmıştır; Architecture aşamasında quantity, allocation, state, API ve acceptance test artefact’larına yayılımı doğrulanacaktır.

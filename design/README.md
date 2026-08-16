@@ -21,8 +21,8 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`visual-design-system.md`](./visual-design-system.md) | Görsel tasarım standardı |
 | [`ui-mockup-review.md`](./ui-mockup-review.md) | Mockup UX, marka ve görsel varlık kabul incelemesi |
 | [`grok-session-review.md`](./grok-session-review.md) | Grok notlarının karşılaştırmalı teknik ve karar incelemesi |
-| [`open-decisions-solution-matrix.md`](./open-decisions-solution-matrix.md) | O-001–O-014 için önerilen çözüm, sahip, risk ve etki matrisi |
-| [`open-decisions-workshop.md`](./open-decisions-workshop.md) | Karar atölyesi için yönetim özeti, karar formu ve Design Gate kapanış planı |
+| [`open-decisions-solution-matrix.md`](./open-decisions-solution-matrix.md) | O-001–O-014 kabul edilen MVP çözümü, sahip, risk ve etki matrisi |
+| [`open-decisions-workshop.md`](./open-decisions-workshop.md) | Kabul edilen karar paketi, karar kanıtı ve Architecture handoff özeti |
 | [`product-packaging-and-uom.md`](./product-packaging-and-uom.md) | Palet-koli-paket-temel birim hiyerarşisi ve miktar dönüşüm kuralları |
 | [`logistics-planning-rules-and-algorithms.md`](./logistics-planning-rules-and-algorithms.md) | Hard/soft lojistik kuralları, araç kapasite eşleştirme ve karışık palet algoritması |
 | [`vehicle-capacity-matching.md`](./vehicle-capacity-matching.md) | Araç kapasite eşleştirme, aday eleme, fit skoru ve yük dağılımı detayları |
@@ -36,7 +36,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`database-technical-architecture.md`](./database-technical-architecture.md) | PostgreSQL, API, transaction ve deployment ön taslağı |
 | [`decision-log.md`](./decision-log.md) | DECIDED, ASSUMED ve OPEN DECISION kayıtları |
 | [`decision-clarification-backlog.md`](./decision-clarification-backlog.md) | O-001–O-014 için karar toplantısı alt soruları ve Design Gate kapanış çıktıları |
-| [`p0-p1-decision-recommendations.md`](./p0-p1-decision-recommendations.md) | P0/P1 öneri paketi, MVP sınırları, gerekçeler, riskler ve karar toplantısı onay listesi |
+| [`p0-p1-decision-recommendations.md`](./p0-p1-decision-recommendations.md) | Kabul edilen P0/P1 baseline, MVP sınırları, gerekçeler, riskler ve Architecture handoff listesi |
 | [`implementation-readiness.md`](./implementation-readiness.md) | Ayrıntılı Design Gate değerlendirmesi |
 | [`implementation-ready.md`](./implementation-ready.md) | Implementation skill için resmi gate dosyası |
 
@@ -64,7 +64,9 @@ RELEASE
 
 ```text
 DESIGN STATUS:
-BLOCKED
+READY FOR ARCHITECTURE
+IMPLEMENTATION:
+NOT READY
 ```
 
-Tasarım artefact'ları büyük ölçüde tamamlanmıştır. Implementation'a geçişi bloke eden kararlar `decision-log.md` ve `implementation-readiness.md` içindedir. Öncelikli sonraki skill `factory-erp-architecture`'dır.
+Tasarım artefact'ları tamamlanmış ve O-001–O-014 karar paketi kabul edilmiştir. Design Gate `READY FOR ARCHITECTURE` durumundadır; production implementation hâlâ Architecture acceptance tamamlanana kadar kapalıdır. Öncelikli sonraki skill `factory-erp-architecture`'dır.

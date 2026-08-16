@@ -1,6 +1,6 @@
 # Factory ERP — O-001–O-014 Açık Karar Çözüm Matrisi
 
-**Durum:** Proje yönetimi için öneri; karar sahibi onayı olmadan `DECIDED` sayılmaz.
+**Durum:** O-001–O-014 karar paketi proje sahibi tarafından 2026-08-16 tarihinde kabul edilmiştir; teknik yayılım ve Architecture doğrulaması sürmektedir.
 **Kullanım:** Her satır karar toplantısında seçilmeli veya gerekçeli biçimde revize edilmelidir.
 
 > **Uyarı:** Vergi, e-belge, bordro, KVKK ve finansal kayıt önerileri teknik tasarım içindir; uygulamaya alınmadan önce mali müşavir, hukuk/uyum ve ilgili iş sahipleri tarafından doğrulanmalıdır.
@@ -9,9 +9,9 @@
 
 Her satır için `/design/decision-clarification-backlog.md` içindeki alt sorular cevaplanmadan önerilen MVP çözümü nihai karar sayılmaz. Karar toplantısında seçilen değer, owner, tarih, gerekçe, etkilenmiş artefact'lar ve kabul testi ayrıca kaydedilmelidir. Ayrıntılı gerekçe, MVP sınırı ve risk değerlendirmesi [`p0-p1-decision-recommendations.md`](./p0-p1-decision-recommendations.md) içinde tutulur.
 
-## Önerilen kararlar
+## Kabul edilen kararlar
 
-| ID | Konu | Önerilen MVP çözümü | Mimari / workflow etkisi | Karar sahibi | Karar verilmezse |
+| ID | Konu | Kabul edilen MVP çözümü | Mimari / workflow etkisi | Karar sahibi | Uygulama notu |
 |---|---|---|---|---|---|
 | O-001 | Vergi/VAT ve e-belge | Fatura domaininde vergi kodu, oranı ve hesaplama alanlarını hazırla; `IInvoiceIntegrationService` adapter’ını tanımla; ilk sürümde gerçek entegratör yerine test/stub sağlayıcı kullan. KDV oranlarını hard-code etme. | Invoice/InvoiceItem vergi alanları, vergi yuvarlama, e-belge durumları ve entegrasyon audit’i gerekir. | Muhasebe + mali müşavir | Fatura şeması ve entegrasyon sözleşmesi yeniden tasarlanır. |
 | O-002 | Kısmi sevkiyat | **İzin ver.** `ordered_qty`, `reserved_qty`, `shipped_qty`, `remaining_qty` alanlarını kalem seviyesinde yönet; bir siparişten birden fazla irsaliye üret. | `PartiallyReserved`, `PartiallyShipped`, `Completed` state’leri; rezervasyon serbest bırakma ve idempotent sevk gerekir. | Satış + depo yöneticisi | Depo operasyonu tamamı hazır olmayan siparişte kilitlenir. |
@@ -28,9 +28,9 @@ Her satır için `/design/decision-clarification-backlog.md` içindeki alt sorul
 | O-013 | Marka, logo, token ve görsel lisans | Kodlamadan önce tek marka adı, logo, favicon, renk token’ları, font ve ürün görseli lisans/placeholder politikası onaylansın. Geçici olarak nötr `Factory ERP` kullan. | Web/mobile/public theme token’ları, asset manifest, favicon ve public header etkilenir. | Proje sahibi + pazarlama | Mockup markaları production’a taşınır, UX ve hukuki risk oluşur. |
 | O-014 | Kargo planlama otomasyon seviyesi ve araç eşleştirme | **MVP’de açıklanabilir uygunluk ön kontrolü + First Fit Decreasing sezgisel öneri + depo sorumlusu manuel onayı önerilir.** Hard constraint ihlali kilidi engellesin; soft warning açıklama/override ile ilerlesin. Optimal 3D packing, aks optimizasyonu ve kesin trafik rotası MVP dışında kalsın. | `VehicleFit`, `LoadPlan`, `LoadUnit`, `LoadUnitStopAllocation`, validation severity, algorithm/version snapshot, manual replan/audit ve yeni workflow state’leri gerekir. | Depo + sevkiyat yöneticisi | Otomasyon seviyesi netleşmezse UI, transaction, permission ve operasyon sorumluluğu yeniden tasarlanır. |
 
-## Varsayılan karar paketi
+## Kabul edilen karar paketi
 
-Proje sahibi hızlı bir MVP kararı vermek isterse aşağıdaki paket önerilir:
+Proje sahibinin 2026-08-16 tarihli açık kabulüyle aşağıdaki paket baseline karar olarak kullanılacaktır:
 
 ```text
 O-001  Adapter + stub; vergi alanları hazır, gerçek entegratör sonra
@@ -49,11 +49,11 @@ O-013  Tek marka ve asset politikası kodlamadan önce zorunlu
 O-014  Heuristik araç/palet önerisi + hard constraint validation + manuel depo onayı; optimalite garantisi yok
 ```
 
-Bu paket **öneridir**, karar sahibi onayı olmadan `decision-log.md` içinde `DECIDED` olarak işlenmemelidir. Özellikle P0 maddeler için karar sahibi açıkça `ASSUMED WITH RISK` demedikçe Design Gate blokajı korunur.
+Bu paket artık `decision-log.md` içinde `DECIDED` olarak işlenmiştir. Etkilenen canonical belgelerin yayılımı ve Architecture/Operations doğrulaması tamamlanmadan implementation başlamaz; ancak Design Gate’in `READY FOR ARCHITECTURE` durumuna geçmesi için karar blokajı kaldırılmıştır.
 
 ## Karar kapatma prosedürü
 
-Her karar için `decision-log.md` içinde şu bilgiler bulunmalıdır: seçilen değer, karar sahibi, karar tarihi, gerekçe, etkilenen tasarım dosyaları ve Architecture aşamasına aktarılacak teknik not. Bir kararın yalnızca Grok, ChatGPT veya başka bir agent tarafından önerilmiş olması, proje sahibi onayı yerine geçmez.
+Her karar için `decision-log.md` içinde seçilen değer, karar sahibi, karar tarihi, gerekçe, etkilenen tasarım dosyaları ve Architecture aşamasına aktarılacak teknik not bulunmaktadır. Yeni karar değişikliklerinde aynı kayıt kuralı korunur; agent önerisi tek başına karar yerine geçmez.
 
 Bir karar kapatıldıktan sonra aşağıdaki tutarlılık kontrolü zorunludur:
 

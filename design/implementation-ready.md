@@ -1,21 +1,69 @@
 # Factory ERP — Implementation Ready Gate
 
-Bu dosya, `factory-erp-design-workflow` skill'inin implementation başlangıç işaretidir. Öneri veya agent çıktısı tek başına implementation başlangıç kanıtı değildir.
+Bu dosya, `factory-erp-design-workflow` skill'inin production implementation başlangıç işaretidir. Öneri veya agent çıktısı tek başına implementation başlangıç kanıtı değildir.
 
 ```text
+DESIGN:
+READY FOR ARCHITECTURE
 IMPLEMENTATION:
 NOT READY
+NEXT SKILL:
+factory-erp-architecture
 ```
 
-`implementation-readiness.md` içindeki Design Gate tablosu kapsamın tasarım açısından büyük ölçüde tamamlandığını, ancak schema ve domain davranışını etkileyen `OPEN DECISION` maddeleri bulunduğunu gösterir. Çözüm önerileri `/design/open-decisions-solution-matrix.md` içinde tutulur; karar sahibi onayı, tarih ve artefact yayılımı tamamlanmadan gate açılmaz. Bu nedenle bu dosya Architecture aşaması tamamlanana kadar `NOT READY` olarak kalmalıdır.
+Proje sahibi O-001–O-014 karar paketini 2026-08-16 tarihinde kabul etmiştir. Bu nedenle Design Gate karar blokajı kaldırılmış ve Architecture aşamasına geçiş açılmıştır. **Bu durum production code yazılabileceği anlamına gelmez.**
 
-Implementation'a geçmeden önce aşağıdaki artefact'lar aynı commit veya izlenebilir karar seti içinde güncellenmelidir:
+## Architecture başlamadan önceki durum
 
-- `decision-log.md`: Açık kararlar çözülmüş olmalı.
-- `domain-model.md`: Entity, bounded context ve source of truth güncel olmalı.
-- `business-workflows.md`: State transition ve effect'ler seçilmiş kurallarla uyumlu olmalı.
-- `database-technical-architecture.md`: Seçilen vergi, partial shipment/invoice, BOM, lot ve bordro kapsamını yansıtmalı.
-- `master-screen-inventory.md`: Yeni state, alan ve permission değişiklikleriyle uyumlu olmalı.
-- `mobile-design.md` ve `public-catalog-design.md`: Kritik operasyon ve public erişim kararlarını yansıtmalı.
+Aşağıdaki kararlar `decision-log.md` içinde `DECIDED` durumundadır ve canonical tasarım belgelerine yayılmıştır:
 
-Bu dosya `READY` yapılmadan `factory-erp-implementation` skill'i ile business feature üretme. `READY` kararı için `/design/decision-log.md`, `/design/domain-model.md`, `/design/business-workflows.md`, `/design/database-technical-architecture.md`, `/design/master-screen-inventory.md`, `/design/public-catalog-design.md` ve ilgili skill-impact review birbirleriyle tutarlı olmalıdır.
+- O-001 vergi/e-belge sınırı.
+- O-002 kısmi sevkiyat ve allocation.
+- O-003 kısmi fatura ve cari etkisi.
+- O-004 BOM/hammadde MVP sınırı.
+- O-005 lot/seri MVP sınırı.
+- O-006 public talep ve müşteri kabulü.
+- O-007 risk soft block/override politikası.
+- O-008 maaş/bordro MVP sınırı.
+- O-009 public/KVKK ve abuse controls.
+- O-010 backup, RPO/RTO ve restore politikası.
+- O-011 Ubuntu/Docker/LAN HTTPS ve public route sınırı.
+- O-012 fiyat listesi ve snapshot politikası.
+- O-013 production marka ve asset manifest.
+- O-014 kargo otomasyonu ve manuel depo onayı.
+
+## Architecture aşamasında üretilecek artefact’lar
+
+`factory-erp-architecture` skill’i aşağıdaki çıktıları üretmeden implementation başlamaz:
+
+- Domain aggregate ve bounded-context sınırları.
+- API endpoint, DTO, validation, error ve idempotency sözleşmeleri.
+- EF Core/PostgreSQL migration planı.
+- Allocation, quantity, concurrency ve ledger constraints.
+- RBAC/permission policy ve state transition authorization.
+- Audit event ve notification matrisi.
+- Web, mobile ve public data contract’ları.
+- Docker Compose, reverse proxy, HTTPS, backup/restore ve health-check ayrıntıları.
+- Architecture acceptance checklist ve karar traceability matrisi.
+
+## Implementation’a geçiş koşulları
+
+Aşağıdaki dosyalar Architecture çıktılarıyla birlikte güncellenip doğrulanmadan `IMPLEMENTATION: READY` yapılmayacaktır:
+
+- `decision-log.md`
+- `domain-model.md`
+- `business-workflows.md`
+- `database-technical-architecture.md`
+- `master-screen-inventory.md`
+- `public-catalog-design.md`
+- `mobile-design.md`
+- `implementation-readiness.md`
+- architecture/QA/security/operations skill-impact review’ları
+- migration planı, API contract testleri, permission testleri ve restore acceptance testleri
+
+## Mevcut sonuç
+
+```text
+Architecture: ALLOWED TO START
+Production code: BLOCKED UNTIL ARCHITECTURE ACCEPTANCE
+```

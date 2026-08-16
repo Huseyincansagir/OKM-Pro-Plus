@@ -8,7 +8,7 @@
 
 ## 1. Genel tavsiye
 
-Projenin mevcut kapsamı için en güvenli yol, ilk sürümde **modüler monolith, local-first, temel stok/satış/sevkiyat/cari akışları güçlü, ileri otomasyon ve mevzuat entegrasyonları kontrollü biçimde sınırlı** bir MVP tanımlamaktır. P0 kararları mimarinin omurgasını belirlediği için kodlamadan önce kapatılmalıdır. P1 kararları için ya net değer seçilmeli ya da yazılı `ASSUMED WITH RISK` kaydı açılmalıdır.
+Projenin mevcut kapsamı için en güvenli yol, ilk sürümde **modüler monolith, local-first, temel stok/satış/sevkiyat/cari akışları güçlü, ileri otomasyon ve mevzuat entegrasyonları kontrollü biçimde sınırlı** bir MVP tanımlamaktır. P0 ve P1 kararları proje sahibinin kabulüyle kapatılmıştır. Architecture aşamasında seçilen değerler API, migration, permission, QA ve operations artefact’larına yayılacaktır.
 
 Önerilen sıralama şöyledir:
 
@@ -272,7 +272,7 @@ O-013  Tek marka/asset manifest production öncesi zorunlu
 O-014  Hard validation + FFD öneri + manuel depo onayı; optimalite yok
 ```
 
-Bu paket öneridir. Proje sahibi onayı olmadan `decision-log.md` içinde `DECIDED` olarak işlenmemeli; kabul edilmeyen veya ertelenen maddeler açıkça `ASSUMED WITH RISK` ya da `OPEN` kalmalıdır.
+Bu paket proje sahibinin 2026-08-16 kabulüyle `decision-log.md` içinde `DECIDED` baseline olarak işlenmiştir. Yeni kapsam veya karar değişikliği gelirse ilgili O-ID yeniden açılır ve Design Gate tekrar değerlendirilir.
 
 ## 6. Karar toplantısı için kısa onay listesi
 

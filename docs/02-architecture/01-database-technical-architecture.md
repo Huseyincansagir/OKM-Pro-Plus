@@ -511,11 +511,11 @@ Finansal ve stok kayıtları fiziksel olarak silinmemeli; kritik işlem yapan ku
 | Dosya | Metadata DB, dosya filesystem veya S3 uyumlu storage |
 | Rapor | Read model/projection ve server-side filtre |
 
-## 13. Karar bağımlı şema ve deployment genişlemeleri
+## 13. Kabul edilen şema ve deployment baseline’ı
 
-Aşağıdaki maddeler `/design/open-decisions-solution-matrix.md` içindeki öneriler seçildiğinde migration ve API tasarımına yansıtılır. Önerinin bulunması, seçimin yapılmış olduğu anlamına gelmez.
+Aşağıdaki maddeler proje sahibinin 2026-08-16 tarihinde kabul ettiği O-001–O-014 kararlarının migration, API ve deployment etkileridir. Architecture aşamasında gerçek entity/migration/DTO sözleşmelerine dönüştürülmelidir.
 
-| Karar | Şema/API etkisi | Gate koşulu |
+| Karar | Kabul edilen şema/API etkisi | Architecture kabul kontrolü |
 |---|---|---|
 | O-002 Kısmi sevkiyat | `SalesOrderItem` üzerinde ordered/reserved/shipped/remaining miktarları; bir siparişten birden fazla `DeliveryNote`; `delivery_note_item_allocations`; quantity snapshot ve row-lock | Domain, workflow, screen inventory, allocation ve concurrency testleri birlikte güncellenmiş olmalı |
 | O-003 Kısmi fatura | `InvoiceItem`–`DeliveryNoteItem` allocation; invoiced/remaining miktarları; duplicate allocation constraint/idempotency; `CurrentTransaction(Debit)` | Fatura toplamı sevk edilenden ve kalan miktardan büyük olamaz; fatura stok hareketi üretmez |
@@ -531,4 +531,4 @@ Aşağıdaki maddeler `/design/open-decisions-solution-matrix.md` içindeki öne
 
 ## 15. Kodlama öncesi çıkış kriteri
 
-Bu ön taslak; migration yazmadan önce entity ilişkilerinin, belge yaşam döngülerinin, transaction sınırlarının, permission modelinin ve deployment bileşenlerinin gözden geçirilmesi için kullanılmalıdır. Proje yönetimi ekibinin özellikle sipariş onayı, irsaliye stok çıkışı, ödeme-cari hareket ve üretim-stok girişi işlemlerini onaylamasından sonra şema detaylandırılıp migration planına geçilmelidir.
+Bu taslak, kabul edilen kararların entity ilişkileri, belge yaşam döngüleri, transaction sınırları, permission modeli ve deployment bileşenlerine aktarılması için Architecture girdisidir. Migration yazımı, gerçek API contract’ları ve acceptance testleri `factory-erp-architecture` aşamasında üretilecektir; production code ve migration implementation’ı Architecture acceptance tamamlanmadan başlamaz.

@@ -239,17 +239,17 @@ Bu değerlerin toplamı yine temel birimde tutulur. `quantity_base` doğruluk ka
 - Ambalaj tanımı değişirse yeni effective-from sürümleme veya yeni packaging kaydı oluşturulur; geçmiş stok ve belgeler geriye dönük yeniden yorumlanmaz.
 - Kullanılabilir stok hesabı temel birimde yapılır: `AvailableBaseQuantity = OnHandBaseQuantity - ReservedBaseQuantity`.
 
-## 8. Karar bağımlı genişlemeler
+## 8. Kabul edilen karar kapsamı ve domain etkileri
 
-Aşağıdaki model genişlemeleri `/design/open-decisions-solution-matrix.md` içindeki öneriler seçildiğinde etkinleştirilir; karar sahibi onayı olmadan baseline entity veya state olarak kabul edilmez:
+Aşağıdaki domain sınırları proje sahibinin 2026-08-16 tarihinde kabul ettiği O-001–O-014 baseline’ına göre uygulanır. Architecture aşaması bu kapsamı aggregate, command/query ve persistence contract’larına dönüştürür.
 
 | Karar | Domain etkisi |
 |---|---|
 | O-002 Kısmi sevkiyat | `SalesOrderItem` için ordered/reserved/shipped/cancelled/remaining miktarları, bir siparişten birden fazla `DeliveryNote` ve `DeliveryNoteItemAllocation` |
 | O-003 Kısmi fatura | `InvoiceItemAllocation` ile `DeliveryNoteItem` bağlantısı, invoiced/credited/remaining miktarları ve miktar sınırı |
 | O-012 Fiyat listesi | `PriceList`, `CustomerPriceGroup`, geçerlilik ve order/quote price snapshot |
-| O-004 BOM | `ProductionMaterial` ve hammadde hareketleri; MVP kapalı tutulursa migration dışı |
-| O-005 Lot/seri | `Lot`/`SerialNumber`, son kullanma ve traceability; MVP kapalı tutulursa migration dışı |
+| O-004 BOM | `ProductionMaterial` ve hammadde hareketleri MVP dışında; finished-good receipt ve üretim gerçekleşmesi baseline kapsamındadır |
+| O-005 Lot/seri | `Lot`/`SerialNumber`, son kullanma ve traceability MVP dışında; kalite ihtiyacı çıkarsa ilgili O-ID yeniden açılır |
 
 ## 9. Fiziksel lojistik ve karışık palet domain modeli
 

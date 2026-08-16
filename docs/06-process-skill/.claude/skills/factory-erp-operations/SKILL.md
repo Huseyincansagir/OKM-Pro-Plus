@@ -9,12 +9,14 @@ description: Sistemi şirket içi sunucuda çalıştırmak, Docker deployment, b
 
 Sistemin şirket bilgisayarında/server'ında güvenilir şekilde çalıştırılmasını ve sürdürülebilir biçimde işletilmesini sağla.
 
-## Decision-dependent operations
+## Accepted-decision operations
 
-- Read `/design/decision-log.md` and `/design/decision-clarification-backlog.md` before finalizing deployment or recovery instructions.
-- Treat O-010 (RPO/RTO) and O-011 (server/LAN/HTTPS topology) as required operational decisions. Do not present retention, network exposure, certificate, or remote-access values as final until the owner and target are recorded.
-- For public access, payroll, delivery proof and financial data, document the data exposure boundary, access owner, logging rule and incident response path.
+- Read `/design/decision-log.md` and `/design/decision-clarification-backlog.md` before finalizing deployment or recovery instructions; current O-001–O-014 values are the accepted baseline.
+- Apply O-010 as the operational baseline: daily full backup, separate disk/NAS target, 14-day retention, monthly restore test, with RPO ≤ 24 hours and RTO ≤ 8 hours as the accepted starting targets.
+- Apply O-011 as the deployment baseline: Ubuntu LTS, Docker Compose, PostgreSQL, reverse proxy, company LAN HTTPS and isolated public route; do not expose internal ERP endpoints directly to the internet.
+- For public access, payroll, delivery proof and financial data, document the data exposure boundary, access owner, logging rule and incident response path according to O-008/O-009.
 - A deployment is not operationally accepted until backup restore, health check, smoke test, mobile LAN access and permission-sensitive endpoints are verified on the target environment.
+- If a new or changed operational decision appears, reopen the relevant O-ID and stop treating the changed value as final until owner/date/evidence are recorded.
 
 ## Deployment
 

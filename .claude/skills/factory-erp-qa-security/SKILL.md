@@ -11,11 +11,12 @@ Sistemin yalnızca çalışmasını değil, yanlış kullanım altında da güve
 
 ## Karar ve Design Gate kanıtı
 
-- Test planını `/design/decision-log.md` ve `/design/decision-clarification-backlog.md` ile eşleştir; her O-ID için ilgili acceptance test veya `ASSUMED WITH RISK` kaydı bulunmalı.
-- O-001–O-005, O-011 ve O-012 kapanmadan ilgili fatura, sevkiyat, üretim, stok, deployment veya fiyat feature'larını release-ready sayma.
+- Test planını `/design/decision-log.md` ve `/design/decision-clarification-backlog.md` ile eşleştir; mevcut O-001–O-014 değerlerini kabul edilmiş baseline olarak test fixture ve assertion’lara taşı.
+- O-001–O-005, O-011 ve O-012 `DECIDED` olsa da ilgili fatura, sevkiyat, üretim, stok, deployment ve fiyat acceptance testleri tamamlanmadan release-ready sayma.
 - O-007, O-009, O-010 ve O-014 için owner, override, failure, audit, privacy/recovery veya algorithm acceptance testleri eksikse release gate'i kırmızı tut.
-- Bir karar kapatıldıktan sonra domain rule, workflow state, database constraint, API authorization, UI behavior, operations runbook ve test evidence arasında tutarlılık kontrolü yap.
-- Bir öneri veya varsayım testte sabit gerçek gibi kullanılmamalı; test fixture ve assertion karar statüsünü açıkça belirtmeli.
+- Karar yayılımını domain rule, workflow state, database constraint, API authorization, UI behavior, operations runbook ve test evidence arasında doğrula.
+- Yeni veya değişen bir karar `OPEN DECISION` durumuna dönerse ilgili feature’ın release gate’ini durdur ve Design Gate’i yeniden değerlendir.
+- Agent önerisi veya historical document testte güncel karar gibi kullanılmamalı; güncel `decision-log.md` authoritative kaynaktır.
 
 
 ## Test katmanları

@@ -2,7 +2,7 @@
 
 **Kapsam:** `QUANTITY_BASE_MISMATCH`, `QUANTITY_CONCURRENCY_CONFLICT`, idempotency ve O-002/O-003 allocation persistence
 
-**Durum:** Tasarım önerisi; Design Gate kapanmadan production contract değildir.
+**Durum:** O-002/O-003 proje sahibi tarafından 2026-08-16 tarihinde kabul edilmiş teknik baseline’dır; Architecture aşamasında production API/migration contract’ına dönüştürülecektir.
 
 **İlgili canonical belgeler:** [`partial-shipment-invoicing-workflow.md`](./partial-shipment-invoicing-workflow.md), [`database-technical-architecture.md`](./database-technical-architecture.md), [`domain-model.md`](./domain-model.md)
 
@@ -596,4 +596,4 @@ Bu teknik sözleşmenin production migration'a dönüşmesinden önce şu seçim
 | Conflict UX | Kullanıcıya otomatik miktar düşürme önerilecek mi, yoksa yalnızca yeniden yükleme mi? |
 | Close/waiver | Faturalanmayan sevk miktarı hangi rol ve gerekçeyle kapatılacak? |
 
-Bu belge O-002 ve O-003 için ayrıntılı teknik tasarım önerisidir; karar sahibi onayı gelmeden `DECIDED` olarak işaretlenmemelidir.
+Bu belge O-002 ve O-003 için kabul edilmiş ayrıntılı teknik tasarım baseline’ıdır. Architecture aşamasında API, migration, trigger/constraint, permission ve acceptance test sözleşmelerine aktarılacaktır. Yeni kapsam değişikliği ilgili O-ID’yi yeniden açar.

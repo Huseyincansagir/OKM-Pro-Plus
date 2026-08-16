@@ -1,16 +1,16 @@
 # Factory ERP-Lite
 ## Açık Kararlar ve Design Gate Karar Atölyesi
 
-> **Amaç:** O-001–O-014 arasındaki açık kararları; önerilen MVP çözümü, karar sahibi, mimari etkisi ve kapanış kriterleriyle birlikte proje yönetimi ekibinin onayına sunmak.
+> **Amaç:** Proje sahibinin kabul ettiği O-001–O-014 karar paketini, karar kanıtını ve Architecture aşamasına aktarılacak baseline kapsamını kayıt altına almak.
 
 | Alan | Durum |
 |---|---|
 | Proje | Factory ERP-Lite — üretim, depo, satış, sevkiyat, fatura, cari, ödeme, personel ve raporlama |
-| Aşama | `DISCOVER → DESIGN` |
-| Design Gate | **BLOCKED** |
+| Aşama | `DESIGN → DESIGN GATE / READY FOR ARCHITECTURE` |
+| Design Gate | **READY FOR ARCHITECTURE** |
 | Implementation | **NOT READY** |
-| Sonraki skill | `factory-erp-architecture` — açık kararlar kapatıldıktan sonra |
-| Karar kuralı | Agent önerisi tek başına `DECIDED` değildir; proje sahibi onayı gerekir |
+| Sonraki skill | `factory-erp-architecture` — başlayabilir |
+| Karar kuralı | O-001–O-014 proje sahibi tarafından 2026-08-16 tarihinde `DECIDED` yapıldı; yeni değişiklikler owner/date/evidence gerektirir |
 | Kanonik kaynak | [`/design/`](./) |
 
 ---
@@ -19,15 +19,15 @@
 
 Factory ERP-Lite için ekran envanteri, UX mimarisi, mobil operasyon akışları, public katalog tasarımı, domain modeli, iş akışları ve PostgreSQL teknik ön taslağı hazırlanmıştır. Bu artefact'lar kodlamaya başlamadan önce gerekli tasarım omurgasını oluşturur.
 
-Bununla birlikte O-001–O-014 arasındaki **14 açık karar**, veri modeli, belge durumları, yetki politikaları, entegrasyon sınırları, public erişim güvenliği ve deployment davranışını doğrudan etkiler. Bu nedenle Design Gate şu anda **BLOCKED** durumundadır. Karar sahipleri seçimleri, gerekçeleri ve karar tarihlerini yazılı biçimde onaylamadan production code yazılmamalıdır.
+O-001–O-014 arasındaki **14 karar**, veri modeli, belge durumları, yetki politikaları, entegrasyon sınırları, public erişim güvenliği ve deployment davranışını etkilediği için karar paketi olarak kayda alınmıştır. Proje sahibinin 2026-08-16 tarihli kabulüyle Design Gate karar blokajı kaldırılmış, Architecture aşamasına geçiş açılmıştır. Production code ise Architecture acceptance tamamlanana kadar başlatılmamalıdır.
 
 > **Toplantının temel çıktısı:** Her O maddesi için `seçim + karar sahibi + tarih + gerekçe + etkilenen artefact listesi` kaydedilmiş olmalıdır.
 
 ---
 
-## 2. Korunan mimari temel
+## 2. Kabul edilen mimari temel
 
-Açık kararlar henüz kapanmamış olsa da aşağıdaki temel yönler korunmaktadır:
+O-001–O-014 kararları aşağıdaki mimari temel üzerine yayılmıştır; Architecture aşaması bu baseline’ı API, migration ve deployment sözleşmelerine dönüştürecektir:
 
 | Konu | Korunan karar |
 |---|---|

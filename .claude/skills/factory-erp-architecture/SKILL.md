@@ -11,17 +11,17 @@ Tasarım çıktısını üretime hazır teknik mimariye dönüştür.
 
 ## Design kararlarını tüketme kuralı
 
-`/design/decision-log.md` ve `/design/open-decisions-solution-matrix.md` birlikte okunmalıdır. Solution matrix içindeki öneri, owner/date/evidence bulunmadan `DECIDED` kabul edilemez. Architecture skill'i açık kararları sessizce kapatamaz; seçilmemiş bir öneri şema, migration veya API sözleşmesine zorunlu kural olarak işlenmemelidir.
+`/design/decision-log.md` ve `/design/open-decisions-solution-matrix.md` birlikte okunmalıdır. Solution matrix içindeki öneri, owner/date/evidence bulunmadan `DECIDED` kabul edilemez. Mevcut baseline’da O-001–O-014 proje sahibi tarafından 2026-08-16 tarihinde kabul edilmiş ve `decision-log.md` içinde `DECIDED` olarak kayıtlıdır; Architecture skill’i bu seçilmiş değerleri zorunlu teknik girdiler olarak tüketebilir. Yeni veya değişen kararlar yine owner/date/evidence olmadan zorunlu şema, migration veya API kuralına dönüştürülmemelidir.
 
 Architecture başlamadan önce kararın `/design/domain-model.md`, `/design/business-workflows.md`, `/design/database-technical-architecture.md`, `/design/master-screen-inventory.md` ve ilgili skill-impact review'a yayıldığı doğrulanmalıdır.
 
 ## Karar netleştirme ve Design Gate
 
-- `/design/decision-clarification-backlog.md` dosyasını karar toplantısı gündemi olarak kullan; açık başlıkları uygulanabilir alt sorulara ayır.
-- O-001, O-002, O-003, O-004, O-005, O-011, O-012 ve O-013 maddelerini P0 tasarım blokajı olarak ele al; proje sahibi açıkça `ASSUMED WITH RISK` kabul etmedikçe mimari zorunluluk üretme.
-- O-007, O-009, O-010 ve O-014 için sorumlu rol, override/failure davranışı, audit olayı ve kabul testi tanımlanmadan architecture çıktısını tamamlanmış sayma.
-- Bir kararın kapanış kanıtı; seçilen değer, owner, tarih, gerekçe, etkilenen artefact'lar ve migration/API/state kısıtlarını birlikte içermelidir.
-- Karar kapandıktan sonra domain, workflow, database, UI, QA/security ve operations skill mirror'larının aynı canonical karara yayıldığını doğrula.
+- `/design/decision-clarification-backlog.md` dosyasını mevcut kararların alt soru/kapanış kanıtı ve artefact yayılım kontrol listesi olarak kullan.
+- O-001–O-014 için karar blokajı kaldırılmıştır; Architecture çıktılarında `decision-log.md` içindeki kabul edilen değerleri aynen uygula.
+- O-007, O-009, O-010 ve O-014 için seçilmiş override/failure davranışı, audit olayı ve kabul testini Architecture artefact’larına taşı.
+- Bir kararın kapanış kanıtı; seçilen değer, owner, tarih, gerekçe, etkilenen artefact'lar ve migration/API/state kısıtlarını birlikte içermelidir; mevcut karar kayıtlarında bunları traceable tut.
+- Yeni bir karar değişikliği veya kapsam genişlemesi görülürse ilgili O-ID’yi yeniden `OPEN DECISION` yap, Design Gate’i tekrar değerlendir ve seçilmemiş değeri zorunlu teknik kurala dönüştürme.
 
 ## Mimari yaklaşım
 
@@ -98,7 +98,11 @@ Temel entity grupları:
 - Mobil `viewMode` (`BaseUnit`, `Packaging`, `Breakdown`) yalnızca görünüm sözleşmesidir; `operationPackagingId` işlem seviyesidir ve `quantityBase` backend'de yeniden hesaplanır.
 - Mobil miktar işlemleri için barkod resolve, quantity preview, count, transfer, load scan ve delivery endpoint'leri aynı context/permission/idempotency/hata sözleşmesini kullanmalıdır.
 - `Idempotency-Key` ve `quantity_operation_snapshots` olmadan ikinci stok, transfer, yükleme veya teslim hareketi kabul edilmemeli.
-- BOM, lot/seri, e-belge adapter ve local deployment gibi konuları seçilen karara göre migration kapsamına al; öneriyi karar yerine koyma.
+- BOM/hammadde ve lot/seri için kabul edilen MVP dışı sınırı koru; `ProductionMaterial`, `Lot` ve `SerialNumber` tablolarını implementation migration’ına ekleme.
+- O-001 e-belge için vergi alanlarını ve `IInvoiceIntegrationService` adapter/stub sınırını uygula; gerçek sağlayıcı entegrasyonunu ayrı release olarak tut.
+- O-011 için Ubuntu LTS + Docker Compose + PostgreSQL + reverse proxy + LAN HTTPS ve public route izolasyonunu architecture deployment baseline’ına al.
+- O-012 için `PriceList`, `CustomerPriceGroup`, `ProductPrice` ve quote/order/invoice price snapshot’larını zorunlu tasarım girdisi olarak ele al.
+- O-014 için hard constraint + First Fit Decreasing öneri + manuel depo onayı akışını uygula; MVP’de optimalite garantisi verme.
 
 ## Transaction sınırları
 
