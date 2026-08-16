@@ -420,3 +420,22 @@ Migration `Down` metodu üretim ledger verisini silmek için kullanılmamalıdı
 ### 8.2 Sonraki teknik adımlar
 
 Bu uygulama source-target benzersizliği ve allocation kind modelini persistence seviyesine taşımıştır. Henüz tamamlanmayan konular; iki gerçek PostgreSQL connection ile concurrent allocation race testi, deferred cross-row upper-bound trigger’ı, allocation reversal işleminin application command transaction’ı, centralized idempotency replay/mismatch integration testi ve row-version/ETag conflict mapping’idir. Bu konular migration/application persistence slice’ının sonraki adımıdır.
+
+
+## 9. G5 hardening decision: current-account currency scope
+
+2026-08-16 tarihinde verilen karar doğrultusunda **A seçeneği** korunmuştur. MVP canonical baseline müşteri başına tek cari hesap ve `current_accounts.customer_id UNIQUE` invariant’ıdır. `currency_code` şu an muhasebe hesaplamasında tek aktif para birimi olan `TRY` ile sabitlenmiştir. Bu nedenle `(customer_id, currency_code)` composite unique index migration’ı uygulanmayacak ve mevcut `CustomerId` unique index’i değiştirilmeyecektir.
+
+Multi-currency açılması ileride yalnızca index değişikliği olarak ele alınmayacaktır. Bu durumda current-account query/command sözleşmeleri currency-scoped hale getirilmeli, statement endpoint’i ve DTO’lar gözden geçirilmeli, invoice/payment currency eşleşmesi, ledger aggregation, seed, migration ve integration testleri birlikte güncellenmelidir. Bu kapsam ayrı bir architecture decision olarak açılmalıdır.
+
+## 10. G5 hardening concurrency doğrulaması
+
+İki ayrı `FactoryErpDbContext` ve iki ayrı PostgreSQL connection ile aynı yeni aktif müşteri için eşzamanlı iki `ApplyPaymentAsync` çağrısı çalıştırıldı. Mevcut `customer_id UNIQUE` index’i ve `LockOrCreateCurrentAccountAsync` transaction davranışı sonucunda tam olarak bir çağrı başarılı, diğer çağrı `23505 unique_violation` ile rollback oldu. Son doğrulama tek current account, tek payment ve tek `PaymentApplied` current transaction bıraktı; fixture test sonunda temizlendi.
+
+Test dosyası:
+
+```text
+tests/FactoryErp.Infrastructure.UnitTests/Idempotency/CurrentAccountConcurrencyIntegrationTests.cs
+```
+
+Bu test, current-account creation race’inin sessiz duplicate veya çift ledger üretmediğini kanıtlar. Unique violation’ın application katmanında kontrollü domain/problem response’a çevrilmesi ayrıca ele alınması gereken bir API hardening maddesidir.
