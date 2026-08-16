@@ -11,7 +11,7 @@ description: Tasarımı kodlayan ana geliştirme skill'i. Backend, web, mobile, 
 
 ## Başlangıç koşulu
 
-`/design/implementation-ready.md` yoksa, `READY` değilse veya canonical artefact'lar arasında karar yayılımı doğrulanmamışsa yeni business feature implement etmeye başlama. Bir agent'ın dosyayı READY yazmış olması tek başına yeterli kanıt değildir; `/design/decision-log.md`, solution matrix, domain, workflow, database, screen inventory, UI design package ve skill-impact review birlikte kontrol edilmelidir. Ambalaj, fiziksel ölçü, araç kapasitesi, rota/durak, yük birimi ve `ShipmentPackage` kuralları implementation öncesi aynı canonical sürümde bulunmalıdır. Mevcut küçük altyapı düzeltmeleri gerekiyorsa yap, ancak domain tasarımını varsayarak gizlice değiştirme.
+`/design/implementation-ready.md` yoksa, `READY` değilse veya canonical artefact'lar arasında karar yayılımı doğrulanmamışsa yeni business feature implement etmeye başlama. Bir agent'ın dosyayı READY yazmış olması tek başına yeterli kanıt değildir; `/design/decision-log.md`, solution matrix, `/design/decision-clarification-backlog.md`, domain, workflow, database, screen inventory, UI design package ve skill-impact review birlikte kontrol edilmelidir. Ambalaj, fiziksel ölçü, araç kapasitesi, rota/durak, yük birimi ve `ShipmentPackage` kuralları implementation öncesi aynı canonical sürümde bulunmalıdır. P0 açık kararlar proje sahibi tarafından kapatılmadan veya açıkça `ASSUMED WITH RISK` kabul edilmeden ilgili business feature'a başlama. Mevcut küçük altyapı düzeltmeleri gerekiyorsa yap, ancak domain tasarımını varsayarak gizlice değiştirme.
 
 ## Teknoloji
 
@@ -137,6 +137,13 @@ Aşağıdaki hatalar kabul edilmez:
 - orphaned financial transaction
 - untracked stock adjustment
 - unauthorized state transition
+
+## Karar kapanışı ve kapsam kilidi
+
+- Feature başlamadan önce ilgili O-ID'lerini ve clarification backlog alt sorularını yazılı olarak eşleştir.
+- Vergi/e-belge, kısmi sevkiyat/fatura, BOM/lot, deployment, fiyat, marka ve ilgili permission kararları kapanmadıysa migration/API/state tasarımını varsayımla kilitleme.
+- Her seçilmiş karar için owner/date/rationale/effected artefacts/acceptance tests kaydı olmadan `Definition of Done` değerlendirmesi yapma.
+- Karar değişikliği implementation sırasında ortaya çıkarsa kod içinde sessizce uyarlama yapma; Design Gate'e geri dön ve canonical belgeleri güncelle.
 
 ## Agent workflow
 

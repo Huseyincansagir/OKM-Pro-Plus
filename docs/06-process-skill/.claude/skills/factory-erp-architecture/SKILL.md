@@ -15,6 +15,14 @@ Tasarım çıktısını üretime hazır teknik mimariye dönüştür.
 
 Architecture başlamadan önce kararın `/design/domain-model.md`, `/design/business-workflows.md`, `/design/database-technical-architecture.md`, `/design/master-screen-inventory.md` ve ilgili skill-impact review'a yayıldığı doğrulanmalıdır.
 
+## Karar netleştirme ve Design Gate
+
+- `/design/decision-clarification-backlog.md` dosyasını karar toplantısı gündemi olarak kullan; açık başlıkları uygulanabilir alt sorulara ayır.
+- O-001, O-002, O-003, O-004, O-005, O-011, O-012 ve O-013 maddelerini P0 tasarım blokajı olarak ele al; proje sahibi açıkça `ASSUMED WITH RISK` kabul etmedikçe mimari zorunluluk üretme.
+- O-007, O-009, O-010 ve O-014 için sorumlu rol, override/failure davranışı, audit olayı ve kabul testi tanımlanmadan architecture çıktısını tamamlanmış sayma.
+- Bir kararın kapanış kanıtı; seçilen değer, owner, tarih, gerekçe, etkilenen artefact'lar ve migration/API/state kısıtlarını birlikte içermelidir.
+- Karar kapandıktan sonra domain, workflow, database, UI, QA/security ve operations skill mirror'larının aynı canonical karara yayıldığını doğrula.
+
 ## Mimari yaklaşım
 
 Varsayılan mimari:

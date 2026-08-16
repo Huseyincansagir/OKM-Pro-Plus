@@ -9,6 +9,15 @@ description: Fabrika ERP'sinin functional QA, integration/E2E, security, authori
 
 Sistemin yalnızca çalışmasını değil, yanlış kullanım altında da güvenli ve tutarlı kalmasını doğrula.
 
+## Karar ve Design Gate kanıtı
+
+- Test planını `/design/decision-log.md` ve `/design/decision-clarification-backlog.md` ile eşleştir; her O-ID için ilgili acceptance test veya `ASSUMED WITH RISK` kaydı bulunmalı.
+- O-001–O-005, O-011 ve O-012 kapanmadan ilgili fatura, sevkiyat, üretim, stok, deployment veya fiyat feature'larını release-ready sayma.
+- O-007, O-009, O-010 ve O-014 için owner, override, failure, audit, privacy/recovery veya algorithm acceptance testleri eksikse release gate'i kırmızı tut.
+- Bir karar kapatıldıktan sonra domain rule, workflow state, database constraint, API authorization, UI behavior, operations runbook ve test evidence arasında tutarlılık kontrolü yap.
+- Bir öneri veya varsayım testte sabit gerçek gibi kullanılmamalı; test fixture ve assertion karar statüsünü açıkça belirtmeli.
+
+
 ## Test katmanları
 
 ### Unit
@@ -141,6 +150,9 @@ En az şu roller için pozitif ve negatif test yap:
 N+1, missing indexes ve full-table scan risklerini ara.
 
 ## Release gate
+
+Design Gate ile Release Gate'i karıştırma: Design Gate mimariye geçiş uygunluğunu, Release Gate çalışan ürünün doğrulanmasını ölçer. Açık P0 karar veya eksik karar yayılımı varsa build başarılı olsa bile release readiness `BLOCKED` kalır.
+
 
 Release öncesi:
 

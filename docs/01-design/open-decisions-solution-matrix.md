@@ -5,6 +5,10 @@
 
 > **Uyarı:** Vergi, e-belge, bordro, KVKK ve finansal kayıt önerileri teknik tasarım içindir; uygulamaya alınmadan önce mali müşavir, hukuk/uyum ve ilgili iş sahipleri tarafından doğrulanmalıdır.
 
+## Netleştirme yöntemi
+
+Her satır için `/design/decision-clarification-backlog.md` içindeki alt sorular cevaplanmadan önerilen MVP çözümü nihai karar sayılmaz. Karar toplantısında seçilen değer, owner, tarih, gerekçe, etkilenmiş artefact'lar ve kabul testi ayrıca kaydedilmelidir.
+
 ## Önerilen kararlar
 
 | ID | Konu | Önerilen MVP çözümü | Mimari / workflow etkisi | Karar sahibi | Karar verilmezse |
@@ -45,7 +49,7 @@ O-013  Tek marka ve asset politikası kodlamadan önce zorunlu
 O-014  Heuristik araç/palet önerisi + hard constraint validation + manuel depo onayı; optimalite garantisi yok
 ```
 
-Bu paket **öneridir**, karar sahibi onayı olmadan `decision-log.md` içinde `DECIDED` olarak işlenmemelidir.
+Bu paket **öneridir**, karar sahibi onayı olmadan `decision-log.md` içinde `DECIDED` olarak işlenmemelidir. Özellikle P0 maddeler için karar sahibi açıkça `ASSUMED WITH RISK` demedikçe Design Gate blokajı korunur.
 
 ## Karar kapatma prosedürü
 

@@ -65,6 +65,10 @@
 | O-013 | Final marka adı, logo ve ürün görseli lisansı | Manus mockup'larında MaviKağıt, NAVIS ve Napkinova adları birlikte kullanılmıştır; uygulama token'ları, header ve public katalog tek marka altında sabitlenmelidir. | Proje sahibi + pazarlama |
 | O-014 | Kargo planlama otomasyon seviyesi ve araç eşleştirme politikası | Sezgisel otomatik öneri yalnızca uygunluk ön kontrolü mü yapacak, yoksa araç/palet/rota atamasını otomatik kilitleyecek mi; manuel override ve optimalite beklentisi netleşmelidir. | Depo + sevkiyat yöneticisi |
 
-## 5. Karar yönetimi kuralları
+## 5. Karar netleştirme gündemi
 
-`OPEN DECISION` maddeleri çözülmeden riskli domain implementasyonuna geçilmez. Öneri seçenekleri ve MVP çözüm paketi `/design/open-decisions-solution-matrix.md` içinde tutulur; yalnızca karar sahibi onayı, karar tarihi ve etkilenen artefact listesi ile desteklenen kararlar `DECIDED` sınıfına taşınabilir. Bir karar çözüldüğünde bu dosyadaki sınıf, gerekçe, etkilenen tasarım dosyaları ve gerekiyorsa workflow state'leri güncellenir. Design Gate sırasında tüm açık kararlar `BLOCKED` veya `ASSUMED WITH RISK` olarak değerlendirilir.
+O-001–O-014 maddelerini toplantıda uygulanabilir alt sorulara dönüştürmek için `/design/decision-clarification-backlog.md` dosyasını kullan. Bu dosya karar önermez; karar sahibinin seçmesi gereken değerleri, etkilenen artefact'ları ve kabul ölçütlerini görünür hale getirir. P0 maddeler kapanmadan veya açıkça `ASSUMED WITH RISK` kabul edilmeden Design Gate `READY FOR ARCHITECTURE` yapılamaz.
+
+## 6. Karar yönetimi kuralları
+
+`OPEN DECISION` maddeleri çözülmeden riskli domain implementasyonuna geçilmez. Öneri seçenekleri ve MVP çözüm paketi `/design/open-decisions-solution-matrix.md` içinde tutulur; yalnızca karar sahibi onayı, karar tarihi ve etkilenen artefact listesi ile desteklenen kararlar `DECIDED` sınıfına taşınabilir. Bir karar çözüldüğünde bu dosyadaki sınıf, gerekçe, etkilenen tasarım dosyaları, `/design/decision-clarification-backlog.md` içindeki kapanış çıktısı ve gerekiyorsa workflow state'leri güncellenir. Design Gate sırasında tüm açık kararlar `BLOCKED` veya `ASSUMED WITH RISK` olarak değerlendirilir.

@@ -24,12 +24,13 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 6. [`../design/grok-session-review.md`](../design/grok-session-review.md) — Grok notlarının karşılaştırmalı incelemesi.
 7. [`../design/open-decisions-solution-matrix.md`](../design/open-decisions-solution-matrix.md) — O-001–O-014 çözüm önerileri ve karar sahipleri.
 8. [`../design/open-decisions-workshop.md`](../design/open-decisions-workshop.md) — Karar atölyesi özeti, onay formu ve Design Gate kapanış planı.
-9. [`../design/product-packaging-and-uom.md`](../design/product-packaging-and-uom.md) — Palet-koli-paket-temel birim hiyerarşisi ve miktar dönüşüm kuralları.
-10. [`../design/mobile-toggle-api-and-schema.md`](../design/mobile-toggle-api-and-schema.md) — Mobil Palet/Koli/Paket toggle database, API ve idempotency sözleşmesi.
-11. [`../design/mobile-toggle-screen-by-screen-review.md`](../design/mobile-toggle-screen-by-screen-review.md) — Toggle'ın ekran bazlı görünürlük, varsayılan ve aksiyon UX incelemesi.
-12. [`../design/logistics-planning-rules-and-algorithms.md`](../design/logistics-planning-rules-and-algorithms.md) — Hard/soft lojistik kuralları, araç kapasite eşleştirme ve karışık palet algoritması.
-13. [`../design/vehicle-capacity-matching.md`](../design/vehicle-capacity-matching.md) — Araç kapasite eşleştirme, aday eleme, fit skoru ve yük dağılımı detayları.
-14. [`../design/shipment-logistics-ui-design.md`](../design/shipment-logistics-ui-design.md) — Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı.
+9. [`../design/decision-clarification-backlog.md`](../design/decision-clarification-backlog.md) — O-001–O-014 karar alt soruları, ortak UX netleştirmeleri ve gate kapanış kanıtları.
+10. [`../design/product-packaging-and-uom.md`](../design/product-packaging-and-uom.md) — Palet-koli-paket-temel birim hiyerarşisi ve miktar dönüşüm kuralları.
+11. [`../design/mobile-toggle-api-and-schema.md`](../design/mobile-toggle-api-and-schema.md) — Mobil Palet/Koli/Paket toggle database, API ve idempotency sözleşmesi.
+12. [`../design/mobile-toggle-screen-by-screen-review.md`](../design/mobile-toggle-screen-by-screen-review.md) — Toggle'ın ekran bazlı görünürlük, varsayılan ve aksiyon UX incelemesi.
+13. [`../design/logistics-planning-rules-and-algorithms.md`](../design/logistics-planning-rules-and-algorithms.md) — Hard/soft lojistik kuralları, araç kapasite eşleştirme ve karışık palet algoritması.
+14. [`../design/vehicle-capacity-matching.md`](../design/vehicle-capacity-matching.md) — Araç kapasite eşleştirme, aday eleme, fit skoru ve yük dağılımı detayları.
+15. [`../design/shipment-logistics-ui-design.md`](../design/shipment-logistics-ui-design.md) — Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı.
 
 ## Arşiv okuma sırası
 
@@ -49,6 +50,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 14. [`01-design/21-mobile-toggle-api-and-schema.md`](./01-design/21-mobile-toggle-api-and-schema.md)
 15. [`01-design/22-mobile-toggle-screen-by-screen-review.md`](./01-design/22-mobile-toggle-screen-by-screen-review.md)
 16. [`01-design/23-vehicle-capacity-matching.md`](./01-design/23-vehicle-capacity-matching.md)
+17. [`01-design/24-decision-clarification-backlog.md`](./01-design/24-decision-clarification-backlog.md)
 
 ## Aşama sonucu
 

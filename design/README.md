@@ -31,6 +31,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`business-workflows.md`](./business-workflows.md) | Sales, production ve personnel workflow'ları |
 | [`database-technical-architecture.md`](./database-technical-architecture.md) | PostgreSQL, API, transaction ve deployment ön taslağı |
 | [`decision-log.md`](./decision-log.md) | DECIDED, ASSUMED ve OPEN DECISION kayıtları |
+| [`decision-clarification-backlog.md`](./decision-clarification-backlog.md) | O-001–O-014 için karar toplantısı alt soruları ve Design Gate kapanış çıktıları |
 | [`implementation-readiness.md`](./implementation-readiness.md) | Ayrıntılı Design Gate değerlendirmesi |
 | [`implementation-ready.md`](./implementation-ready.md) | Implementation skill için resmi gate dosyası |
 
