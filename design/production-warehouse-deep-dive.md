@@ -146,6 +146,15 @@ Kritik stok listesinde ürün, depo, kullanılabilir miktar, minimum stok, son h
 
 ## 9. Stok listesi ve stok detay ekranı
 
+Stok ekranının üst araç çubuğunda ortak miktar görünümü bulunur:
+
+```text
+[ Temel Birim ] [ Ambalaj ] [ Kırılım ]
+Ambalaj filtresi: [ Tümü ] [ Palet ] [ Koli ] [ Paket ] [ Temel Birim ]
+```
+
+Bu kontrol fiziksel stoğun nasıl okunacağını değiştirir; ledger miktarını değiştirmez. Kritik stok ve finansal karşılaştırmalarda temel birim karşılığı daima görünür kalır.
+
 ### Stok listesi kolonları
 
 | Kolon | Anlam |
@@ -215,6 +224,17 @@ Transfer durumları `Taslak`, `Hazırlanıyor`, `Yolda`, `Tamamlandı`, `İptal`
 
 ## 13. Barkod deneyimi
 
+Barkod sonucu ekranında üçlü toggle aynı ürün özeti üzerinde çalışır:
+
+```text
+[ Temel Birim ] [ Ambalaj ] [ Kırılım ]
+Ürün: Premium Napkin 33x33
+Okunan: 1 Koli = 2.000 adet
+Mevcut: 18.600 adet | 9 Koli + 6 Paket
+```
+
+Koli barkodu okutulduğunda varsayılan işlem `+1 Koli`, paket barkodu okutulduğunda `+1 Paket` olur. Aynı ürünün farklı ambalaj barkodları temel miktarda toplanır. “Sayım”, “Sevkiyata Ekle” ve “Transfer Başlat” aksiyonları seçili görünümle devam eder; kayıt backend'de temel birimde oluşturulur.
+
 ### Web USB barkod
 
 USB okuyucu klavye gibi giriş yaptığında odaklanmış barkod alanı kısa sürede gelen karakterleri okuyup Enter sinyalinde arama yapar. Kullanıcı manuel yazı ile cihaz çıktısını ayırt edebilmesi için son tarama zamanı ve barkod uzunluğu sistemde tutulabilir.
@@ -235,6 +255,8 @@ Ağ yoksa kamera okuması ürün kodunu geçici olarak gösterebilir; stok harek
 
 ## 14. Sevkiyat hazırlama ile depo bağlantısı
 
+Sevkiyat ekranında `Temel Birim / Ambalaj / Kırılım` toggle'ı tüm satırlara uygulanır. `Tümü / Palet / Koli / Paket / Temel Birim` filtresi, farklı fiziksel hazırlama senaryolarında kullanılabilir.
+
 Sevkiyat ekranı irsaliyeden gelen beklenen kalemleri gösterir. Her kalemde sipariş miktarı, daha önce sevk edilen, sevk edilecek ve barkodla doğrulanan miktar; hem temel birimde hem de seçilen ambalaj seviyesinde gösterilir. Örneğin `5 Koli (10.000 adet)`.
 
 ```text
@@ -249,7 +271,52 @@ Sevkiyat ekranı irsaliyeden gelen beklenen kalemleri gösterir. Her kalemde sip
 
 Depo kullanıcıları finansal fiyat veya cari bilgilerini varsayılan olarak görmez. Sevkiyat tamamlandığında irsaliye ve stok hareketi arasındaki bağlantı detay ekranında gösterilir.
 
-## 15. Yetki matrisi
+## 15. Kargo planlama ve karışık palet
+
+Sevkiyat hazırlama sonrasında depo kullanıcısı `Kargo Planı` ekranına geçer. Ekran; irsaliye kalemlerini, araç/kargo kapasitesini, kullanılacak palet tiplerini, toplam kg/hacim/palet sayısını ve uygunluk uyarılarını aynı bağlamda gösterir.
+
+```text
+Sevkiyat: SHP-2026-000142       Araç: Kamyon-03
+Kapasite: 1.200 kg | 8,0 m³ | 4 palet
+Kullanım: 426 kg | 2,4 m³ | 2 palet
+Durum: Uygun
+
+PALLET-001  Karışık Palet
+├─ Premium Napkin 33x33   3 Koli   36 kg   0,216 m³
+└─ Kokteyl Napkin 24x24   6 Koli   78 kg   0,468 m³
+
+[ Uygunluğu Hesapla ] [ Palet Ekle ] [ Kalem Ata ] [ Planı Kilitle ]
+```
+
+### Kargo planlama akışı
+
+```text
+Sevkiyat oluştur
+→ Araç/kargo tipi seç
+→ Kapasite ön kontrolü
+→ Kargo planı taslağı
+→ Tekli veya karışık palet ata
+→ Ağırlık/hacim/istifleme kontrolü
+→ Planı kilitle
+→ Palet/koli barkoduyla yükleme doğrulaması
+→ Sevk et
+```
+
+Sistem ilk sürümde uygunluk ön kontrolü ve manuel palet atama desteği sunar; matematiksel olarak optimal plan garantisi vermez. Depo sorumlusu öneriyi düzenleyip planı kilitler. Plan kilitlenmeden yükleme tamamlanamaz.
+
+### Uygunluk kontrolleri
+
+| Kontrol | Davranış |
+|---|---|
+| Ağırlık | Araç ve palet maksimum kg sınırı aşılırsa plan geçersiz olur |
+| Hacim | Araç iç hacmi ve palet dış ölçüsü birlikte kontrol edilir |
+| Palet adedi | Araç kapasitesindeki maksimum palet sayısı aşılmaz |
+| İstifleme | Üstüne yük konulamayan veya yönü sabit ürünler korunur |
+| Miktar | Yük planı irsaliye/sevkiyat kalan temel miktarını aşamaz |
+| Karışık palet | Farklı ürünler yalnızca fiziksel uyumluluk varsa aynı palete atanır |
+| Gerçek yük | Barkodla planlanan-gerçekleşen farkı gösterilir; farkta açıklama istenir |
+
+## 16. Yetki matrisi
 
 | İşlem | Depo | Üretim | Yönetici | Muhasebe |
 |---|---:|---:|---:|---:|
@@ -261,11 +328,14 @@ Depo kullanıcıları finansal fiyat veya cari bilgilerini varsayılan olarak g�
 | Üretim kaydı girme | — | ✓ | ✓ | — |
 | İş emri tamamlama | — | ✓ | ✓ | — |
 | İrsaliye hazırlama | ✓ | — | ✓ | Görüntüleme |
+| Kargo planı oluşturma | ✓ | — | ✓ | Görüntüleme |
+| Kargo planı kilitleme | ✓ | — | ✓ | — |
+| Yükleme doğrulama | ✓ | — | ✓ | Görüntüleme |
 | Fatura oluşturma | — | — | ✓ | ✓ |
 
 Yetki yok ekranı kullanıcıya yalnızca “erişim yok” dememeli; işlemi yapabilecek departmanı veya rolü de açıklamalıdır.
 
-## 16. Tasarımda özel hata ve güvenlik durumları
+## 17. Tasarımda özel hata ve güvenlik durumları
 
 | Durum | Kullanıcıya mesaj |
 |---|---|
@@ -278,7 +348,7 @@ Yetki yok ekranı kullanıcıya yalnızca “erişim yok” dememeli; işlemi ya
 | Ağ bağlantısı yok | İşlem sunucuya kaydedilmedi. Bağlantı gelince tekrar deneyin. |
 | Yetki yok | Bu işlemi yapma yetkiniz bulunmuyor. |
 
-## 17. Üretim ve depo için kritik raporlar
+## 18. Üretim ve depo için kritik raporlar
 
 ### Üretim
 

@@ -9,7 +9,7 @@
 | Customers | Customer, Address, Contact, Note | Müşteri kimliği, iletişim ve adres |
 | Sales | QuoteRequest, Quote, SalesOrder, Approval | Talep, teklif, sipariş ve onay |
 | Warehouse | Warehouse, Location, Stock, StockMovement, Reservation, Count, Transfer | Fiziksel stok ve depo hareketleri |
-| Shipping | DeliveryNote, Shipment, Vehicle, Driver | Sevk belgesi, yükleme ve teslim |
+| Shipping | DeliveryNote, Shipment, Vehicle, Driver, PalletType, LoadPlan, LoadUnit, LoadUnitItem, VehicleCapacity | Sevk belgesi, araç/kargo kapasitesi, tekli veya karışık palet yükleme ve teslim |
 | Invoicing | Invoice, InvoiceItem | Fatura ve belge bağlantıları |
 | Current Accounts | CurrentAccount, CurrentTransaction | Borç, alacak, bakiye ve ekstre |
 | Payments | Payment, PaymentMethod, PaymentAllocation | Tahsilat/ödeme ve fatura dağılımı |
@@ -37,7 +37,7 @@
 | Teklif | `Quote` | Quote PDF, quote summary | Sipariş fiyatı tekliften sessizce kopyalanmamalı |
 | Sipariş | `SalesOrder` | Approval panel, picking list | Sevk belgesi sipariş yerine geçmemeli |
 | İrsaliye | `DeliveryNote` | Shipment picking view | Sevkiyat miktarı irsaliyeden bağımsızlaşmamalı |
-| Sevkiyat | `Shipment` | Delivery status, loading board | Teslim durumu irsaliyede kopyalanmamalı |
+| Sevkiyat | `Shipment` + `LoadPlan` + `LoadUnit` | Delivery status, loading board, capacity utilization | Yük planı sevkiyat miktarının yerine geçmemeli; plan kilitlenmeden fiziksel yükleme kesinleşmemeli |
 | Fatura | `Invoice` | Customer balance, payment status | Cari hareket faturanın yerine geçmemeli |
 | Üretim | `ProductionRecord` | Production dashboard, machine report | Dashboard toplamı ana kayıt yerine geçmemeli |
 | Makine | `Machine` | Machine status board | İş emrinde makine adı metin olarak kopyalanmamalı |
@@ -62,6 +62,11 @@ flowchart TD
   SalesOrder --> StockReservation
   SalesOrder --> DeliveryNote
   DeliveryNote --> Shipment
+  Shipment --> LoadPlan
+  LoadPlan --> LoadUnit
+  LoadUnit --> LoadUnitItem
+  Vehicle --> VehicleCapacity
+  PalletType --> LoadUnit
   DeliveryNote --> Invoice
   Invoice --> CurrentTransaction
   PriceList --> ProductPrice
@@ -203,6 +208,39 @@ Aşağıdaki model genişlemeleri `/design/open-decisions-solution-matrix.md` i�
 | O-004 BOM | `ProductionMaterial` ve hammadde hareketleri; MVP kapalı tutulursa migration dışı |
 | O-005 Lot/seri | `Lot`/`SerialNumber`, son kullanma ve traceability; MVP kapalı tutulursa migration dışı |
 
-## 8. Tasarım sonucu
+## 8. Fiziksel lojistik ve karışık palet domain modeli
+
+Ambalaj miktarı ile fiziksel yükleme farklı sorumluluklardır. `5 Koli` ürün miktarını ifade eder; koli boyutu, brüt ağırlığı, hacmi ve hangi palete yerleştirildiği `Shipping` bounded context'inde yönetilir.
+
+| Entity | Sorumluluk |
+|---|---|
+| `ProductPhysicalProfile` | Temel ürün ölçüsü, net ağırlığı, hacmi, kırılabilirlik ve taşıma kuralları |
+| `PackagingPhysicalProfile` | Kutu/koli/paket/palet dış ölçüsü, dara, brüt ağırlık ve istifleme kuralları |
+| `PalletType` | Palet ölçüsü, dara ağırlığı, maksimum yük ve istifleme sınırı |
+| `VehicleCapacity` | Araç/kargo tipi için maksimum ağırlık, hacim, palet ve ölçü kapasitesi |
+| `LoadPlan` | Bir shipment için taslak, doğrulanmış veya kilitlenmiş yükleme planı |
+| `LoadUnit` | Palet, kafes, koli grubu veya loose yük birimi; karışık palet olabilir |
+| `LoadUnitItem` | LoadUnit içindeki ürün, ambalaj seviyesi, temel miktar ve fiziksel değerler |
+
+`LoadUnit` tek bir ürün kartı değildir. Karışık palet şu şekilde modellenir:
+
+```text
+Shipment
+  → LoadPlan
+      → LoadUnit(Pallet-001, Mixed)
+          → LoadUnitItem(Product A, 3 Koli)
+          → LoadUnitItem(Product B, 6 Koli)
+```
+
+### Fiziksel lojistik invariants
+
+- Yük planı `Shipment` miktarını artıramaz; her `LoadUnitItem` bağlı irsaliye/sevkiyat kaleminin kalan miktarını aşamaz.
+- Palet uygunluğu ağırlık, hacim, palet ölçüsü, maksimum yük, istifleme ve ürün uyumluluğu kontrollerinin tamamından geçmelidir.
+- `is_stackable = false` veya `max_stack_count = 1` olan yüklerin üzerine başka yük konulamaz.
+- Karışık palet aynı palet üzerinde birden fazla ürün veya ambalaj seviyesine izin verir; fiziksel uyumsuzluk varsa sistem engeller veya yetkili override ister.
+- Taslak yük planı sevkiyatı değiştirmez. `Locked` durumuna gelen plan audit kaydı üretir; gerçek yükleme ayrıca barkodla doğrulanır.
+- Planlanan ve gerçekleşen yük farkı açıklama ve gerekirse yetkili onayı gerektirir.
+
+## 9. Tasarım sonucu
 
 Source of truth haritası `/design` altındaki canonical ekran, workflow ve teknik dokümanların ortak referansıdır. Numaralı `docs/00`–`docs/06` dosyaları senkronize arşiv olarak korunur. Aynı kavram için farklı modüllerde ikinci bir ana kayıt tasarlanırsa bu durum `/design/decision-log.md` içinde açıkça değerlendirilmeden Design Gate geçilmez.

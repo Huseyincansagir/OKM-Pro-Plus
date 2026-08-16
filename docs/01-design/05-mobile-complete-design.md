@@ -69,7 +69,13 @@ Tara sekmesi
 
 Tarama ekranında kamera görüntüsü, çerçeve, flaş, manuel kod girişi ve “Barkodu okutun” açıklaması bulunur. Barkod bulunamazsa kullanıcı manuel ürün aramasına geçebilir. Aynı barkodun art arda okutulması duplicate hareket oluşturmayacak şekilde kısa süreli kilitlenir.
 
-Ürün sonuç ekranında ürün görseli, ürün adı, ürün kodu, barkod, temel birimde toplam stok, seçili depo, rezerve miktar ve kullanılabilir miktar gösterilir. Ambalaj görünümü de ayrıca sunulur; örneğin `5 Koli (10.000 adet)`. Hızlı işlemler role göre değişir:
+Ürün sonuç ekranında ürün görseli, ürün adı, ürün kodu, barkod, temel birimde toplam stok, seçili depo, rezerve miktar ve kullanılabilir miktar gösterilir. Ambalaj görünümü de ayrıca sunulur; örneğin `5 Koli (10.000 adet)`. Mobilde ortak üçlü toggle kullanılır:
+
+```text
+[ Temel Birim ] [ Ambalaj ] [ Kırılım ]
+```
+
+Kullanıcının seçimi stok doğruluğunu değiştirmez. Depo/saha işlemlerinde varsayılan `Ambalaj`, sayım ve karma stoklarda varsayılan `Kırılım`, finansal özetlerde varsayılan `Temel Birim` görünümüdür. Hızlı işlemler role göre değişir:
 
 | Rol | İşlemler |
 |---|---|
@@ -97,17 +103,19 @@ Sayım görevi seç
 → Onaya gönder veya yetkiliyse tamamla
 ```
 
-Fark oluştuğunda sistem miktarı, sayılan miktar ve fark büyük puntolarla gösterilir. Gerekçe zorunlu olur. Kullanıcının düzeltme yetkisi yoksa “Onaya Gönder” görünür; yetkiliyse kesinleştirmeden önce stok etkisi özetlenir.
+Fark oluştuğunda sistem miktarı, sayılan miktar ve fark büyük puntolarla gösterilir. Her üç değer aynı toggle görünümünde tutulur; temel birim karşılığı da yardımcı metin olarak görünür. Gerekçe zorunlu olur. Kullanıcının düzeltme yetkisi yoksa “Onaya Gönder” görünür; yetkiliyse kesinleştirmeden önce stok etkisi özetlenir.
 
 ## 8. Transfer akışı
 
-Transfer ekranında kaynak depo, hedef depo ve konum seçilir. Ürün barkodla eklenir, miktar ve ambalaj seviyesi girilir; temel miktar önizlemesi gösterilir. Kullanıcı `5 Koli` seçerse sistem ilgili temel miktarı hesaplar. Kaynakta temel kullanılabilir stok yeterli değilse işlem tamamlanmaz. Transfer kayıt numarası, kaynak çıkışı ve hedef giriş durumu başarılı sonuç ekranında gösterilir.
+Transfer ekranında kaynak depo, hedef depo ve konum seçilir. Ürün barkodla eklenir, miktar ve ambalaj seviyesi girilir; temel miktar önizlemesi gösterilir. Kullanıcı `5 Koli` seçerse sistem ilgili temel miktarı hesaplar. Miktar görünümü `Temel Birim / Ambalaj / Kırılım` toggle'ı ile değiştirilebilir. Kaynakta temel kullanılabilir stok yeterli değilse işlem tamamlanmaz. Transfer kayıt numarası, kaynak çıkışı ve hedef giriş durumu başarılı sonuç ekranında gösterilir.
 
 ## 9. Sevkiyat operasyonu
 
 İşlerim ekranında sevke hazır ve hazırlanmakta olan sevkiyatlar kart halinde listelenir. Kartta sevkiyat no, müşteri, irsaliye, teslim tarihi, ürün adedi ve öncelik bulunur.
 
-Sevkiyat detayı ürün doğrulama ekranına açılır. Her satırda beklenen, okutulan ve kalan miktar hem temel birimde hem de ambalaj görünümünde gösterilir. Örneğin `5 Koli (10.000 adet)`. Barkod okutuldukça okutulan temel miktar artar. Fark varsa sistem uyarır ve sevkiyatı tamamlamadan önce açıklama ister.
+Sevkiyat detayı ürün doğrulama ekranına açılır. Her satırda beklenen, okutulan ve kalan miktar hem temel birimde hem de ambalaj görünümünde gösterilir. `Temel Birim / Ambalaj / Kırılım` toggle'ı aynı satıra uygulanır. Örneğin `5 Koli (10.000 adet)`. Barkod okutuldukça okutulan temel miktar artar. Fark varsa sistem uyarır ve sevkiyatı tamamlamadan önce açıklama ister.
+
+Kargo planı varsa mobilde ayrıca araç kapasitesi, kullanılan kg/m³/palet, aktif palet barkodu ve palet içeriği gösterilir. Kullanıcı yeni bir palet barkodu açabilir, koli/paket barkodlarını ilgili palete ekleyebilir ve karışık paletin toplam ağırlık/hacmini görebilir. Plan kilitli değilse mobilde yalnızca taslak düzenleme; kilitli plan üzerinde ise barkodla yükleme doğrulama yapılır.
 
 ```text
 Sevkiyat seç
@@ -116,6 +124,7 @@ Sevkiyat seç
 → Miktarları tamamla
 → Araç/şoför bilgisini kontrol et
 → Yükleme tamamlandı
+→ Planlanan/gerçekleşen farkı kontrol et
 → Sevkiyata hazır / sevk edildi
 ```
 

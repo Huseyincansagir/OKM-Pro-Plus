@@ -172,26 +172,173 @@ Barcode → Product → Packaging Level → Base Quantity
 
 Barkod koliye aitse okutma varsayılan olarak `1 Koli`; paket barkodu ise `1 Paket` ekler. Kullanıcı miktarı artırabilir veya yetkili işlemde ambalaj seviyesini değiştirebilir.
 
-## 9. Ekran kuralları
+## 9. Ortak arayüz deseni: miktar görünümü ve ambalaj filtresi
 
-Ürün kartında temel birim ve ambalaj özeti görünür. Sipariş, irsaliye, transfer ve sevkiyat ekranlarında miktar girişi iki alanla yapılır:
+Ambalaj bilgisi tek bir ürün ekranına hapsedilmez. Barkod, stok, sayım, transfer, sipariş, irsaliye, sevkiyat, fatura allocation, üretim ve rapor ekranlarında ortak bir **üçlü segmented toggle** kullanılır:
+
+```text
+[ Temel Birim ]  [ Ambalaj ]  [ Kırılım ]
+```
+
+| Görünüm | Kullanıcıya gösterilen | Kullanım amacı |
+|---|---|---|
+| **Temel Birim** | `10.000 adet` veya `300 kg` | Stok doğruluğu, finansal kontrol, miktar karşılaştırması |
+| **Ambalaj** | `5 Koli` | Depo, satış, sevkiyat ve saha operasyonu |
+| **Kırılım** | `2 Palet + 5 Koli + 6 Paket` | Karma/açılmış ambalajların fiziksel açıklaması |
+
+Bu toggle **miktarı değiştirmez; yalnızca görünümü değiştirir.** Miktar girişi için ayrıca ambalaj seviyesi seçici kullanılır:
 
 ```text
 Miktar: [ 5 ]
-Ambalaj: [ Koli ▼ ]
+Giriş birimi: [ Koli ▼ ]
 Karşılığı: 10.000 adet
+Gösterim: [ Temel Birim | Ambalaj | Kırılım ]
 ```
 
-Stok ekranlarında kullanıcı görünümü değiştirebilir:
+Liste ve raporlarda segmented toggle'a ek olarak ambalaj filtresi bulunur:
 
 ```text
-Temel birim: 18.600 adet
-Ambalaj görünümü: 9 Koli + 6 Paket
+Ambalaj filtresi: [ Tümü ] [ Palet ] [ Koli ] [ Paket ] [ Temel Birim ]
 ```
+
+Filtre yalnızca ilgili ambalaj seviyesinde kaydedilmiş veya dönüştürülebilen kayıtları süzer; ledger miktarı değişmez. Kullanıcının seçimi sayfa bazında saklanabilir, ancak kritik belge ekranlarında temel miktar ve seçili ambalaj karşılığı aynı anda görünür kalır.
+
+### Ekranlara yayılım
+
+| Ekran/işlem | Varsayılan görünüm | Özel davranış |
+|---|---|---|
+| Barkod okuma | `Ambalaj` | Koli barkodu `1 Koli`, paket barkodu `1 Paket` ekler; art arda okumalar temel miktarda toplanır |
+| Stok listesi ve detay | `Kırılım` | Tümü/Palet/Koli/Paket/Temel Birim filtresi ve görünüm toggle'ı |
+| Sayım | `Kırılım` | Sistem miktarı ve sayılan miktar aynı görünümde; düzeltme temel birimde kaydedilir |
+| Transfer | `Ambalaj` | Giriş birimi seçilir, temel miktar önizlenir; kaynak kontrolü temel birimde yapılır |
+| Sipariş/teklif | `Ambalaj` | `5 Koli` girilir, `10.000 adet` yardımcı bilgi olarak gösterilir |
+| İrsaliye | `Ambalaj` | Sipariş/rezerve/sevk edilen/sevk edilecek kolonları aynı ambalaj görünümünde gösterilir |
+| Sevkiyat doğrulama | `Kırılım` | Beklenen, okutulan ve kalan değerler temel + fiziksel kırılım olarak görünür |
+| Fatura allocation | `Temel Birim` | Tahsis ve kalan kontrolü temel miktarda yapılır; ambalaj karşılığı yardımcı gösterilir |
+| Üretim | Ürün politikasına göre | Hedef/gerçekleşen temel miktar; saha için ambalaj karşılığı |
+| Raporlar | Kullanıcı seçimi | Ambalaj filtresi ve `group by` görünümü; rapor dipnotunda temel birim belirtilir |
+
+### Barkod tarama sonrası örnek
+
+```text
+Ürün: Premium Napkin 33x33
+Okunan barkod: Koli barkodu
+Sonuç: +1 Koli = +2.000 adet
+
+[ Temel Birim ] [ Ambalaj ] [ Kırılım ]
+Mevcut: 18.600 adet | 9 Koli + 6 Paket
+İşlem miktarı: 3 Koli | 6.000 adet
+
+[ Sayıma Ekle ] [ Sevkiyata Ekle ] [ Transfer Başlat ]
+```
+
+Aynı ürünün paket barkodu daha sonra okutulursa işlem `3 Koli + 1 Paket` olarak görünür; backend toplamı temel birimde tutar. Toggle veya filtre, kullanıcıya farklı bir okuma sağlasa da `quantity_base` değerini değiştiremez.
 
 Public katalogda fiyat ve şirket içi stok gösterilmez; ancak ürünün paket/koli içeriği ve teklif talebinin temel miktar karşılığı kullanıcıya açıklanabilir.
 
-## 10. Uygulama öncesi kabul kriterleri
+## 10. Fiziksel ölçü, ağırlık ve istifleme modeli
+
+Ambalaj miktarı ile fiziksel lojistik bilgisi ayrı fakat ilişkili tutulur. `5 Koli` demek yalnızca 5 adet koli değildir; kargonun kapladığı hacim, brüt ağırlık ve istifleme davranışı da hesaplanabilmelidir.
+
+### Ürün ve ambalaj fiziksel alanları
+
+| Alan grubu | Ürün temel birimi | Paket/koli/palet ambalajı |
+|---|---|---|
+| Boyut | `length`, `width`, `height` ve `dimension_uom` | Ambalajın dış ölçüsü; örneğin mm |
+| Ağırlık | Net birim ağırlığı veya kg başına ürün bilgisi | `net_weight`, `tare_weight`, `gross_weight` |
+| Hacim | Birim hacmi veya hesaplanabilir ölçüler | `volume` veya boyutlardan hesaplanan hacim |
+| Fiziksel kurallar | Kırılabilirlik, yön, taşınabilirlik | `is_stackable`, `max_stack_count`, `max_load_kg` |
+| Ambalaj tipi | Ürün formu | Kutu, koli, palet, shrink, çuval vb. |
+
+Sistem içinde ölçüleri normalize etmek için uzunluk `mm`, ağırlık `g` veya `kg`, hacim `mm³` veya `m³` olarak saklanabilir; kullanıcı arayüzü şirket standardına göre `cm`, `kg` ve `m³` gösterebilir. Birim kodu ve precision her kayıtta açık olmalıdır.
+
+Önerilen fiziksel nesneler:
+
+| Entity | Sorumluluk |
+|---|---|
+| `ProductPhysicalProfile` | Temel ürünün fiziksel ölçüsü, net ağırlığı, hacmi ve taşıma kuralları |
+| `PackagingPhysicalProfile` | Paket/koli/palet dış ölçüsü, dara ağırlığı, brüt ağırlığı ve istifleme kuralları |
+| `PalletType` | Euro palet, standart palet veya şirket içi palet ölçüsü; kapasite ve dara |
+| `LoadPlan` | Bir sevkiyatın araç/kargo yükleme planı |
+| `LoadUnit` | Tek palet, kafes, koli grubu veya bağımsız yük birimi |
+| `LoadUnitItem` | Yük birimindeki ürün/ambalaj miktarı ve temel karşılığı |
+
+### Fiziksel hesap kuralları
+
+Bir yük satırı için sistem şu değerleri üretmelidir:
+
+```text
+base_quantity
+packaging_quantity
+net_weight
+packaging_tare
+gross_weight = net_weight + packaging_tare
+volume
+```
+
+`5 Koli` için örnek:
+
+```text
+1 Koli = 600 mm × 400 mm × 300 mm
+1 Koli net ağırlığı = 12 kg
+Koli dara ağırlığı = 0,5 kg
+5 Koli net ağırlığı = 60 kg
+5 Koli brüt ağırlığı = 62,5 kg
+Toplam hacim = 5 × 0,072 m³ = 0,36 m³
+```
+
+Bu değerler ürünün gerçek ana verisinden hesaplanır; örnekteki sayılar yalnızca modelin nasıl çalışacağını göstermek içindir.
+
+## 11. Karışık palet ve kargo planlama
+
+Aynı palet üzerinde farklı ürün veya farklı ambalaj seviyeleri taşınabilir. Karışık palet için `Pallet` ayrı bir ürün olarak oluşturulmaz; sevkiyata bağlı bir `LoadUnit` olarak planlanır.
+
+```text
+Shipment
+  └─ LoadPlan
+      ├─ LoadUnit: Palet-001
+      │   ├─ Product A / 3 Koli
+      │   └─ Product B / 6 Koli
+      └─ LoadUnit: Palet-002
+          └─ Product C / 1 Palet
+```
+
+### Kargo planlama akışı
+
+1. Sistem seçilen sevkiyatın irsaliye kalemlerini ve temel miktarlarını toplar.
+2. Her kalem için ambalaj ölçüsü, brüt ağırlık, hacim ve istifleme kuralını hesaplar.
+3. Kullanıcı araç veya kargo tipi seçer; araç kapasitesi ağırlık, hacim, palet adedi ve ölçü sınırlarıyla tanımlıdır.
+4. Sistem önce bir **uygunluk ön kontrolü** yapar: toplam ağırlık, toplam hacim, palet kapasitesi, ürün taşma riski ve istiflenemeyen ürünler.
+5. Sistem önerilen bir yük planı oluşturabilir; ancak ilk sürümde sonuç “optimal” kabul edilmez. Depo sorumlusu öneriyi düzenleyip manuel olarak onaylar.
+6. Karışık palet satırları bir `LoadUnit` altında toplanır. Her satırda ürün, ambalaj, miktar, temel miktar, ağırlık ve hacim görünür.
+7. Plan kesinleştiğinde palet etiketi/barkodu üretilir ve sevkiyat doğrulamasına bağlanır.
+
+### Planlama ekranı
+
+```text
+Sevkiyat: SHP-2026-000142       Araç: Kamyon-03
+Kapasite: 1.200 kg | 8,0 m³ | 4 palet
+Kullanım: 426 kg | 2,4 m³ | 2 palet
+Durum: Uygun
+
+PALLET-001  Karışık Palet
+├─ Premium Napkin 33x33   3 Koli   36 kg   0,216 m³
+└─ Kokteyl Napkin 24x24   6 Koli   78 kg   0,468 m³
+
+[ Uygunluğu Hesapla ] [ Palet Ekle ] [ Kalem Ata ] [ Planı Kilitle ]
+```
+
+### Karışık palet kuralları
+
+- Aynı palete farklı ürünler ancak fiziksel uyumluluk ve istifleme kuralları izin veriyorsa eklenebilir.
+- Kırılabilir, ezilebilir veya üstüne yük konulamaz ürünler için `max_stack_count = 1` veya `is_stackable = false` dikkate alınır.
+- Palet kapasitesi ağırlık, hacim ve maksimum ölçü açısından ayrı ayrı kontrol edilir; yalnızca toplam koli adedi yeterli kontrol değildir.
+- Bir yük birimindeki miktarların toplamı bağlı irsaliye/sevkiyat miktarını aşamaz.
+- Kargo planı sevkiyatı değiştirmez; yalnızca sevkiyat kalemlerinin fiziksel yük birimlerine nasıl dağıtıldığını belirler.
+- Plan kilitlendikten sonra değişiklik yeni versiyon/audit kaydı üretir.
+- Gerçek yükleme sırasında barkodla doğrulama yapılır; planlanan ve gerçekleşen yük farkı açıklama gerektirir.
+
+## 12. Uygulama öncesi kabul kriterleri
 
 - [ ] Her ürün için `base_uom` tanımlanabiliyor.
 - [ ] Ürün altında birden fazla ambalaj seviyesi tanımlanabiliyor.

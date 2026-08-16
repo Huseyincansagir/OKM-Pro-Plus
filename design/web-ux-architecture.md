@@ -70,6 +70,15 @@ Bugün çalışan personel, devamsızlık, izinli personel, fazla mesai ve onay 
 
 Ürün kataloğu masaüstünde filtrelenebilir kart ve tablo görünümünü destekleyecektir. Görseli güçlü olan ürünlerde kart görünümü, hızlı operasyonlarda tablo görünümü kullanılacaktır.
 
+Ambalaj hiyerarşisi için ortak kontrol deseni tüm web modüllerinde kullanılacaktır:
+
+```text
+[ Temel Birim ]  [ Ambalaj ]  [ Kırılım ]
+Ambalaj filtresi: [ Tümü ] [ Palet ] [ Koli ] [ Paket ] [ Temel Birim ]
+```
+
+Toggle görünümü değiştirir, miktarı değiştirmez. Miktar girişi olan formlarda ayrıca `Miktar + Giriş birimi + Temel karşılık` üçlüsü gösterilir. Kritik belge ve finans ekranlarında temel miktar her zaman görünür kalır.
+
 | Ürün kartı alanı | Gösterim |
 |---|---|
 | Fotoğraf | Kare küçük görsel, yoksa nötr placeholder |
@@ -102,8 +111,8 @@ Tabloda sipariş numarası, müşteri, tarih, toplam, ödeme şartı, sevk durum
 | Sekme | İçerik |
 |---|---|
 | Genel | Müşteri, adres, ödeme şartı, teslim tarihi, notlar |
-| Ürünler | Ürün, girilen miktar + ambalaj, temel miktar, fiyat, iskonto, vergi, toplam |
-| Stok ve rezervasyon | Temel birimde mevcut, rezerve, eksik ve kullanılabilir miktar; ambalaj görünümü |
+| Ürünler | Ürün, girilen miktar + ambalaj, temel miktar, fiyat, iskonto, vergi, toplam; görünüm toggle'ı |
+| Stok ve rezervasyon | Temel birimde mevcut, rezerve, eksik ve kullanılabilir miktar; ambalaj görünümü ve ambalaj filtresi |
 | Belgeler | Teklif, irsaliye, sevkiyat, fatura bağlantıları |
 | Onay geçmişi | Onaylayan kişi, tarih, karar ve açıklama |
 | Aktivite | Kayıt üzerinde yapılan değişikliklerin zaman çizelgesi |
@@ -114,9 +123,9 @@ Sorumlu “Onayla” butonuna bastığında ayrı bir onay paneli açılacak ve 
 
 ## 7. Depo ve stok ekranları
 
-Stok listesi ürün, depo, konum, temel birimde mevcut/rezerve/kullanılabilir miktar ve seçilebilir ambalaj görünümü kolonlarını gösterecektir. Kritik stok satırlarında görsel uyarı ve temel birimle minimum stok değeri görünür olacaktır. Stok detayında giriş, çıkış, transfer, sayım, iade ve düzeltme hareketleri zaman sırasıyla listelenecektir.
+Stok listesi ürün, depo, konum, temel birimde mevcut/rezerve/kullanılabilir miktar ve seçilebilir ambalaj görünümü kolonlarını gösterecektir. Üst araç çubuğunda `Temel Birim / Ambalaj / Kırılım` toggle'ı ve `Tümü / Palet / Koli / Paket / Temel Birim` filtresi bulunacaktır. Kritik stok satırlarında görsel uyarı ve temel birimle minimum stok değeri görünür olacaktır. Stok detayında giriş, çıkış, transfer, sayım, iade ve düzeltme hareketleri zaman sırasıyla listelenecektir.
 
-Barkod okuyucu, web üzerinde klavye girdisi gibi çalıştığında odaklanmış barkod alanı otomatik olarak ürünü bulacak; mobilde kamera taraması aynı ürün detayına bağlanacaktır. Ürün bulunduğunda kullanıcıya “Stok görüntüle”, “Transfer başlat”, “Sayım yap” ve yetkisi varsa “Düzeltme talebi oluştur” işlemleri sunulacaktır.
+Barkod okuyucu, web üzerinde klavye girdisi gibi çalıştığında odaklanmış barkod alanı otomatik olarak ürünü bulacak; mobilde kamera taraması aynı ürün detayına bağlanacaktır. Barkod sonucu ekranında varsayılan `Ambalaj` görünümü ile `Temel Birim / Ambalaj / Kırılım` toggle'ı bulunur. Ürün bulunduğunda kullanıcıya “Stok görüntüle”, “Transfer başlat”, “Sayım yap” ve yetkisi varsa “Düzeltme talebi oluştur” işlemleri sunulacaktır.
 
 ## 8. Üretim ekranları
 
@@ -126,9 +135,23 @@ Barkod okuyucu, web üzerinde klavye girdisi gibi çalıştığında odaklanmı�
 
 ## 9. İrsaliye ve sevkiyat ekranları
 
-Onaylanmış siparişten irsaliye oluşturulurken kullanıcı, her ürün için sipariş, rezerve, daha önce sevk edilen ve sevk edilecek miktarı hem temel birimde hem seçilen ambalaj görünümünde görecektir. Örneğin `5 Koli (10.000 adet)`. Stok yetersizse sistem irsaliyeyi kesinleştirmeden önce açık bir uyarı verecektir.
+Onaylanmış siparişten irsaliye oluşturulurken kullanıcı, her ürün için sipariş, rezerve, daha önce sevk edilen ve sevk edilecek miktarı hem temel birimde hem seçilen ambalaj görünümünde görecektir. İrsaliye satırlarında `Temel Birim / Ambalaj / Kırılım` toggle'ı aynı anda uygulanır. Örneğin `5 Koli (10.000 adet)`. Stok yetersizse sistem irsaliyeyi kesinleştirmeden önce açık bir uyarı verecektir.
 
 Sevkiyat detayında irsaliye ve müşteri özeti üstte; araç, şoför, yükleme tarihi, çıkış tarihi ve teslim durumu ortada; teslim belgesi ve notlar altta yer alacaktır. Sevkiyat durumu yatay bir adım göstergesiyle hazırlanıyor, sevke hazır, sevk edildi, teslim edildi ve iptal şeklinde izlenecektir.
+
+### Kargo planı ve karışık palet ekranı
+
+Sevkiyat detayından açılan kargo planı ekranı üç bölümlüdür:
+
+| Bölüm | İçerik |
+|---|---|
+| Kapasite özeti | Araç/kargo tipi, maksimum kg, m³, palet sayısı, kullanılan kapasite, doluluk yüzdesi |
+| Sevkiyat kalemleri | Ürün, ambalaj, temel miktar, net/brüt ağırlık, hacim, atanmış palet ve kalan miktar |
+| Yük birimleri | Palet/kafes/koli grupları; tekli veya karışık palet içeriği, istifleme durumu ve barkod |
+
+Üstte `Uygunluğu Hesapla`, `Palet Ekle`, `Kalem Ata` ve `Planı Kilitle` aksiyonları bulunur. Sistem ağırlık, hacim, palet adedi, ölçü ve istifleme uyarılarını ayrı ayrı gösterir. İlk sürümde otomatik öneri manuel düzenlenebilir; sistem optimal yükleme garantisi vermez.
+
+Karışık palet satırlarında `Temel Birim / Ambalaj / Kırılım` toggle'ı kullanılabilir. Planlanan miktar irsaliye kaleminin kalanını aşamaz. Plan kilitlendikten sonra değişiklik yeni versiyon ve audit kaydı üretir; gerçek yükleme palet/koli barkodlarıyla doğrulanır.
 
 ## 10. Fatura ve cari ekranları
 

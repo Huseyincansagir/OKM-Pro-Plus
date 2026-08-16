@@ -45,6 +45,30 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 
 ## 4. Ana route ve modül envanteri
 
+### 4.0 Ortak miktar görünümü ve ambalaj kontrolleri
+
+Ambalaj hiyerarşisi ilgili tüm ekranlarda ortak bir bileşen setiyle görünür:
+
+```text
+[ Temel Birim ]  [ Ambalaj ]  [ Kırılım ]
+Ambalaj filtresi: [ Tümü ] [ Palet ] [ Koli ] [ Paket ] [ Temel Birim ]
+```
+
+Bu üçlü toggle yalnızca gösterimi değiştirir; stok ve belge miktarını değiştirmez. Miktar girişi gereken ekranlarda toggle'dan ayrı olarak şu kontrol kullanılır:
+
+```text
+Miktar: [ 5 ]   Giriş birimi: [ Koli ▼ ]   Karşılığı: 10.000 adet
+```
+
+| Ortak kontrol | Kullanıldığı yerler | Kural |
+|---|---|---|
+| Görünüm toggle'ı | Barkod sonucu, stok, sayım, transfer, sipariş, irsaliye, sevkiyat, üretim, rapor | `Temel Birim`, `Ambalaj`, `Kırılım` görünümü arasında geçer |
+| Ambalaj filtresi | Ürün, stok, hareket, belge ve rapor listeleri | `Tümü`, `Palet`, `Koli`, `Paket`, `Temel Birim` filtreleri |
+| Giriş birimi seçici | Teklif, sipariş, transfer, sayım, irsaliye, üretim | Girilen miktarı seçilen ambalaj seviyesinden temel birime çevirir |
+| Temel miktar yardımcı metni | Kritik tüm işlem formları | `5 Koli` yanında `10.000 adet` veya `300 kg` gösterilir |
+
+Kritik belge ekranlarında seçilen görünüm ne olursa olsun temel miktar karşılığı gizlenmez. `quantity_base` backend tarafından hesaplanır; frontend görünümü veya filtresi ledger değerini değiştiremez.
+
 ### 4.1 Kimlik ve başlangıç
 
 | Ekran | Route önerisi | Temel alan / işlem |
@@ -52,18 +76,18 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 | Giriş | `/giris` | E-posta/kullanıcı adı, parola, beni hatırla |
 | İlk parola değişimi | `/ilk-parola` | Eski/geçici parola, yeni parola, tekrar |
 | Parolamı unuttum | `/parola-sifirla` | E-posta, doğrulama ve yeni parola |
-| Dashboard | `/dashboard` | Role göre KPI, uyarı, görev ve grafikler |
+| Dashboard | `/dashboard` | Role göre KPI, uyarı, görev ve grafikler; miktar görünümü seçimi |
 | Profil ve oturum | `/profil` | Kullanıcı bilgileri, parola, aktif oturumlar |
 
 ### 4.2 Yönetici dashboard'ları
 
 | Dashboard | İçerik |
 |---|---|
-| Yönetici | Bugünkü satış, üretim, bekleyen sipariş, onaylar, tahsilat, gecikmeler, kritik stok, riskli müşteriler, faturalaşmamış irsaliyeler |
-| Satış | Açık teklif talepleri, hazırlanan teklifler, onay bekleyen siparişler, aylık satış, en çok talep edilen ürünler |
-| Depo | Kritik stok, bugün giriş/çıkış, hazırlanacak sevkiyat, bekleyen sayım, son barkod işlemleri |
-| Üretim | Aktif iş emirleri, makine durumu, üretim miktarı, fire, duruş, hedefe ilerleme |
-| Muhasebe | Tahsilat, toplam borç, toplam alacak, geciken faturalar, vadesi yaklaşanlar, faturalaşmamış irsaliyeler |
+| Yönetici | Bugünkü satış, üretim, bekleyen sipariş, onaylar, tahsilat, gecikmeler, kritik stok, riskli müşteriler, faturalaşmamış irsaliyeler; miktar görünümü toggle'ı |
+| Satış | Açık teklif talepleri, hazırlanan teklifler, onay bekleyen siparişler, aylık satış, en çok talep edilen ürünler; ambalaj filtresi |
+| Depo | Kritik stok, bugün giriş/çıkış, hazırlanacak sevkiyat, bekleyen sayım, son barkod işlemleri; temel/ambalaj/kırılım toggle'ı |
+| Üretim | Aktif iş emirleri, makine durumu, üretim miktarı, fire, duruş, hedefe ilerleme; hedef/gerçekleşen görünüm seçimi |
+| Muhasebe | Tahsilat, toplam borç, toplam alacak, geciken faturalar, vadesi yaklaşanlar, faturalaşmamış irsaliyeler; temel miktar ve ambalaj karşılığı |
 | İK | Bugün çalışan personel, devamsızlık, izinli personel, fazla mesai, onay bekleyen izinler |
 
 ### 4.3 Satış ve müşteri modülü
@@ -90,9 +114,10 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 |---|---|---|
 | Ürün kart görünümü | Fotoğraf, ürün adı, kod, barkod, stok, fiyat, aktiflik | Detay, düzenle, teklife ekle |
 | Ürün tablo görünümü | Kod, ad, kategori, temel birim, ambalaj özeti, stok, minimum stok, fiyat, durum | Filtrele, dışa aktar, toplu işlem |
-| Ürün detayı | Görsel, kod, barkodlar, temel birim, palet-koli-paket hiyerarşisi, dönüşüm katsayıları, fiyat, maliyet, minimum stok, hareketler | Düzenle, ambalaj ekle/sürümle, barkod ekle, görsel yükle |
-| Ürün oluştur/düzenle | Ürün ana bilgileri, `base_uom`, ambalaj seviyeleri, koli/paket içerikleri, parçalı işlem izni | Kaydet, aktif/pasif yap, dönüşüm doğrula |
+| Ürün detayı | Görsel, kod, barkodlar, temel birim, palet-koli-paket hiyerarşisi, dönüşüm katsayıları, fiziksel ölçüler, net ağırlık, hacim, istifleme, fiyat, maliyet, minimum stok, hareketler | Düzenle, ambalaj ekle/sürümle, fiziksel profil düzenle, barkod ekle, görsel yükle |
+| Ürün oluştur/düzenle | Ürün ana bilgileri, `base_uom`, ambalaj seviyeleri, koli/paket içerikleri, parçalı işlem izni, temel birim ölçü/ağırlık | Kaydet, aktif/pasif yap, dönüşüm ve fiziksel profil doğrula |
 | Ambalaj hiyerarşisi | Seviye, ad, üst ambalaj, alt ambalaj adedi, temel birim karşılığı, satılabilirlik, parçalı işlem | Ekle, sıralamayı değiştir, effective date ile sürümle |
+| Fiziksel profil | Boyutlar, ölçü birimi, net/brüt/dara ağırlık, hacim, kırılabilirlik, yön, istiflenebilirlik, maksimum istif sayısı | Kaydet, geçerlilik sürümle, doğrulama uyarılarını çöz |
 | Kategori listesi | Kategori adı, üst kategori, ürün sayısı, durum | Ekle, düzenle, arşivle |
 | Barkod yönetimi | Barkod, ürün, ambalaj seviyesi, barkod tipi, aktiflik | Ekle, değiştir, pasifleştir |
 
@@ -131,7 +156,14 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 | İrsaliye oluştur | Sipariş, müşteri, adres, ürünler, sevk edilecek miktar + ambalaj, temel miktar, tarih, açıklama | Taslak, hazırla, kesinleştir |
 | İrsaliye detayı | Ürünler, `5 Koli (10.000 adet)` görünümü, temel stok çıkışı, bağlı sipariş, sevkiyat, fatura, hareket | PDF, iptal, sevkiyat oluştur |
 | Sevkiyat listesi | Sevkiyat no, irsaliye, müşteri, araç, şoför, temel/ambalaj toplamı, tarih, teslim durumu | Oluştur, yükle, teslim et |
-| Sevkiyat detayı | Araç, şoför, yükleme, çıkış, teslim, belge, not | Hazırla, sevk edildi, teslim edildi |
+| Sevkiyat detayı | Araç, şoför, yükleme, çıkış, teslim, belge, not, kapasite özeti | Hazırla, sevk edildi, teslim edildi, kargo planına git |
+| Kargo planlama | Sevkiyat kalemleri, araç/kargo kapasitesi, toplam kg, hacim, palet sayısı, doluluk ve uyarılar | Otomatik öneri oluştur, manuel palet ata, uygunluğu hesapla, planı kilitle |
+| Karışık palet detayı | Palet barkodu, ürün/ambalaj satırları, temel miktar, kg, hacim, istifleme durumu | Kalem ekle/çıkar, barkodla doğrula, etiketi bas |
+| Yükleme doğrulama | Planlanan/gerçekleşen palet, koli, temel miktar, ağırlık ve hacim | Barkod okut, fark açıklaması, yüklemeyi tamamla |
+| Araç/kargo tipleri | Tip, iç ölçü, maksimum kg, hacim, palet kapasitesi, ölçü sınırı, istifleme kuralı | Ekle, düzenle, pasifleştir |
+| Palet tipleri | Tip, ölçü, dara ağırlığı, maksimum yük, istifleme kuralı | Ekle, düzenle, pasifleştir |
+| Yük planı özeti | Toplam net/brüt kg, hacim, palet sayısı, araç doluluk oranları, uyarılar | Uygunluğu hesapla, planı kilitle |
+| Yükleme farkı | Planlanan/gerçekleşen koli, temel miktar, palet, kg, hacim farkı | Açıklama gir, yetkiliye gönder, yeniden doğrula |
 | Araçlar | Plaka, araç tipi, kapasite, durum | Ekle, düzenle |
 | Şoförler | Sicil, ad, telefon, ehliyet, durum | Ekle, düzenle |
 
@@ -175,9 +207,10 @@ Aşağıdaki durumlar bütün modüllerde ayrıca tasarlanacaktır:
 | Cari | Borç/alacak, ekstre, geciken ödemeler, risk |
 | Fatura | Dönem, ödeme durumu, gecikme, müşteri, ürün |
 | İrsaliye | Günlük, bekleyen, faturalaşmamış, sevk durumu |
+| Sevkiyat ve kargo | Araç doluluk, palet kullanımı, toplam kg/m³, karışık palet, planlanan-gerçekleşen yük farkı |
 | Personel | Puantaj, mesai, izin, devamsızlık, çalışma süresi |
 
-Ortak rapor araçları tarih aralığı, müşteri, ürün, depo, makine, personel, durum ve ödeme tipi filtreleridir. Grafik ve tablo aynı filtre kümesini kullanır. Dışa aktarma seçenekleri PDF, Excel ve CSV olacaktır.
+Ortak rapor araçları tarih aralığı, müşteri, ürün, depo, makine, personel, durum, ödeme tipi, ambalaj seviyesi ve araç/kargo tipi filtreleridir. Miktar raporlarında `Temel Birim / Ambalaj / Kırılım` toggle'ı bulunur; dipnotta temel birim belirtilir. Grafik ve tablo aynı filtre kümesini kullanır. Dışa aktarma seçenekleri PDF, Excel ve CSV olacaktır.
 
 ### 4.11 Bildirim, yönetim ve sistem ayarları
 

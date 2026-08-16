@@ -82,6 +82,11 @@ flowchart LR
 | `product_barcodes` | Bir ürüne ve gerekirse ambalaj seviyesine bağlı barkod |
 | `product_images` | Ürün görseli ve dosya metadata'sı |
 | `product_prices` | Fiyat listesi, müşteri grubu veya geçerlilik dönemi |
+| `product_physical_profiles` | Ürün temel birimi için ölçü, net ağırlık, hacim ve taşıma kuralları |
+| `packaging_physical_profiles` | Paket/koli/palet dış ölçüsü, dara, brüt ağırlık ve istifleme kuralları |
+| `pallet_types` | Palet standardı, ölçüsü, dara ağırlığı ve kapasitesi |
+
+`product_physical_profiles` için boyutlar `length`, `width`, `height`, `dimension_uom`; ağırlıklar `net_weight`, `weight_uom`; hacim `volume`, `volume_uom`; taşıma kuralları ise `is_stackable`, `max_stack_count`, `max_load_kg` gibi alanlarla tutulur. Ambalaj seviyesine ait dış ölçü ve ağırlıklar `packaging_physical_profiles` içinde saklanır. Sistem içinde normalize edilmiş birimler kullanılmalı; UI dönüşümü yalnızca gösterim katmanında yapılmalıdır.
 
 Ürün kodu ve barkod benzersiz olmalıdır. Public katalog yalnızca `is_active = true` olan ve public görünürlüğü açık ürünleri döndürür. `product_packagings` aynı ürünün farklı ambalajlarını temsil eder; `5 Koli` için ayrı ürün kartı oluşturulmaz.
 
@@ -152,6 +157,10 @@ AvailableBaseQuantity = OnHandBaseQuantity - ReservedBaseQuantity
 | `delivery_note_items` | Sevk miktarı, barkod doğrulaması, `quantity_base` ve ambalaj görünümü |
 | `shipments` | Araç, şoför, yükleme ve teslim durumu |
 | `shipment_items` | İrsaliye/sevkiyat ürün bağlantısı |
+| `vehicle_capacities` | Araç/kargo tipi için maksimum kg, hacim, palet ve ölçü kapasitesi |
+| `load_plans` | Shipment'a bağlı taslak/doğrulanmış/kilitli kargo planı |
+| `load_units` | Palet, karışık palet, kafes, koli grubu veya loose yük birimi |
+| `load_unit_items` | Yük birimindeki ürün, ambalaj seviyesi, temel miktar, ağırlık ve hacim |
 | `invoices` | Fatura başlığı |
 | `invoice_items` | Fatura kalemleri |
 
@@ -168,6 +177,16 @@ QuoteRequest
 ```
 
 Her belge başlığında durum, belge numarası, oluşturma/değiştirme kullanıcıları, tarih ve gerekliyse iptal açıklaması bulunmalıdır.
+
+`load_plans` sevkiyat miktarını değiştirmez; yalnızca `shipment_items` kalemlerini fiziksel `load_units` içine dağıtır. Önerilen alanlar:
+
+| Tablo | Ana alanlar |
+|---|---|
+| `load_plans` | `shipment_id`, `vehicle_capacity_id`, `status`, `version`, `total_weight`, `total_volume`, `pallet_count`, `validation_summary`, `locked_at` |
+| `load_units` | `load_plan_id`, `pallet_type_id`, `unit_code`, `unit_type`, `is_mixed`, `length`, `width`, `height`, `tare_weight`, `gross_weight`, `volume`, `stackable`, `status` |
+| `load_unit_items` | `load_unit_id`, `shipment_item_id`, `product_id`, `packaging_id`, `entered_quantity`, `quantity_base`, `net_weight`, `volume`, `packaging_snapshot` |
+
+Plan doğrulaması ağırlık, hacim, palet adedi, ölçü, istifleme ve sevkiyat kalan miktarını birlikte kontrol eder. `Locked` plan değişikliği versiyon ve audit kaydı üretir; gerçek yükleme barkodla ayrıca doğrulanır.
 
 ### 4.5 Cari ve finans
 

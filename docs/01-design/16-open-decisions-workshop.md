@@ -56,6 +56,19 @@ Her ürünün bir `base_uom` değeri bulunur. Palet, koli ve paket seviyeleri ay
 
 Stok, rezervasyon, sevkiyat, fatura allocation ve üretim hareketlerinin doğruluk kaynağı temel birim miktarıdır. Kullanıcının girdiği ambalaj ve belge tarihindeki dönüşüm snapshot'ı da saklanır. Açılmış ambalajlarda `0,5 Koli` gibi belirsiz bir gösterim yerine `4 Koli + 6 Paket` gibi açık kırılım kullanılır.
 
+### Fiziksel ölçüler ve karışık palet planlama
+
+Ambalaj miktarı ile fiziksel lojistik bilgisi ayrı tutulur. Ürün veya ambalaj seviyesinde boyut, net/brüt/dara ağırlık, hacim, kırılabilirlik ve istiflenebilirlik bilgileri tanımlanır. Böylece `5 Koli` yalnızca miktar olarak değil, kargo için gereken kg ve m³ olarak da hesaplanabilir.
+
+Karışık palet ayrı bir ürün değildir; sevkiyata bağlı `LoadPlan → LoadUnit → LoadUnitItem` yapısıdır. Bir `LoadUnit` aynı palet üzerinde farklı ürün veya ambalaj kalemlerini taşıyabilir. Sistem araç/kargo kapasitesini ağırlık, hacim, palet adedi, ölçü ve istifleme kurallarıyla kontrol eder. İlk sürümde otomatik öneri yalnızca uygunluk ön kontrolü ve manuel düzenleme desteği verir; depo sorumlusu planı kilitler ve gerçek yükleme barkodla doğrulanır.
+
+```text
+Sevkiyat: SHP-2026-000142       Kapasite: 1.200 kg | 8,0 m³ | 4 palet
+PALLET-001  Karışık Palet
+├─ Premium Napkin 33x33   3 Koli   36 kg   0,216 m³
+└─ Kokteyl Napkin 24x24   6 Koli   78 kg   0,468 m³
+```
+
 ---
 
 ## 3. Karar haritası
