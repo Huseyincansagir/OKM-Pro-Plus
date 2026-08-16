@@ -419,3 +419,12 @@ Coverage yüzdesi tek başına kalite ölçüsü değildir. Coverage raporu; öz
 - QA/security acceptance raporu ve Architecture decision traceability kaydı hazırlanmış.
 
 Bu belge test framework configuration veya test implementation dosyası değildir. Architecture ve implementation ekiplerinin üreteceği test projeleri, fixture’lar ve pipeline adımları için kabul edilen MVP stratejisidir.
+
+
+## 13. Accepted ADR test overlay
+
+ADR-001–ADR-011 is accepted for MVP handoff. The first implementation slice must prove positive/non-negative quantity separation, immutable packaging snapshots, private aggregate backing fields, row_version/ETag conflicts, deterministic source-row locking, transaction rollback, outbox-after-commit behavior and typed ProblemDetails mapping.
+
+Unit tests must not pretend to prove PostgreSQL locking. The persistence integration suite uses two real PostgreSQL connections to prove that two concurrent allocations cannot exceed the source remaining quantity. It also verifies the deferred upper-bound trigger, idempotency unique behavior, row-version conflict and deterministic multi-item lock ordering.
+
+Release readiness remains separate from Architecture acceptance. A green Domain/test scaffold allows the next implementation slice only after build, unit, architecture dependency and documentation evidence are archived. API, migration, web, mobile, Worker, external adapter, backup and deployment release gates remain individually required.

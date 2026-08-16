@@ -1,6 +1,6 @@
 # Factory ERP — Design Decision Log
 
-**Aşama:** DESIGN → DESIGN GATE / READY FOR ARCHITECTURE
+**Aşama:** ARCHITECTURE ACCEPTED → IMPLEMENTATION SCAFFOLD
 **Kapsam:** Kodlama öncesi tutarlılık, source of truth ve açık karar yönetimi
 
 ## 1. Karar sınıfları
@@ -82,6 +82,26 @@ Kararlar kabul edilmiş olsa da ilgili iş sahiplerinin Architecture/Operations 
 
 `decision-clarification-backlog.md` artık açık karar üretmek için değil, kabul edilen O-001–O-014 kararlarının alt sorularının kapanış kanıtını ve artefact yayılımını izlemek için kullanılır. Her madde için seçilen değer, karar sahibi, 2026-08-16 tarihi, gerekçe, etkilenen artefact’lar ve kabul kapsamı bu log’a işlendi. Açık karar sayısı: **0**.
 
-## 6. Karar yönetimi kuralları
+## 6. ACCEPTED ARCHITECTURE DECISIONS — ADR-001–ADR-011
+
+Proje sahibi, Architecture aşamasında kalan teknik kararlar için araştırma sonrası sunulan önerilerin tamamının kabul edilmesini istemiştir. Bu nedenle aşağıdaki ADR baseline’ı 2026-08-16 tarihinde kabul edilmiştir. Araştırma kanıtları ve ayrıntılı etkiler `architecture-decision-baseline.md` dosyasındadır.
+
+| ADR | Kabul edilen değer | Kanıt/etki |
+|---|---|---|
+| ADR-001 | Positive işlem miktarı için immutable `Quantity`; zero-capable projection için `NonNegativeQuantity` veya decimal projection | Domain invariant ve quantity testleri |
+| ADR-002 | Immutable `PackagingSnapshot`/`QuantitySnapshot`; server-side `quantity_base` hesaplama | Mobil/API/ledger/audit |
+| ADR-003 | Private EF Core backing field, read-only collection, explicit Fluent API access mode | Aggregate encapsulation |
+| ADR-004 | Public `row_version`/ETag; trigger ile monotonic bigint; Npgsql `xmin` public contract değil | API/EF/PostgreSQL concurrency |
+| ADR-005 | Read Committed + deterministic `SELECT FOR UPDATE` + re-read + deferred allocation guard | Sevk/fatura yarış koşulları |
+| ADR-006 | Validation/authorization/idempotency sonrası tek command transaction; business effects atomic | CQRS/stock/current ledger |
+| ADR-007 | Same-domain side effect için in-process domain event; external çağrı transaction içinde yok | Domain/Application |
+| ADR-008 | Aynı DB transaction’ında `outbox_messages`; commit sonrası worker ve idempotent consumer | Notification/external adapter |
+| ADR-009 | Concurrency/deadlock/serialization/unique hatalarını typed ProblemDetails’a map et; retry fresh read ile sınırlı | API/UX/operations |
+| ADR-010 | Production self-hosted runner private, protected environment, restricted runner group ve release-only | GitHub Actions security |
+| ADR-011 | Architecture artefact’ları kabul edildi; implementation gate Domain + tests scaffold’u için açıldı | Implementation handoff |
+
+Açık teknik karar sayısı: **0**. ADR veya O-ID değişirse ilgili karar yeniden açılır, etkilenmiş artefact’lar güncellenir ve gate yeniden değerlendirilir.
+
+## 7. Karar yönetimi kuralları
 
 Yeni bir kapsam veya karar değişikliği gelirse ilgili O-ID yeniden `OPEN DECISION` durumuna alınır, etkilenen domain/workflow/database/UI/skill/QA/operations artefact’ları belirlenir ve Design Gate yeniden değerlendirilir. Mevcut O-001–O-014 kararları `DECIDED` durumundadır; Architecture skill’i bu seçilmiş değerleri zorunlu teknik girdiler olarak tüketebilir. Karar sahibi onayı ve yayılım kanıtı olmadan yeni bir varsayım `DECIDED` yapılamaz.

@@ -167,3 +167,10 @@ Release öncesi:
 - critical logs monitored
 
 `release-readiness.md` oluştur.
+
+
+## ADR-001–ADR-011 acceptance evidence
+
+Architecture ADR-001–ADR-011 is accepted for MVP handoff but release evidence remains mandatory. The first implementation slice must include tests for positive/non-negative quantity separation, immutable packaging snapshots, private aggregate backing fields, row_version/ETag conflicts, deterministic `FOR UPDATE` allocation behavior, atomic CQRS rollback, outbox-after-commit behavior and typed ProblemDetails mapping.
+
+A green unit suite is insufficient for allocation concurrency: PostgreSQL two-connection tests must prove that source-row locking, re-read, deferred upper-bound constraints and idempotency prevent over-shipment/over-invoicing. A green scaffold slice does not authorize API, migration, web, mobile, Worker or external adapter release until their corresponding integration, security and operational evidence exists.

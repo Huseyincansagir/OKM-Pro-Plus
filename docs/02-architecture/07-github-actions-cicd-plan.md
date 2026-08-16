@@ -451,3 +451,14 @@ MVP için “green pipeline” production implementation veya release garantisi 
 - Rollback ve forward-fix davranışı release evidence içinde kayıtlıdır.
 
 Bu belge aktif workflow dosyaları veya deploy script’leri değildir. Solution scaffold’u oluşturulduğunda gerçek `.github/workflows`, `deploy/scripts`, Dockerfile ve Compose path’leri bu contract’tan türetilecektir.
+
+
+## 9. Accepted Architecture ADR overlay
+
+ADR-010 changes the release workflow security boundary. Pull-request, fork and untrusted branch jobs run only on GitHub-hosted or isolated non-production runners. The production self-hosted runner is private, restricted to a runner group, protected by a production environment with required reviewers and invoked only by protected release tag/manual dispatch. Its token permissions are least-privilege and its host secrets are not printed or passed through shell arguments.
+
+ADR-006/ADR-008 require the release pipeline to deploy API and Worker with the same outbox schema contract. Migration is a separate approved job before API readiness; Worker readiness includes outbox backlog and database schema checks. The pipeline must prove that a failed command rolls back allocation/stock/current-ledger changes and that external calls are deferred until after commit.
+
+ADR-009 adds required CI evidence for `DbUpdateConcurrencyException`, deadlock/serialization retry mapping, `QUANTITY_BASE_MISMATCH`, `QUANTITY_CONCURRENCY_CONFLICT`, idempotency payload mismatch and allocation trigger failures. The release job does not auto-replay a stale business command.
+
+The active workflow files will be created only with the first implementation scaffold. At that point, `pull_request.yml` must not invoke production self-hosted labels, and release workflows must use protected environments and immutable image digests.

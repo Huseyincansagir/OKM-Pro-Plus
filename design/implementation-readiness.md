@@ -5,13 +5,15 @@
 ```text
 DESIGN STATUS:
 READY FOR ARCHITECTURE
+ARCHITECTURE:
+ACCEPTED FOR MVP HANDOFF
 IMPLEMENTATION:
-NOT READY
+READY FOR SCAFFOLD
 NEXT SKILL:
-factory-erp-architecture
+factory-erp-implementation
 ```
 
-Proje sahibinin 2026-08-16 tarihli kabulüyle O-001–O-014 karar blokajı kaldırılmıştır. Bu dosya **implementation’a hazır** anlamına gelmez; Design aşamasının tamamlandığını ve Architecture aşamasının başlayabileceğini gösterir.
+Proje sahibinin 2026-08-16 tarihli kabulüyle O-001–O-014 karar blokajı kaldırılmış; araştırma sonrası ADR-001–ADR-011 teknik baseline’ı da kabul edilmiştir. Bu dosya artık **sınırlı MVP scaffold ve test implementation’ına geçiş izni** verir; tüm ERP feature’larının aynı anda kodlanabileceği anlamına gelmez.
 
 ## 1. Design Gate kontrolü
 
@@ -25,7 +27,7 @@ Proje sahibinin 2026-08-16 tarihli kabulüyle O-001–O-014 karar blokajı kald�
 | Financial effect tanımlı mı? | PASS | Invoice allocation, current transaction debit/credit, payment, tax snapshot ve reversal sınırları tanımlıdır. |
 | Audit requirements tanımlı mı? | PASS | Kritik belge, stok, cari, ödeme, üretim, risk, override, public consent, backup ve yetki geçişleri belirlenmiştir. |
 | Screen inventory tamam mı? | PASS | Web, public ve mobil modüller; liste, detay ve işlem ekranlarıyla envanterlenmiştir. |
-| API/data source belirsizlikleri giderildi mi? | PASS WITH ARCHITECTURE FOLLOW-UP | Canonical source of truth ve seçilmiş karar etkileri tanımlıdır; gerçek DTO/API sözleşmeleri Architecture aşamasında üretilecektir. |
+| API/data source belirsizlikleri giderildi mi? | PASS | Canonical source of truth, API/DTO/error/idempotency sözleşmeleri ve seçilmiş ADR etkileri Architecture artefact’larında tanımlıdır. |
 | Source of truth çakışmaları giderildi mi? | PASS | `domain-model.md`, `business-workflows.md`, `database-technical-architecture.md` ve `decision-log.md` ile canonical entity’ler belirlenmiştir. |
 | Database domain sınırları mantıklı mı? | PASS | Modüler monolith sınırları, allocation tabloları, transaction ve index ön taslağı mevcuttur. |
 | Mobile kritik operasyonlar tanımlı mı? | PASS | Barkod, stok, sayım, transfer, sevkiyat, miktar toggle ve üretim akışları tanımlıdır. |
@@ -56,9 +58,9 @@ O-001–O-014 maddelerinin tamamı proje sahibi tarafından 2026-08-16 tarihinde
 
 **Açık karar sayısı: 0.** Yeni kapsam veya karar değişikliği gelirse ilgili O-ID yeniden açılır ve Design Gate yeniden değerlendirilir.
 
-## 3. Architecture’a geçiş kriteri
+## 3. Architecture acceptance sonucu
 
-Architecture aşamasına geçişe izin verilmiştir. `factory-erp-architecture` skill’i aşağıdaki çıktıları üretmelidir:
+Architecture aşamasının MVP çıktıları tamamlanmış ve ADR-001–ADR-011 ile kabul edilmiştir. Kabul edilen çıktılar şunlardır:
 
 - Entity aggregate sınırları ve domain command/query sözleşmeleri.
 - ASP.NET Core API endpoint, DTO, validation, error ve idempotency sözleşmeleri.
@@ -66,20 +68,18 @@ Architecture aşamasına geçişe izin verilmiştir. `factory-erp-architecture` 
 - RBAC/permission policy, state transition authorization ve audit event matrisi.
 - Web, mobile ve public yüzeyleri için karar uyumlu data contract’ları.
 - Docker Compose, network, HTTPS, backup/restore ve health-check ayrıntıları.
-- O-001–O-014 kararlarına karşı architecture acceptance checklist.
+- O-001–O-014 ve ADR-001–ADR-011 kararlarına karşı acceptance checklist.
 
 ## 4. Implementation’a geçiş kriteri
 
-Implementation’a geçmek için ayrıca Architecture skill’inin gerçek API sözleşmeleri, migration planı, permission policy’leri, deployment/backup belgeleri ve ilgili acceptance testleri tamamlanmalıdır. `implementation-ready.md` bu nedenle hâlâ `NOT READY` kalır.
+Implementation gate **READY FOR SCAFFOLD** durumundadır. İlk implementation slice yalnızca Domain ve test altyapısıdır:
 
-Aşağıdaki belgeler tamamlanmadan production code başlatılmamalıdır:
+1. `FactoryErp.Domain` common types.
+2. `PositiveQuantity`, `NonNegativeQuantity`, `PackagingSnapshot` ve `QuantitySnapshot`.
+3. `SalesOrderItem`, `DeliveryNoteItem` ve allocation invariant’ları.
+4. Domain unit test project’i.
+5. Architecture dependency testleri.
 
-- `decision-log.md`
-- `domain-model.md`
-- `business-workflows.md`
-- `database-technical-architecture.md`
-- `master-screen-inventory.md`
-- `public-catalog-design.md`
-- `mobile-design.md`
-- ilgili architecture/QA/security/operations skill-impact review’ları
-- Architecture çıktıları ve migration/API acceptance testleri
+Bu slice’ın build, unit test, architecture test ve documentation acceptance kanıtları alınmadan API, EF migration, web, mobile, production worker veya external adapter feature’ları başlatılmayacaktır.
+
+Production implementation devam ederken karar değişirse ilgili ADR yeniden açılır, implementation durdurulur ve canonical artefact’lar güncellenir.

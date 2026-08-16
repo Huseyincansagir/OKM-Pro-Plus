@@ -43,6 +43,8 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 25. [`../design/factoryerp-domain-code-design.md`](../design/factoryerp-domain-code-design.md) — FactoryErp.Domain temel entity, aggregate, quantity/packaging value object ve allocation invariant kod tasarımı.
 26. [`../design/allocation-cqrs-unit-test-code-design.md`](../design/allocation-cqrs-unit-test-code-design.md) — Allocation ve CQRS transaction unit test blueprint’leri, idempotency, rollback ve error branch testleri.
 27. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
+28. [`../design/architecture-decision-baseline.md`](../design/architecture-decision-baseline.md) — Araştırılmış ve kabul edilmiş ADR-001–ADR-011 teknik baseline, gerekçeler, riskler ve acceptance testleri.
+29. [`../design/research-findings-architecture-decisions.md`](../design/research-findings-architecture-decisions.md) — EF Core, PostgreSQL, Npgsql, domain events, value objects ve GitHub Actions kaynaklı araştırma notları.
 
 ## Arşiv okuma sırası
 
@@ -78,14 +80,17 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 30. [`02-architecture/08-aspnet-clean-architecture-and-cqrs.md`](./02-architecture/08-aspnet-clean-architecture-and-cqrs.md)
 31. [`02-architecture/09-factoryerp-domain-code-design.md`](./02-architecture/09-factoryerp-domain-code-design.md)
 32. [`02-architecture/10-allocation-cqrs-unit-test-code-design.md`](./02-architecture/10-allocation-cqrs-unit-test-code-design.md)
+33. [`02-architecture/11-architecture-decision-baseline.md`](./02-architecture/11-architecture-decision-baseline.md)
+34. [`02-architecture/12-research-findings-architecture-decisions.md`](./02-architecture/12-research-findings-architecture-decisions.md)
 
 ## Aşama sonucu
 
 ```text
-DISCOVER → DESIGN → DESIGN GATE → ARCHITECTURE
+DISCOVER → DESIGN → DESIGN GATE → ARCHITECTURE → IMPLEMENTATION SCAFFOLD
 DESIGN STATUS: READY FOR ARCHITECTURE
-ARCHITECTURE: IN PROGRESS
-IMPLEMENTATION: NOT READY
+ARCHITECTURE: ACCEPTED FOR MVP HANDOFF
+IMPLEMENTATION: READY FOR SCAFFOLD
+NEXT SKILL: factory-erp-implementation
 ```
 
-Karar baseline’ı canonical [`../design/decision-log.md`](../design/decision-log.md) içinde tutulur. `/design/implementation-ready.md` `IMPLEMENTATION: NOT READY` kaldığı sürece business feature implementasyonu başlatılmaz.
+Karar baseline’ı canonical [`../design/decision-log.md`](../design/decision-log.md) ve [`../design/architecture-decision-baseline.md`](../design/architecture-decision-baseline.md) içinde tutulur. `IMPLEMENTATION: READY FOR SCAFFOLD` yalnızca Domain + test ilk slice’ına izin verir; ilk slice kanıtları tamamlanmadan business feature implementasyonu başlatılmaz.

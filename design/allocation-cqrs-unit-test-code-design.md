@@ -4,7 +4,9 @@
 
 **Durum:** Unit test code blueprint; production test project’i değildir.
 
-**Gate:** `IMPLEMENTATION: NOT READY`. Kod blokları implementation scaffold’u oluşturulana kadar `tests/` altına taşınmayacaktır.
+**Gate:** `IMPLEMENTATION: READY FOR SCAFFOLD`. Kod blokları ilk Domain + test scaffold slice’ında `tests/` altına taşınabilir; API, EF migration ve diğer feature testleri ilk slice kanıtları tamamlanmadan açılmaz.
+
+**Accepted ADR baseline:** Positive transaction quantity, zero-capable projection, private backing fields, row-lock/re-read, atomic CQRS transaction, domain event/outbox ayrımı ve typed conflict mapping zorunludur.
 
 ## 1. Test yaklaşımı
 
@@ -88,7 +90,7 @@ public static class QuantityFixture
 }
 ```
 
-Gerçek implementation’da `Quantity.Create(0, scale)` ihtiyacı ayrıca `NonNegativeQuantity` veya `QuantityProjection` ile çözülmelidir. Aşağıdaki testlerde sıfır toplamlar için production value object kararı uygulanacaktır.
+ADR-001 ile `PositiveQuantity` ve `NonNegativeQuantity` ayrımı kabul edilmiştir. Production testleri sıfır toplamları `NonNegativeQuantity.Zero(scale)` ile, yeni allocation/movement girdilerini `PositiveQuantity` ile oluşturacaktır.
 
 ## 4. Quantity ve packaging unit testleri
 
@@ -572,4 +574,4 @@ Gate açıldıktan sonra test ve domain implementation şu sırayla başlatılı
 9. PostgreSQL concurrency ve API integration testleri
 ```
 
-Bu belge henüz test project’i veya runnable `.cs` dosyası değildir. `IMPLEMENTATION: READY` kararı verilmeden mevcut repository’ye production/test source tree eklenmemesi gerekir.
+Bu belge test project’i için blueprint’tir. `IMPLEMENTATION: READY FOR SCAFFOLD` kararıyla ilk Domain ve test source tree eklenebilir; ancak ilk slice kanıtları tamamlanmadan API, EF migration, web, mobile, worker veya external adapter testleri açılmaz.

@@ -381,3 +381,14 @@ Architecture aşamasında bu contract’tan aşağıdaki çıktılar üretilecek
 7. EF Core aggregate mapping ve migration referansları.
 
 Bu belge endpoint yönünü ve uygulama sözleşmesini belirler; controller, handler, EF Core implementation veya production deployment kodu değildir.
+
+
+## 15. Accepted Architecture ADR overlay
+
+The API contract now consumes ADR-001–ADR-011. Quantity input endpoints accept entered quantity and operation packaging, but the server recalculates `quantityBase`; mismatches return `422 QUANTITY_BASE_MISMATCH`. State-changing commands require `Idempotency-Key`, correlation ID and, where a resource version is exposed, `If-Match`/ETag.
+
+`IssueDeliveryNote`, `IssueInvoice`, `ApplyPayment`, `CompleteProduction` and `LockLoadPlan` execute validation, authorization, idempotency lookup, source-row re-read/lock and business effects inside one application transaction. The API never calls SMTP, e-document, external HTTP or push providers inside that transaction. It writes an outbox record and returns the committed command result.
+
+`DbUpdateConcurrencyException`, PostgreSQL deadlock/serialization failures and allocation constraint violations are mapped to the typed ProblemDetails codes in `architecture-decision-baseline.md`. A retryable conflict requires a fresh read; the API does not blindly replay a command with a stale version or changed payload.
+
+Successful mutation responses include the current resource version/ETag where applicable. Public endpoints never expose internal row versions, stock ledger details, current-account data, salary data or allocation internals.

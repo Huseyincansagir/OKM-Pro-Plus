@@ -5,13 +5,15 @@ Bu dosya, `factory-erp-design-workflow` skill'inin production implementation ba�
 ```text
 DESIGN:
 READY FOR ARCHITECTURE
+ARCHITECTURE:
+ACCEPTED FOR MVP HANDOFF
 IMPLEMENTATION:
-NOT READY
+READY FOR SCAFFOLD
 NEXT SKILL:
-factory-erp-architecture
+factory-erp-implementation
 ```
 
-Proje sahibi O-001–O-014 karar paketini 2026-08-16 tarihinde kabul etmiştir. Bu nedenle Design Gate karar blokajı kaldırılmış ve Architecture aşamasına geçiş açılmıştır. **Bu durum production code yazılabileceği anlamına gelmez.**
+Proje sahibi O-001–O-014 karar paketini ve araştırma sonrası ADR-001–ADR-011 teknik baseline’ını 2026-08-16 tarihinde kabul etmiştir. Design Gate ve Architecture acceptance tamamlanmış; implementation yalnızca Domain + test scaffold’u için açılmıştır. **Bu durum tüm ERP feature’larının veya production deployment’ın hazır olduğu anlamına gelmez.**
 
 ## Architecture başlamadan önceki durum
 
@@ -64,6 +66,19 @@ Aşağıdaki dosyalar Architecture çıktılarıyla birlikte güncellenip doğru
 ## Mevcut sonuç
 
 ```text
-Architecture: ALLOWED TO START
-Production code: BLOCKED UNTIL ARCHITECTURE ACCEPTANCE
+Architecture: ACCEPTED FOR MVP HANDOFF
+Implementation: READY FOR SCAFFOLD
+Production features: BLOCKED UNTIL FIRST SLICE EVIDENCE
+Next skill: factory-erp-implementation
 ```
+
+İlk implementation slice:
+
+```text
+FactoryErp.Domain common/value objects
+→ allocation invariants
+→ Domain unit tests
+→ Architecture dependency tests
+```
+
+Bu slice’ın build/test/documentation kanıtları alınmadan API, EF migration, web, mobile, worker veya external adapter feature’larına geçilmez.

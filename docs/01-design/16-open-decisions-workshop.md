@@ -6,10 +6,11 @@
 | Alan | Durum |
 |---|---|
 | Proje | Factory ERP-Lite — üretim, depo, satış, sevkiyat, fatura, cari, ödeme, personel ve raporlama |
-| Aşama | `DESIGN → DESIGN GATE / READY FOR ARCHITECTURE` |
-| Design Gate | **READY FOR ARCHITECTURE** |
-| Implementation | **NOT READY** |
-| Sonraki skill | `factory-erp-architecture` — başlayabilir |
+| Aşama | `DESIGN → DESIGN GATE → ARCHITECTURE → IMPLEMENTATION SCAFFOLD` |
+| Design Gate | **ACCEPTED** |
+| Architecture | **ACCEPTED FOR MVP HANDOFF** |
+| Implementation | **READY FOR SCAFFOLD** |
+| Sonraki skill | `factory-erp-implementation` — yalnızca Domain + test ilk slice’ı |
 | Karar kuralı | O-001–O-014 proje sahibi tarafından 2026-08-16 tarihinde `DECIDED` yapıldı; yeni değişiklikler owner/date/evidence gerektirir |
 | Kanonik kaynak | [`/design/`](./) |
 
@@ -19,7 +20,7 @@
 
 Factory ERP-Lite için ekran envanteri, UX mimarisi, mobil operasyon akışları, public katalog tasarımı, domain modeli, iş akışları ve PostgreSQL teknik ön taslağı hazırlanmıştır. Bu artefact'lar kodlamaya başlamadan önce gerekli tasarım omurgasını oluşturur.
 
-O-001–O-014 arasındaki **14 karar**, veri modeli, belge durumları, yetki politikaları, entegrasyon sınırları, public erişim güvenliği ve deployment davranışını etkilediği için karar paketi olarak kayda alınmıştır. Proje sahibinin 2026-08-16 tarihli kabulüyle Design Gate karar blokajı kaldırılmış, Architecture aşamasına geçiş açılmıştır. Production code ise Architecture acceptance tamamlanana kadar başlatılmamalıdır.
+O-001–O-014 arasındaki **14 karar** ve araştırma sonrası ADR-001–ADR-011 teknik kararları, proje sahibinin 2026-08-16 tarihli kabulüyle baseline’a alınmıştır. Architecture artefact’ları MVP handoff için tamamlanmış ve implementation yalnızca Domain + test scaffold ilk slice’ı için açılmıştır. İlk slice kanıtları alınmadan diğer production feature’ları başlatılmayacaktır.
 
 > **Toplantının temel çıktısı:** Her O maddesi için `seçim + karar sahibi + tarih + gerekçe + etkilenen artefact listesi` kaydedilmiş olmalıdır.
 

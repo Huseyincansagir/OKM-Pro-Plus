@@ -11,7 +11,7 @@ description: Tasarımı kodlayan ana geliştirme skill'i. Backend, web, mobile, 
 
 ## Başlangıç koşulu
 
-`/design/implementation-ready.md` yoksa, `IMPLEMENTATION: READY` değilse veya canonical artefact'lar arasında karar yayılımı doğrulanmamışsa yeni business feature implement etmeye başlama. Bir agent'ın dosyayı READY yazmış olması tek başına yeterli kanıt değildir; `/design/decision-log.md`, solution matrix, `/design/decision-clarification-backlog.md`, domain, workflow, database, screen inventory, UI design package ve skill-impact review birlikte kontrol edilmelidir. Ambalaj, fiziksel ölçü, araç kapasitesi, rota/durak, yük birimi ve `ShipmentPackage` kuralları implementation öncesi aynı canonical sürümde bulunmalıdır. O-001–O-014 mevcut baseline’da `DECIDED` durumundadır; bu değerleri uygulama contract’larına aynen taşı. Yeni veya değişen bir karar `OPEN DECISION` ise ilgili business feature’ı başlatma. Architecture acceptance tamamlanmadan production code yazma.
+`/design/implementation-ready.md` yoksa, `IMPLEMENTATION: READY FOR SCAFFOLD` veya daha ileri kabul edilmiş bir implementation state’i değilse ya da canonical artefact'lar arasında karar yayılımı doğrulanmamışsa yeni business feature implement etmeye başlama. Bir agent'ın dosyayı READY yazmış olması tek başına yeterli kanıt değildir; `/design/decision-log.md`, solution matrix, `/design/decision-clarification-backlog.md`, domain, workflow, database, screen inventory, UI design package ve skill-impact review birlikte kontrol edilmelidir. Ambalaj, fiziksel ölçü, araç kapasitesi, rota/durak, yük birimi ve `ShipmentPackage` kuralları implementation öncesi aynı canonical sürümde bulunmalıdır. O-001–O-014 mevcut baseline’da `DECIDED` durumundadır; bu değerleri uygulama contract’larına aynen taşı. Yeni veya değişen bir karar `OPEN DECISION` ise ilgili business feature’ı başlatma. Architecture acceptance tamamlanmadan production feature code yazma. ADR-001–ADR-011 kabul edilmiş ve Architecture handoff tamamlanmıştır; bu nedenle yalnızca `FactoryErp.Domain` common/value objects, allocation invariants, Domain unit tests ve Architecture dependency tests için scaffold implementation başlatılabilir. İlk slice kanıtları yeşil olmadan API, EF migration, web, mobile, Worker veya external adapter feature’larına geçme.
 
 ## Teknoloji
 
@@ -144,6 +144,21 @@ Aşağıdaki hatalar kabul edilmez:
 - Vergi/e-belge, kısmi sevkiyat/fatura, BOM/lot, deployment, fiyat, marka ve ilgili permission kararları kapanmadıysa migration/API/state tasarımını varsayımla kilitleme.
 - Her seçilmiş karar için owner/date/rationale/effected artefacts/acceptance tests kaydı olmadan `Definition of Done` değerlendirmesi yapma.
 - Karar değişikliği implementation sırasında ortaya çıkarsa kod içinde sessizce uyarlama yapma; Design Gate'e geri dön ve canonical belgeleri güncelle.
+
+## First implementation slice
+
+Implementation gate `READY FOR SCAFFOLD` durumundadır. İlk slice kapsamı:
+
+```text
+FactoryErp.Domain common types
+→ PositiveQuantity / NonNegativeQuantity
+→ PackagingSnapshot / QuantitySnapshot
+→ SalesOrderItem / DeliveryNoteItem allocation invariants
+→ Domain unit tests
+→ Architecture dependency tests
+```
+
+Bu slice içinde ADR-001–ADR-009’daki quantity, backing field, row-version, lock/re-read, transaction, outbox ve error mapping kuralları test edilebilir tasarım olarak korunur. API, EF migration, web, mobile, Worker ve external adapter feature’ları ilk slice build/test/evidence tamamlanmadan başlatılamaz.
 
 ## Agent workflow
 

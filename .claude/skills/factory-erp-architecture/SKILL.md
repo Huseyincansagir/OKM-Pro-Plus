@@ -213,3 +213,21 @@ En az:
 - Reverse proxy
 
 Backup, restore, health check ve log rotation planı oluştur. Local-first veya ücretsiz deployment önerisi, işletim sistemi, HTTPS, reverse proxy ve RPO/RTO sahibi tarafından onaylanmadan kesin deployment kararı sayılmaz.
+
+
+## Accepted Architecture ADR baseline
+
+`/design/architecture-decision-baseline.md` is now a mandatory input alongside `decision-log.md`. ADR-001–ADR-011 are accepted technical decisions and must be consumed as follows:
+
+- Use positive quantity types for new movement/allocation inputs and zero-capable projection types for remaining totals.
+- Use immutable packaging/quantity snapshots and recalculate `quantity_base` server-side.
+- Map aggregate child collections through private EF Core backing fields and never expose public mutation.
+- Use API `row_version`/ETag with an explicit PostgreSQL-compatible token; do not expose Npgsql `xmin`.
+- Use Read Committed plus deterministic source-row `SELECT FOR UPDATE`, transaction-local re-read and deferred allocation upper-bound validation.
+- Keep validation, authorization, idempotency and source re-read before atomic CQRS business effects; write outbox rows in the same transaction and publish after commit.
+- Map concurrency, deadlock, serialization, unique and domain constraint failures to typed ProblemDetails and require fresh-read retry.
+- Keep production self-hosted runner protected, private, release-only and inaccessible to PR/untrusted code.
+
+## Architecture acceptance and implementation handoff
+
+Architecture outputs are accepted for MVP handoff. The implementation skill may begin only the bounded first slice: `FactoryErp.Domain` common/value objects, allocation invariants, Domain unit tests and Architecture dependency tests. API, EF migration, web, mobile, Worker and external adapter features remain gated until first-slice evidence is green.

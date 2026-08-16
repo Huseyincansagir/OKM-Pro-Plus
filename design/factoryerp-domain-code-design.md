@@ -4,7 +4,9 @@
 
 **Durum:** Kod tasarımı ve blueprint; production source tree değildir.
 
-**Gate:** `design/implementation-ready.md` hâlâ `IMPLEMENTATION: NOT READY` olduğu için aşağıdaki C# blokları henüz `src/` altına taşınmayacaktır.
+**Gate:** `design/implementation-ready.md` artık `IMPLEMENTATION: READY FOR SCAFFOLD` durumundadır. Aşağıdaki C# blokları blueprint’tir; ilk implementation slice içinde `src/FactoryErp.Domain` ve `tests/` altında gerçek sınıflara dönüştürülecektir.
+
+**Accepted ADR baseline:** ADR-001 positive işlem quantity ile zero-capable projection ayrımını; ADR-003 private backing field mapping’ini; ADR-005 allocation lock/re-read stratejisini; ADR-006 CQRS transaction sınırını; ADR-007/ADR-008 domain event/outbox ayrımını zorunlu kılar.
 
 ## 1. Tasarım ilkeleri
 
@@ -577,3 +579,17 @@ Implementation gate açılmadan önce aşağıdaki noktalar netleştirilmelidir:
 | Reversal | Reversal entity/movement’in source record’dan ayrımı |
 
 Bu belge implementation’a geçiş için temel sınıf tasarımını inceler; henüz `src/FactoryErp.Domain` altında üretim kodu oluşturulmadı.
+
+## 11. Accepted ADR implementation addendum
+
+The earlier snippets in this document are illustrative and are superseded by the accepted ADR baseline where they conflict. The implementation slice must use `PositiveQuantity` for new movement/allocation inputs and `NonNegativeQuantity` for ordered, reserved, shipped and remaining projections. The provisional `0.000001` sentinel must not be used in production code.
+
+`PackagingSnapshot.ToBaseQuantity` returns `PositiveQuantity`. `QuantitySnapshot.QuantityBase` is a positive input snapshot. Projection arithmetic that can reach zero uses `NonNegativeQuantity`; negative results are rejected before persistence.
+
+Aggregate child collections remain private backing fields. EF Core maps them with explicit Fluent API field access, while public API surface exposes read-only projections. Allocation mutation is possible only through aggregate/application commands.
+
+`SalesOrderItem`, `DeliveryNoteItem` and invoiceable source rows are re-read under the application transaction after PostgreSQL `SELECT FOR UPDATE`. The Domain layer checks invariants; Infrastructure supplies row locking, row-version checking and deferred database constraints.
+
+Domain events are collected in the aggregate and dispatched in-process for same-domain effects. External notifications and adapters are represented as `outbox_messages` in the same transaction and are published only after commit by the Worker. No external HTTP, SMTP or e-document call is made inside an aggregate transaction.
+
+The first scaffold slice must add tests for `PositiveQuantity`, `NonNegativeQuantity`, packaging snapshots, allocation upper bounds, reversal, idempotency, stale version and concurrency conflict mapping before application/API features begin.

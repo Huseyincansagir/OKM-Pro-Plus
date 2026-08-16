@@ -256,3 +256,14 @@ Architecture/Operations acceptance için aşağıdaki kanıtlar gerekir:
 | Observability | API/database/backup hata bildirimi çalışıyor |
 
 Bu belge Docker Compose ve operasyon architecture planıdır. Gerçek `compose.yaml`, reverse-proxy config, backup script ve deployment runbook Architecture acceptance sonrasında implementation repository’sinde üretilecektir.
+
+
+## 12. Accepted Architecture ADR overlay
+
+ADR-006/ADR-008 require the `worker` service to process committed `outbox_messages` after the API transaction completes. External notifications, report jobs and adapter calls are not executed inside API request transactions. The worker must expose queue/backlog health without exposing message payloads or secrets.
+
+ADR-004 requires the API and database deployment to preserve the `row_version`/ETag contract. PostgreSQL update triggers and migration version checks are part of deployment acceptance. The `factory_erp_migrator` role is separate from the API role and is used only by the controlled migration job.
+
+ADR-010 requires production deployment to use a private protected self-hosted runner or an internal pull/release mechanism. PR code is never run on the production runner. The production runner belongs to a restricted runner group, uses environment approval and has only the minimum PostgreSQL/Compose access required for release and backup jobs.
+
+Before each release, the pipeline checks backup freshness, migration compatibility, image digest, schema version, health endpoints and outbox worker readiness. Rollback is image rollback plus forward-fix or restore; destructive database migration is not automatically reversed.

@@ -42,6 +42,8 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`aspnet-clean-architecture-and-cqrs.md`](./aspnet-clean-architecture-and-cqrs.md) | ASP.NET Core Clean Architecture klasör yapısı, dependency yönü, CQRS handler ve architecture test sözleşmeleri |
 | [`factoryerp-domain-code-design.md`](./factoryerp-domain-code-design.md) | FactoryErp.Domain temel entity, aggregate, quantity/packaging value object ve allocation invariant kod tasarımı |
 | [`allocation-cqrs-unit-test-code-design.md`](./allocation-cqrs-unit-test-code-design.md) | Allocation ve CQRS transaction unit test blueprint’leri, idempotency, rollback ve error branch testleri |
+| [`architecture-decision-baseline.md`](./architecture-decision-baseline.md) | Araştırılmış ve kabul edilmiş ADR-001–ADR-011 teknik baseline, gerekçeler, riskler ve acceptance testleri |
+| [`research-findings-architecture-decisions.md`](./research-findings-architecture-decisions.md) | EF Core, PostgreSQL, Npgsql, domain events, value objects ve GitHub Actions kaynaklı araştırma notları |
 | [`docker-compose-deployment-plan.md`](./docker-compose-deployment-plan.md) | Docker Compose servisleri, network, HTTPS, backup/restore ve operasyon kabul kriterleri |
 | [`decision-log.md`](./decision-log.md) | DECIDED, ASSUMED ve OPEN DECISION kayıtları |
 | [`decision-clarification-backlog.md`](./decision-clarification-backlog.md) | O-001–O-014 için karar toplantısı alt soruları ve Design Gate kapanış çıktıları |
@@ -72,10 +74,10 @@ RELEASE
 ## Mevcut sonuç
 
 ```text
-DESIGN STATUS:
-READY FOR ARCHITECTURE
-IMPLEMENTATION:
-NOT READY
+DESIGN STATUS: READY FOR ARCHITECTURE
+ARCHITECTURE: ACCEPTED FOR MVP HANDOFF
+IMPLEMENTATION: READY FOR SCAFFOLD
+NEXT SKILL: factory-erp-implementation
 ```
 
-O-001–O-014 karar paketi kabul edilmiş, Architecture artefact’ları üretim aşamasına alınmıştır. Design Gate `READY FOR ARCHITECTURE` durumundan Architecture çalışma durumuna geçmiştir; production implementation hâlâ Architecture acceptance tamamlanana kadar kapalıdır.
+O-001–O-014 ve ADR-001–ADR-011 baseline’ları kabul edilmiş, Architecture artefact’ları MVP handoff için tamamlanmıştır. Implementation yalnızca Domain + test scaffold’u için açılmıştır; ilk slice kanıtları alınmadan diğer production feature’ları başlatılmaz.

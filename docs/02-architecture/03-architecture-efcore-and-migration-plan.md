@@ -471,3 +471,16 @@ Migration’ın geri alınması için her migration’da `Down` yolu bulunabilir
 - Backup ve restore prosedürü migration öncesi ve sonrası test edilmiştir.
 
 Bu belge Architecture persistence tasarımıdır; gerçek `DbContext`, entity class, configuration class ve migration dosyaları implementation/architecture acceptance sonrasında üretilecektir.
+
+
+## 9. Accepted Architecture ADR overlay
+
+The EF Core design now consumes ADR-001–ADR-009. Positive movement/allocation inputs use the positive quantity type; ordered/shipped/reserved/remaining projections use a zero-capable non-negative type. Packaging and quantity snapshots are immutable JSONB/complex-value mappings with an explicit schema version.
+
+Aggregate child collections use private backing fields and explicit Fluent API field access. `DeliveryNoteItemAllocation`, `InvoiceItemAllocation`, stock movements and current-account transactions cannot be modified through public collection setters.
+
+The PostgreSQL schema exposes `row_version bigint NOT NULL` for API/ETag semantics. A database trigger increments it on update. Npgsql `xmin` is not exposed as the public resource version. EF maps `row_version` as a concurrency token and integration tests must verify stale updates produce the expected conflict mapping.
+
+Allocation writes run under Read Committed with deterministic `SELECT FOR UPDATE` source-row locks, transaction-local re-read and deferred upper-bound validation. Multi-source commands lock rows in ascending stable ID/line order. Deadlock, serialization and unique conflicts rollback the transaction and map to the API contract.
+
+`outbox_messages` is included in the infrastructure persistence model and migration sequence. Outbox records are written in the same transaction as the domain business effects; Worker publication happens only after commit. External adapters are not called from `SaveChanges` or aggregate methods.

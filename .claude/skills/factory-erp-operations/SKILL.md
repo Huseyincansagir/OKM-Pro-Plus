@@ -142,3 +142,10 @@ MONITORING.md
 INCIDENT-RESPONSE.md
 ENVIRONMENT.md
 ```
+
+
+## ADR-001–ADR-011 operational handoff
+
+Architecture ADR-001–ADR-011 is accepted for MVP handoff. Operations must preserve the following runtime rules: positive transaction quantities and zero-capable projections; immutable packaging snapshots; row_version/ETag; PostgreSQL Read Committed with deterministic source-row locking; atomic command effects; committed outbox processing; typed conflict codes; and protected release-only self-hosted runner access.
+
+The first implementation slice does not change production deployment. Compose, migration, backup and restore procedures remain design artifacts until implementation evidence exists. Once the slice is scaffolded, CI must verify domain tests, architecture tests, schema compatibility and outbox/health behavior before any on-prem release job is enabled.
