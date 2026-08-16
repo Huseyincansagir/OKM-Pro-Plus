@@ -13,4 +13,7 @@ using var scope = host.Services.CreateScope();
 var dbContext = scope.ServiceProvider.GetRequiredService<FactoryErpDbContext>();
 await dbContext.Database.MigrateAsync();
 
-Console.WriteLine("Factory ERP database migration completed.");
+var identitySeeder = scope.ServiceProvider.GetRequiredService<FactoryErp.Infrastructure.Authentication.IdentitySeeder>();
+await identitySeeder.SeedBootstrapAdminAsync(builder.Configuration);
+
+Console.WriteLine("Factory ERP database migration and optional bootstrap seed completed.");

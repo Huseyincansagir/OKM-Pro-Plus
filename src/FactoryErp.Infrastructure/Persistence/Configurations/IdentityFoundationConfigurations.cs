@@ -14,6 +14,7 @@ public sealed class UserRecordConfiguration : IEntityTypeConfiguration<UserRecor
         builder.Property(x => x.UserName).HasColumnName("user_name").HasMaxLength(160).IsRequired();
         builder.Property(x => x.Email).HasColumnName("email").HasMaxLength(320);
         builder.Property(x => x.DisplayName).HasColumnName("display_name").HasMaxLength(200).IsRequired();
+        builder.Property(x => x.PasswordHash).HasColumnName("password_hash").HasMaxLength(512);
         builder.Property(x => x.IsActive).HasColumnName("is_active").IsRequired();
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("timestamptz");
         builder.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasColumnType("timestamptz");

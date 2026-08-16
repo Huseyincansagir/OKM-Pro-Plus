@@ -1,3 +1,6 @@
+using FactoryErp.Application.Abstractions.Persistence;
+using FactoryErp.Application.Identity;
+using FactoryErp.Infrastructure.Authentication;
 using FactoryErp.Infrastructure.Health;
 using FactoryErp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +16,27 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("FactoryErp")
             ?? configuration["POSTGRES_CONNECTION_STRING"]
             ?? throw new InvalidOperationException("FactoryErp PostgreSQL connection string is not configured.");
+
+        services.Configure<AuthOptions>(options =>
+        {
+            options.Issuer = configuration["Authentication:Issuer"] ?? options.Issuer;
+            options.Audience = configuration["Authentication:Audience"] ?? options.Audience;
+            options.SigningKey = configuration["Authentication:SigningKey"] ?? options.SigningKey;
+            if (int.TryParse(configuration["Authentication:AccessTokenMinutes"], out var accessTokenMinutes))
+            {
+                options.AccessTokenMinutes = accessTokenMinutes;
+            }
+
+            if (int.TryParse(configuration["Authentication:RefreshTokenDays"], out var refreshTokenDays))
+            {
+                options.RefreshTokenDays = refreshTokenDays;
+            }
+        });
+        services.AddSingleton<PasswordHasher>();
+        services.AddScoped<IdentitySeeder>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
+        services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
+        services.AddScoped<IAuditWriter, EfAuditWriter>();
 
         services.AddDbContext<FactoryErpDbContext>(options =>
             options.UseNpgsql(
