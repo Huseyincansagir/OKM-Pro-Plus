@@ -153,6 +153,24 @@ Sevkiyat detayından açılan kargo planı ekranı üç bölümlüdür:
 
 Karışık palet satırlarında `Temel Birim / Ambalaj / Kırılım` toggle'ı kullanılabilir. Planlanan miktar irsaliye kaleminin kalanını aşamaz. Plan kilitlendikten sonra değişiklik yeni versiyon ve audit kaydı üretir; gerçek yükleme palet/koli barkodlarıyla doğrulanır.
 
+### Rota, araç ve durak takibi
+
+Sevkiyat detayında kargo planının yanında bir **rota panosu** bulunur. Bu panoda araç plakası, araç tipi, kapasite kullanımı, şoför, mevcut araç durumu ve durak sırası birlikte gösterilir:
+
+```text
+Araç: 34 ABC 123 · Panelvan · 650 kg / 4,5 m³
+Durum: InTransit · Durak 2 / 4
+
+1. Müşteri A · Teslim edildi · 3 Koli
+2. Müşteri B · Sırada · 1 Palet + 4 Paket
+3. Müşteri C · Sırada · 2 Koli
+4. Müşteri D · Sırada · 6 Paket
+```
+
+Her durak detayında müşteri, seçilmiş teslim adresi, iletişim, planlanan/gerçekleşen varış, o adrese giden palet/koli/paketler, teslim alan kişi ve teslim kanıtı görünür. Paket izleme ekranında tekil barkodla “hangi yük, kime, hangi adrese ve hangi durumda?” sorusu cevaplanır. Kısmi teslim, teslim edilememe, iade ve eksik paket durumları ayrı tutulur.
+
+Araç ana durumu ile sevkiyat durumu ayrı gösterilir. Araç ana durumları `Available`, `Assigned`, `Loading`, `InTransit`, `Maintenance`, `OutOfService`; sevkiyat durumları `Preparing`, `Loaded`, `InTransit`, `PartiallyDelivered`, `Delivered`, `Exception`, `Returned` olarak izlenir.
+
 ## 10. Fatura ve cari ekranları
 
 Fatura listesinde fatura numarası, müşteri, tarih, bağlı irsaliye, toplam, vade ve ödeme durumu görünür olacaktır. Fatura detayında cari etkisi ayrı bir özet kartında gösterilecektir. Fatura oluşturma işlemi öncesinde bağlı irsaliye, vergi, iskonto, vade ve genel toplam kontrol panelinde özetlenecektir.

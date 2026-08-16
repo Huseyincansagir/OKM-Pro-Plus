@@ -9,7 +9,7 @@
 | Customers | Customer, Address, Contact, Note | Müşteri kimliği, iletişim ve adres |
 | Sales | QuoteRequest, Quote, SalesOrder, Approval | Talep, teklif, sipariş ve onay |
 | Warehouse | Warehouse, Location, Stock, StockMovement, Reservation, Count, Transfer | Fiziksel stok ve depo hareketleri |
-| Shipping | DeliveryNote, Shipment, Vehicle, Driver, PalletType, LoadPlan, LoadUnit, LoadUnitItem, VehicleCapacity | Sevk belgesi, araç/kargo kapasitesi, tekli veya karışık palet yükleme ve teslim |
+| Shipping | DeliveryNote, Shipment, VehicleType, Vehicle, Driver, RoutePlan, RouteStop, PalletType, LoadPlan, LoadUnit, LoadUnitItem, ShipmentPackage, VehicleCapacity | Sevk belgesi, araç/kargo kapasitesi, rota/durak, müşteri teslimatı, paket izleme, tekli veya karışık palet yükleme ve teslim |
 | Invoicing | Invoice, InvoiceItem | Fatura ve belge bağlantıları |
 | Current Accounts | CurrentAccount, CurrentTransaction | Borç, alacak, bakiye ve ekstre |
 | Payments | Payment, PaymentMethod, PaymentAllocation | Tahsilat/ödeme ve fatura dağılımı |
@@ -37,7 +37,7 @@
 | Teklif | `Quote` | Quote PDF, quote summary | Sipariş fiyatı tekliften sessizce kopyalanmamalı |
 | Sipariş | `SalesOrder` | Approval panel, picking list | Sevk belgesi sipariş yerine geçmemeli |
 | İrsaliye | `DeliveryNote` | Shipment picking view | Sevkiyat miktarı irsaliyeden bağımsızlaşmamalı |
-| Sevkiyat | `Shipment` + `LoadPlan` + `LoadUnit` | Delivery status, loading board, capacity utilization | Yük planı sevkiyat miktarının yerine geçmemeli; plan kilitlenmeden fiziksel yükleme kesinleşmemeli |
+| Sevkiyat | `Shipment` + `RoutePlan` + `RouteStop` + `LoadPlan` + `LoadUnit` + `ShipmentPackage` | Delivery status, route board, capacity utilization, recipient tracking | Araç durumu, rota veya paket durumu sevkiyat miktarının yerine geçmemeli; her yükün müşteri/adres bağlantısı korunmalı |
 | Fatura | `Invoice` | Customer balance, payment status | Cari hareket faturanın yerine geçmemeli |
 | Üretim | `ProductionRecord` | Production dashboard, machine report | Dashboard toplamı ana kayıt yerine geçmemeli |
 | Makine | `Machine` | Machine status board | İş emrinde makine adı metin olarak kopyalanmamalı |
@@ -65,7 +65,12 @@ flowchart TD
   Shipment --> LoadPlan
   LoadPlan --> LoadUnit
   LoadUnit --> LoadUnitItem
+  VehicleType --> Vehicle
   Vehicle --> VehicleCapacity
+  Shipment --> RoutePlan
+  RoutePlan --> RouteStop
+  RouteStop --> ShipmentPackage
+  ShipmentPackage --> LoadUnitItem
   PalletType --> LoadUnit
   DeliveryNote --> Invoice
   Invoice --> CurrentTransaction
@@ -221,6 +226,12 @@ Ambalaj miktarı ile fiziksel yükleme farklı sorumluluklardır. `5 Koli` ürü
 | `LoadPlan` | Bir shipment için taslak, doğrulanmış veya kilitlenmiş yükleme planı |
 | `LoadUnit` | Palet, kafes, koli grubu veya loose yük birimi; karışık palet olabilir |
 | `LoadUnitItem` | LoadUnit içindeki ürün, ambalaj seviyesi, temel miktar ve fiziksel değerler |
+| `VehicleType` | Kamyonet, kamyon, panelvan, tır vb. tipin kapasite ve ölçü şablonu |
+| `Vehicle` | Gerçek araç, plaka, tip, aktiflik ve mevcut sevkiyat durumu |
+| `VehicleCapacity` | Araç/taşıyıcı için kg, m³, palet, ölçü ve istifleme sınırları |
+| `RoutePlan` | Sevkiyatın durak sırası, toplam rota ve planlanan zamanları |
+| `RouteStop` | Bir müşteri teslimat adresi, sıra, planlanan/gerçekleşen zaman ve durum |
+| `ShipmentPackage` | Koli/paket/palet veya yük biriminin hangi müşteriye/adrese gittiğini ve izleme durumunu taşıyan sevkiyat birimi |
 
 `LoadUnit` tek bir ürün kartı değildir. Karışık palet şu şekilde modellenir:
 
@@ -240,6 +251,10 @@ Shipment
 - Karışık palet aynı palet üzerinde birden fazla ürün veya ambalaj seviyesine izin verir; fiziksel uyumsuzluk varsa sistem engeller veya yetkili override ister.
 - Taslak yük planı sevkiyatı değiştirmez. `Locked` durumuna gelen plan audit kaydı üretir; gerçek yükleme ayrıca barkodla doğrulanır.
 - Planlanan ve gerçekleşen yük farkı açıklama ve gerekirse yetkili onayı gerektirir.
+- Her `ShipmentPackage` en az bir `RouteStop` ve teslimat adresiyle ilişkilidir; bir karışık palet üzerinde farklı müşterilere giden paketler bulunabilir, ancak barkod ve paket içeriğiyle ayrıştırılabilir olmalıdır.
+- `Vehicle` aynı anda kapasitesi uygun birden fazla sevkiyat taşıyabilir; her sevkiyat ve durak için yük dağılımı izlenebilir olmalıdır.
+- Araç ana durumu ile sevkiyat durumu ayrı tutulur. Araç `Available`, `Assigned`, `Loading`, `InTransit`, `Maintenance` olabilir; sevkiyat `Preparing`, `Loaded`, `InTransit`, `PartiallyDelivered`, `Delivered`, `Exception` olabilir.
+- Bir durakta teslim edilen paketler, diğer durakların kalan yükünden ayrıştırılır; teslimat kanıtı ve teslim alan kişi route stop üzerinde tutulur.
 
 ## 9. Tasarım sonucu
 

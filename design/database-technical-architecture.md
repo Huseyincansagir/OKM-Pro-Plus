@@ -157,7 +157,13 @@ AvailableBaseQuantity = OnHandBaseQuantity - ReservedBaseQuantity
 | `delivery_note_items` | Sevk miktarı, barkod doğrulaması, `quantity_base` ve ambalaj görünümü |
 | `shipments` | Araç, şoför, yükleme ve teslim durumu |
 | `shipment_items` | İrsaliye/sevkiyat ürün bağlantısı |
+| `vehicle_types` | Kamyonet, kamyon, panelvan vb. tip ana verisi |
+| `vehicles` | Plaka, araç tipi, aktif durum ve anlık sevkiyat durumu |
 | `vehicle_capacities` | Araç/kargo tipi için maksimum kg, hacim, palet ve ölçü kapasitesi |
+| `drivers` | Şoför kimliği, iletişim ve ehliyet bilgileri |
+| `route_plans` | Sevkiyatın çok duraklı rota planı ve versiyonu |
+| `route_stops` | Müşteri/adres, sıra, planlanan/gerçekleşen zaman ve teslimat durumu |
+| `shipment_packages` | Palet/koli/paket/yük barkodu, alıcı, durak ve izleme durumu |
 | `load_plans` | Shipment'a bağlı taslak/doğrulanmış/kilitli kargo planı |
 | `load_units` | Palet, karışık palet, kafes, koli grubu veya loose yük birimi |
 | `load_unit_items` | Yük birimindeki ürün, ambalaj seviyesi, temel miktar, ağırlık ve hacim |
@@ -178,6 +184,8 @@ QuoteRequest
 
 Her belge başlığında durum, belge numarası, oluşturma/değiştirme kullanıcıları, tarih ve gerekliyse iptal açıklaması bulunmalıdır.
 
+Araç durumu ile rota/sevkiyat durumu birbirinden ayrıdır. Önerilen araç durumları `Available`, `Assigned`, `Loading`, `InTransit`, `Maintenance`, `OutOfService`; sevkiyat durumları `Preparing`, `Loaded`, `InTransit`, `PartiallyDelivered`, `Delivered`, `Exception`, `Returned`; durak durumları `Pending`, `InProgress`, `Delivered`, `Partial`, `Failed`, `Skipped` şeklindedir. Bu ayrım araç ana verisinin, fiziksel konumun ve ticari sevkiyat durumunun birbirine karışmasını önler.
+
 `load_plans` sevkiyat miktarını değiştirmez; yalnızca `shipment_items` kalemlerini fiziksel `load_units` içine dağıtır. Önerilen alanlar:
 
 | Tablo | Ana alanlar |
@@ -185,8 +193,13 @@ Her belge başlığında durum, belge numarası, oluşturma/değiştirme kullan�
 | `load_plans` | `shipment_id`, `vehicle_capacity_id`, `status`, `version`, `total_weight`, `total_volume`, `pallet_count`, `validation_summary`, `locked_at` |
 | `load_units` | `load_plan_id`, `pallet_type_id`, `unit_code`, `unit_type`, `is_mixed`, `length`, `width`, `height`, `tare_weight`, `gross_weight`, `volume`, `stackable`, `status` |
 | `load_unit_items` | `load_unit_id`, `shipment_item_id`, `product_id`, `packaging_id`, `entered_quantity`, `quantity_base`, `net_weight`, `volume`, `packaging_snapshot` |
+| `route_plans` | `shipment_id`, `vehicle_id`, `driver_id`, `status`, `version`, `planned_start_at`, `planned_end_at`, `actual_start_at`, `actual_end_at` |
+| `route_stops` | `route_plan_id`, `sequence_no`, `customer_id`, `address_id`, `planned_arrival_at`, `actual_arrival_at`, `status`, `recipient_name`, `proof_file_id`, `exception_reason` |
+| `shipment_packages` | `shipment_id`, `route_stop_id`, `load_unit_id`, `parent_package_id`, `barcode`, `package_type`, `packaging_id`, `quantity_base`, `status`, `scanned_at`, `delivered_at` |
+| `vehicle_types` | `code`, `name`, `inner_length`, `inner_width`, `inner_height`, `max_gross_weight`, `max_volume`, `max_pallet_count`, `is_active` |
+| `vehicles` | `vehicle_type_id`, `plate_number`, `status`, `current_route_plan_id`, `last_known_location_text`, `last_status_at` |
 
-Plan doğrulaması ağırlık, hacim, palet adedi, ölçü, istifleme ve sevkiyat kalan miktarını birlikte kontrol eder. `Locked` plan değişikliği versiyon ve audit kaydı üretir; gerçek yükleme barkodla ayrıca doğrulanır.
+Plan doğrulaması ağırlık, hacim, palet adedi, ölçü, istifleme ve sevkiyat kalan miktarını birlikte kontrol eder. `Locked` plan değişikliği versiyon ve audit kaydı üretir; gerçek yükleme barkodla ayrıca doğrulanır. `shipment_packages` kayıtları sayesinde “hangi palet/koli/paket hangi müşterinin hangi adresine gidecek?” sorusu tekil barkod ve route stop üzerinden cevaplanır.
 
 ### 4.5 Cari ve finans
 

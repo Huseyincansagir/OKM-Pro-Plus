@@ -115,18 +115,40 @@ Transfer ekranında kaynak depo, hedef depo ve konum seçilir. Ürün barkodla e
 
 Sevkiyat detayı ürün doğrulama ekranına açılır. Her satırda beklenen, okutulan ve kalan miktar hem temel birimde hem de ambalaj görünümünde gösterilir. `Temel Birim / Ambalaj / Kırılım` toggle'ı aynı satıra uygulanır. Örneğin `5 Koli (10.000 adet)`. Barkod okutuldukça okutulan temel miktar artar. Fark varsa sistem uyarır ve sevkiyatı tamamlamadan önce açıklama ister.
 
-Kargo planı varsa mobilde ayrıca araç kapasitesi, kullanılan kg/m³/palet, aktif palet barkodu ve palet içeriği gösterilir. Kullanıcı yeni bir palet barkodu açabilir, koli/paket barkodlarını ilgili palete ekleyebilir ve karışık paletin toplam ağırlık/hacmini görebilir. Plan kilitli değilse mobilde yalnızca taslak düzenleme; kilitli plan üzerinde ise barkodla yükleme doğrulama yapılır.
+Kargo planı varsa mobilde ayrıca araç plakası, araç tipi, kapasitesi, kullanılan kg/m³/palet, aktif palet barkodu ve palet içeriği gösterilir. Kullanıcı yeni bir palet barkodu açabilir, koli/paket barkodlarını ilgili palete ekleyebilir ve karışık paletin toplam ağırlık/hacmini görebilir. Her paket barkodu için ürün, ambalaj seviyesi, temel miktar, müşteri, teslim adresi, rota durağı ve teslim durumu gösterilir. Plan kilitli değilse mobilde yalnızca taslak düzenleme; kilitli plan üzerinde ise barkodla yükleme doğrulama yapılır.
 
 ```text
 Sevkiyat seç
 → İrsaliye ürünlerini gör
 → Ürün barkodlarını doğrula
 → Miktarları tamamla
-→ Araç/şoför bilgisini kontrol et
+→ Araç tipi, araç ve şoförü kontrol et
+→ Durak sırasını ve müşteri adreslerini kontrol et
 → Yükleme tamamlandı
 → Planlanan/gerçekleşen farkı kontrol et
+→ Araç çıkışı
+→ Durak seç
+→ Paketleri barkodla teslim et
+→ İmza/fotoğraf/not al
 → Sevkiyata hazır / sevk edildi
 ```
+
+### Durak ve teslimat ekranı
+
+Mobilde `İşlerim` altında aktif rota kartı gösterilir:
+
+```text
+Araç: 34 ABC 123 · Panelvan
+Durum: InTransit · Durak 2 / 4
+
+[1] Müşteri A · Teslim edildi · 3 Koli
+[2] Müşteri B · Sırada · 1 Palet + 4 Paket
+[3] Müşteri C · Sırada · 2 Koli
+
+[Varış Bildir] [Paket Tara] [Teslim Et] [İstisna Bildir]
+```
+
+Durakta kullanıcı yalnızca o adrese atanmış paketleri görür. Kısmi teslim için teslim edilen barkodlar seçilir; eksik, hasarlı veya teslim edilemeyen paketlerde neden ve fotoğraf/not zorunlu tutulur. Teslim alan kişi ve zaman bilgisi kaydedilerek rota ilerlemesi güncellenir.
 
 ## 10. Üretim operasyonu
 

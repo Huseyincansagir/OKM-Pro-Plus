@@ -304,6 +304,22 @@ Sevkiyat oluştur
 
 Sistem ilk sürümde uygunluk ön kontrolü ve manuel palet atama desteği sunar; matematiksel olarak optimal plan garantisi vermez. Depo sorumlusu öneriyi düzenleyip planı kilitler. Plan kilitlenmeden yükleme tamamlanamaz.
 
+### Araç, rota ve müşteri durakları
+
+Kargo planı kilitlenmeden önce sevkiyata araç tipi, gerçek araç, şoför ve rota atanır. Rota birden fazla müşteri/adres durağı içerebilir. Her durak için o adrese gidecek palet/koli/paket barkodları eşleştirilir.
+
+```text
+Araç: 34 ABC 123 · Panelvan · 650 kg / 4,5 m³
+Durum: InTransit · Durak 2 / 4
+
+1. Müşteri A · Teslim edildi · PALLET-001 / 3 Koli
+2. Müşteri B · Sırada · PALLET-001 / 1 Palet + 4 Paket
+3. Müşteri C · Sırada · 2 Koli
+4. Müşteri D · Sırada · 6 Paket
+```
+
+Depo ekranında paket barkodu okutulduğunda sistem ürün, ambalaj seviyesi, temel miktar, müşteri, teslim adresi ve rota durağını gösterir. Aynı palet içinde farklı müşterilere giden yükler `ShipmentPackage` ve `RouteStop` bağlantılarıyla ayrıştırılır; paletin kendisi tek müşteriye aitmiş gibi varsayılmaz.
+
 ### Uygunluk kontrolleri
 
 | Kontrol | Davranış |
@@ -315,6 +331,10 @@ Sistem ilk sürümde uygunluk ön kontrolü ve manuel palet atama desteği sunar
 | Miktar | Yük planı irsaliye/sevkiyat kalan temel miktarını aşamaz |
 | Karışık palet | Farklı ürünler yalnızca fiziksel uyumluluk varsa aynı palete atanır |
 | Gerçek yük | Barkodla planlanan-gerçekleşen farkı gösterilir; farkta açıklama istenir |
+| Araç durumu | Araç `Available/Assigned/Loading/InTransit/Maintenance` durumlarından biriyle izlenir |
+| Rota/durak | Durak sırası, müşteri/adres, varış ve teslim kanıtı birlikte tutulur |
+| Paket alıcısı | Her palet/koli/paket barkodu müşteri ve teslim adresiyle eşleştirilir |
+| Teslim istisnası | Eksik, hasarlı, yanlış adres, teslim edilemedi veya iade nedeni açıklama ve kanıtla kaydedilir |
 
 ## 16. Yetki matrisi
 
@@ -331,6 +351,9 @@ Sistem ilk sürümde uygunluk ön kontrolü ve manuel palet atama desteği sunar
 | Kargo planı oluşturma | ✓ | — | ✓ | Görüntüleme |
 | Kargo planı kilitleme | ✓ | — | ✓ | — |
 | Yükleme doğrulama | ✓ | — | ✓ | Görüntüleme |
+| Rota ve durak düzenleme | ✓ | — | ✓ | Görüntüleme |
+| Paket alıcı eşleştirme | ✓ | — | ✓ | Görüntüleme |
+| Teslim durumu güncelleme | ✓ | — | ✓ | Görüntüleme |
 | Fatura oluşturma | — | — | ✓ | ✓ |
 
 Yetki yok ekranı kullanıcıya yalnızca “erişim yok” dememeli; işlemi yapabilecek departmanı veya rolü de açıklamalıdır.
@@ -347,6 +370,9 @@ Yetki yok ekranı kullanıcıya yalnızca “erişim yok” dememeli; işlemi ya
 | Sayım farkı | Fark için gerekçe ve yetkili onayı gerekir. |
 | Ağ bağlantısı yok | İşlem sunucuya kaydedilmedi. Bağlantı gelince tekrar deneyin. |
 | Yetki yok | Bu işlemi yapma yetkiniz bulunmuyor. |
+| Araç kapasitesi yetersiz | Seçilen araç bu yük planını ağırlık, hacim veya palet kapasitesi açısından taşıyamaz. |
+| Paket durağa bağlı değil | Bu barkodun müşteri/adres eşleştirmesi eksik. Yükleme planı kilitlenemez. |
+| Teslimat istisnası | Teslim edilemeyen paketler için neden ve kanıt kaydı oluşturun. |
 
 ## 18. Üretim ve depo için kritik raporlar
 

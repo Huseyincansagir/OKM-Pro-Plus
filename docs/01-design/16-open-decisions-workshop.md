@@ -62,6 +62,8 @@ Ambalaj miktarı ile fiziksel lojistik bilgisi ayrı tutulur. Ürün veya ambala
 
 Karışık palet ayrı bir ürün değildir; sevkiyata bağlı `LoadPlan → LoadUnit → LoadUnitItem` yapısıdır. Bir `LoadUnit` aynı palet üzerinde farklı ürün veya ambalaj kalemlerini taşıyabilir. Sistem araç/kargo kapasitesini ağırlık, hacim, palet adedi, ölçü ve istifleme kurallarıyla kontrol eder. İlk sürümde otomatik öneri yalnızca uygunluk ön kontrolü ve manuel düzenleme desteği verir; depo sorumlusu planı kilitler ve gerçek yükleme barkodla doğrulanır.
 
+Sevkiyata ayrıca araç tipi, gerçek araç, şoför ve çok duraklı `RoutePlan` atanır. `RouteStop` müşteri/adres, sıra, planlanan-gerçekleşen zaman ve teslim durumunu taşır. `ShipmentPackage` ise palet/koli/paket barkodunu ilgili müşteri ve adrese bağlar. Böylece sistem şu soruları tekil olarak cevaplayabilir: **Araç şu an hangi durumda? Hangi adrese gidiyor? Araçta hangi palet/koli/paket var? Hangi yük kime teslim edilecek? Hangi paket teslim edildi veya istisnaya düştü?**
+
 ```text
 Sevkiyat: SHP-2026-000142       Kapasite: 1.200 kg | 8,0 m³ | 4 palet
 PALLET-001  Karışık Palet

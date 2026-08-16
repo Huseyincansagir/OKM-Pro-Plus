@@ -156,15 +156,19 @@ Kritik belge ekranlarında seçilen görünüm ne olursa olsun temel miktar kar�
 | İrsaliye oluştur | Sipariş, müşteri, adres, ürünler, sevk edilecek miktar + ambalaj, temel miktar, tarih, açıklama | Taslak, hazırla, kesinleştir |
 | İrsaliye detayı | Ürünler, `5 Koli (10.000 adet)` görünümü, temel stok çıkışı, bağlı sipariş, sevkiyat, fatura, hareket | PDF, iptal, sevkiyat oluştur |
 | Sevkiyat listesi | Sevkiyat no, irsaliye, müşteri, araç, şoför, temel/ambalaj toplamı, tarih, teslim durumu | Oluştur, yükle, teslim et |
-| Sevkiyat detayı | Araç, şoför, yükleme, çıkış, teslim, belge, not, kapasite özeti | Hazırla, sevk edildi, teslim edildi, kargo planına git |
+| Sevkiyat detayı | Araç, şoför, yükleme, çıkış, teslim, belge, not, kapasite özeti, rota özeti | Hazırla, sevk edildi, teslim edildi, kargo planına git |
+| Rota planı | Araç, şoför, durak sırası, müşteri, teslim adresi, planlanan/gerçekleşen zaman, durum | Durak ekle/sırala, rotayı kilitle, durumu güncelle |
+| Durak detayı | Müşteri, teslim adresi, bu durağa giden palet/koli/paketler, teslim alan, kanıt, istisna | Varış bildir, paket okut, kısmi teslim, teslim edildi/edilemedi |
+| Paket izleme | Paket/palet/koli barkodu, ürün, ambalaj, temel miktar, müşteri, adres, durak, durum | Ata, ara, barkod okut, teslim durumunu gör |
 | Kargo planlama | Sevkiyat kalemleri, araç/kargo kapasitesi, toplam kg, hacim, palet sayısı, doluluk ve uyarılar | Otomatik öneri oluştur, manuel palet ata, uygunluğu hesapla, planı kilitle |
-| Karışık palet detayı | Palet barkodu, ürün/ambalaj satırları, temel miktar, kg, hacim, istifleme durumu | Kalem ekle/çıkar, barkodla doğrula, etiketi bas |
-| Yükleme doğrulama | Planlanan/gerçekleşen palet, koli, temel miktar, ağırlık ve hacim | Barkod okut, fark açıklaması, yüklemeyi tamamla |
+| Karışık palet detayı | Palet barkodu, ürün/ambalaj satırları, temel miktar, kg, hacim, istifleme durumu, alıcı durakları | Kalem ekle/çıkar, durak ata, barkodla doğrula, etiketi bas |
+| Yükleme doğrulama | Planlanan/gerçekleşen palet, koli, temel miktar, ağırlık, hacim ve alıcı eşleştirmesi | Barkod okut, fark açıklaması, yüklemeyi tamamla |
 | Araç/kargo tipleri | Tip, iç ölçü, maksimum kg, hacim, palet kapasitesi, ölçü sınırı, istifleme kuralı | Ekle, düzenle, pasifleştir |
 | Palet tipleri | Tip, ölçü, dara ağırlığı, maksimum yük, istifleme kuralı | Ekle, düzenle, pasifleştir |
-| Yük planı özeti | Toplam net/brüt kg, hacim, palet sayısı, araç doluluk oranları, uyarılar | Uygunluğu hesapla, planı kilitle |
-| Yükleme farkı | Planlanan/gerçekleşen koli, temel miktar, palet, kg, hacim farkı | Açıklama gir, yetkiliye gönder, yeniden doğrula |
-| Araçlar | Plaka, araç tipi, kapasite, durum | Ekle, düzenle |
+| Yük planı özeti | Toplam net/brüt kg, hacim, palet sayısı, araç doluluk oranları, durak bazlı yük dağılımı, uyarılar | Uygunluğu hesapla, planı kilitle |
+| Yükleme farkı | Planlanan/gerçekleşen koli, temel miktar, palet, kg, hacim ve alıcı farkı | Açıklama gir, yetkiliye gönder, yeniden doğrula |
+| Araçlar | Plaka, araç tipi, kapasite, aktif rota, anlık durum, son durum zamanı | Ekle, düzenle, durumu güncelle |
+| Araç detayı | Plaka, tip, kapasite, mevcut yük, aktif rota, duraklar, konum metni, bakım durumu | Sevkiyata ata, yükü gör, durumu değiştir |
 | Şoförler | Sicil, ad, telefon, ehliyet, durum | Ekle, düzenle |
 
 ### 4.8 Muhasebe, fatura ve cari modülü
@@ -207,7 +211,7 @@ Kritik belge ekranlarında seçilen görünüm ne olursa olsun temel miktar kar�
 | Cari | Borç/alacak, ekstre, geciken ödemeler, risk |
 | Fatura | Dönem, ödeme durumu, gecikme, müşteri, ürün |
 | İrsaliye | Günlük, bekleyen, faturalaşmamış, sevk durumu |
-| Sevkiyat ve kargo | Araç doluluk, palet kullanımı, toplam kg/m³, karışık palet, planlanan-gerçekleşen yük farkı |
+| Sevkiyat ve kargo | Araç doluluk, palet kullanımı, toplam kg/m³, karışık palet, rota/durak, müşteri teslimat durumu, paket izleme, planlanan-gerçekleşen yük farkı |
 | Personel | Puantaj, mesai, izin, devamsızlık, çalışma süresi |
 
 Ortak rapor araçları tarih aralığı, müşteri, ürün, depo, makine, personel, durum, ödeme tipi, ambalaj seviyesi ve araç/kargo tipi filtreleridir. Miktar raporlarında `Temel Birim / Ambalaj / Kırılım` toggle'ı bulunur; dipnotta temel birim belirtilir. Grafik ve tablo aynı filtre kümesini kullanır. Dışa aktarma seçenekleri PDF, Excel ve CSV olacaktır.
@@ -216,7 +220,7 @@ Ortak rapor araçları tarih aralığı, müşteri, ürün, depo, makine, person
 
 | Ekran | Temel içerik |
 |---|---|
-| Bildirim merkezi | Yeni sipariş onayı, teklif talebi, geciken ödeme, kritik stok, faturalaşmamış irsaliye, izin, sevkiyat hazır |
+| Bildirim merkezi | Yeni sipariş onayı, teklif talebi, geciken ödeme, kritik stok, faturalaşmamış irsaliye, izin, sevkiyat hazır, araç/rota istisnası, teslimat başarısızlığı |
 | Bildirim ayarları | Kullanıcı veya rol bazında bildirim tercihleri |
 | Kullanıcılar | Kullanıcı, e-posta, roller, durum, son giriş, oturumlar |
 | Kullanıcı detayı | Roller, izinler, override yetkileri, oturum geçmişi |

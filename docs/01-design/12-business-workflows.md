@@ -31,12 +31,17 @@ Public Quote Request
 | İrsaliye hazırlama | Depo | Onaylı sipariş, sevk miktarı + ambalaj seviyesi, adres | `Prepared` | `delivery-note.create` | DeliveryNote taslağı, base quantity preview | Henüz kesin stok çıkışı yok | Yok | Hazırlama |
 | İrsaliye kesinleştirme | Depo/yönetici | Barkod doğrulaması, ambalaj seviyesi ve temel miktar | `Issued` | `delivery-note.issue` | DeliveryNote issued, packaging snapshot | `StockMovement(SalesShipment)` temel birimde, reservation release | Yok veya policy'ye göre sevk geliri | Stok çıkışı |
 | Sevkiyat oluşturma | Depo/sevkiyat | İrsaliye, araç, şoför | `Preparing` | `shipment.create` | Shipment ve items | İrsaliye çıkışıyla ilişkilidir | Yok | Sevkiyat hazırlığı |
+| Araç ve rota atama | Sevkiyat sorumlusu | Araç tipi/kapasite, araç, şoför, müşteri adresleri, durak sırası | `RoutePlan.Planned` | `route-plan.assign` | RoutePlan, RouteStop, vehicle status `Assigned` | Yok | Yok | Rota ve araç ataması |
+| Paketleri müşteri/durağa bağlama | Depo/sevkiyat | Palet/koli/paket barkodu, müşteri, teslim adresi, durak | `ShipmentPackage.Assigned` | `shipment-package.assign` | ShipmentPackage, route stop, load unit link | Yok | Yok | Alıcı eşleştirme |
 | Kargo planı oluşturma | Depo/sevkiyat | Sevkiyat kalemleri, araç/kargo kapasitesi, palet tipi | `LoadPlan.Draft` | `load-plan.create` | LoadPlan, kapasite snapshot | Yok | Yok | Plan oluşturma |
 | Karışık palet yerleştirme | Depo | Ürün/ambalaj kalemi, LoadUnit, temel miktar, kg, hacim | `LoadPlan.Validating` | `load-plan.assign` | LoadUnit, LoadUnitItem | Yok | Yok | Palet kalemi atama |
 | Kargo planı doğrulama/kilitleme | Depo sorumlusu | Ağırlık, hacim, palet, ölçü, istifleme ve kalan miktar kontrolleri | `LoadPlan.Locked` | `load-plan.lock` | Validation summary, version, locked_at | Yok | Yok | Kilitleme ve audit |
 | Yükleme doğrulama | Depo/sevkiyat | Palet/koli barkodu, planlanan-gerçekleşen karşılaştırması | `Loaded` | `shipment.load-verify` | Actual load, discrepancy, proof | Tekrar stok düşülmez | Yok | Fark varsa açıklama |
-| Sevk etme | Depo/sevkiyat | Kilitli kargo planı, yükleme sonucu ve çıkış bilgisi | `Shipped` | `shipment.ship` | Shipment state, departure | Tekrar stok düşülmez | Yok | Sevk geçişi |
-| Teslim | Sevkiyat/satış | Teslim tarihi ve not | `Delivered` | `shipment.deliver` | Delivery state, proof metadata | Yok | Yok | Teslim kaydı |
+| Sevk etme | Depo/sevkiyat | Kilitli kargo planı, yükleme sonucu ve çıkış bilgisi | `InTransit` | `shipment.depart` | Shipment/route state, vehicle `InTransit`, departure | Tekrar stok düşülmez | Yok | Araç çıkışı |
+| Durağa varış | Şoför/sevkiyat | Rota, durak, varış zamanı | `RouteStop.InProgress` | `route-stop.arrive` | Stop actual arrival, vehicle location/status | Yok | Yok | Durağa varış |
+| Kısmi teslim | Şoför/sevkiyat | Teslim edilen paket barkodları, eksik/fazla notu | `PartiallyDelivered` | `route-stop.deliver-partial` | Package statuses, stop partial, proof | Yok | Yok | Teslimat farkı |
+| Teslim | Şoför/sevkiyat | Paket barkodları, teslim alan kişi, imza/fotoğraf/not | `Delivered` | `route-stop.deliver` | Package delivered, stop proof, route progress | Yok | Yok | Teslim kaydı |
+| Teslim edilemedi | Şoför/sevkiyat | Neden, fotoğraf/not, yeniden planlama | `Exception` | `route-stop.fail` | Stop exception, package status, follow-up task | Yok | Yok | İstisna kaydı |
 | Fatura oluşturma | Muhasebe | Faturalanabilir irsaliye, temel miktar allocation'ı, ambalaj görünümü, vergi, vade | `Issued` | `invoice.create` | Invoice, items, allocation, packaging snapshot, sequence | Yok | `CurrentTransaction(Debit)` | Fatura ve cari etkisi |
 | Ödeme alma | Muhasebe | Müşteri, tutar, yöntem, referans | `Applied` | `payment.create` | Payment, allocation, transaction | Yok | `CurrentTransaction(Credit)`, balance update | Ödeme ve dağıtım |
 
@@ -52,6 +57,9 @@ Public Quote Request
 - LoadPlan, bağlı shipment kalemlerinin temel miktarlarını aşamaz; taslak plan shipment miktarını değiştiremez.
 - Palet uygunluğu ağırlık, hacim, palet kapasitesi, ölçü ve istifleme kurallarının tamamıyla doğrulanır.
 - `LoadPlan.Locked` olmadan yükleme tamamlanamaz; gerçek yük planlanan miktardan farklıysa fark açıklaması gerekir.
+- Her `ShipmentPackage` bir müşteri ve `RouteStop` ile eşleştirilmeden sevkiyat planı kilitlenemez; ortak palet içindeki farklı alıcılar barkod/paket seviyesinde ayrıştırılır.
+- Araç kapasitesi ağırlık, hacim, palet ve ölçü sınırlarının tamamıyla doğrulanır; araç ana durumu ile sevkiyat durumu ayrı tutulur.
+- Teslimat miktarı ve teslim kanıtı durak/paket seviyesinde kaydedilir; toplam sevkiyat durumu durakların ve paketlerin durumundan türetilir.
 
 ### Kargo planlama akışı
 
@@ -64,7 +72,11 @@ Shipment oluştur
   → Ağırlık/hacim/istifleme doğrulaması
   → LoadPlan kilitle
   → Palet/koli barkoduyla yüklemeyi doğrula
-  → Sevk et
+  → Müşteri/durak paket eşleştirmesini kontrol et
+  → Planı ve rotayı kilitle
+  → Araç çıkışı
+  → Durak bazlı teslimat ve teslim kanıtı
+  → Sevkiyatı kapat
 ```
 
 İlk sürümde sistemin otomatik önerisi **uygunluk ön kontrolü ve manuel düzenleme desteği** olarak kabul edilir; matematiksel olarak optimal yükleme garantisi verilmez. Depo sorumlusu planı onaylar, gerçek yükleme barkodlarla doğrulanır.
@@ -132,7 +144,11 @@ Her belge state'i explicit enum veya state machine ile tanımlanır. Frontend du
 |---|---|---|
 | SalesOrder | Draft → PendingApproval → Approved/Rejected → Preparing → PartiallyShipped/Completed | İptal dışı geri dönüş yok; PartiallyShipped O-002 seçilirse aktifleşir |
 | DeliveryNote | Draft → Prepared → Issued → Shipped → PartiallyInvoiced/Invoiced | Issued sonrası reversal/cancel policy; PartiallyInvoiced O-003 seçilirse aktifleşir |
-| Shipment | Preparing → Ready → Loaded → Shipped → Delivered | Teslim sonrası düzeltme kaydı |
+| Shipment | Preparing → Ready → Loaded → InTransit → PartiallyDelivered/Delivered/Exception | Teslim sonrası düzeltme kaydı |
+| Vehicle | Available → Assigned → Loading → InTransit → Available/Maintenance | Araç durumu shipment durumundan bağımsız izlenir |
+| RoutePlan | Draft → Planned → Locked → InProgress → Completed/Exception | Rota değişikliği versiyon ve audit gerektirir |
+| RouteStop | Pending → InProgress → Delivered/Partial/Failed/Skipped | Teslim kanıtı ve istisna nedeni zorunlu olabilir |
+| ShipmentPackage | Planned → Assigned → Loaded → InTransit → Delivered/Missing/Returned | Barkod ve müşteri/adres bağlantısı korunur |
 | LoadPlan | Draft → Validating → Locked → Loaded/Discrepancy | Kilitli plan değişikliği yeni versiyon ve audit gerektirir |
 | Invoice | Draft → Issued → PartiallyPaid/Paid/Overdue | İptal veya credit/reversal |
 | ProductionOrder | Planned → Released → InProgress/Paused → Completed | Cancelled sonrası geri dönüş yok |

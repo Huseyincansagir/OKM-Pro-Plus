@@ -338,7 +338,39 @@ PALLET-001  Karışık Palet
 - Plan kilitlendikten sonra değişiklik yeni versiyon/audit kaydı üretir.
 - Gerçek yükleme sırasında barkodla doğrulama yapılır; planlanan ve gerçekleşen yük farkı açıklama gerektirir.
 
-## 12. Uygulama öncesi kabul kriterleri
+## 12. Araç, rota ve alıcı paket takibi
+
+Kargo planı tamamlandığında sevkiyata bir `VehicleType`, gerçek `Vehicle`, `Driver` ve çok duraklı `RoutePlan` atanır. Araç tipi kapasite şablonunu; gerçek araç plaka, aktiflik ve anlık durum bilgisini taşır.
+
+```text
+Shipment
+  ├─ Vehicle: 34 ABC 123 / Panelvan / InTransit
+  ├─ RoutePlan
+  │   ├─ RouteStop 1: Müşteri A / Teslim edildi
+  │   ├─ RouteStop 2: Müşteri B / Sırada
+  │   └─ RouteStop 3: Müşteri C / Sırada
+  └─ ShipmentPackage
+      ├─ PALLET-001 / Müşteri A / 3 Koli
+      ├─ PALLET-001 / Müşteri B / 1 Palet + 4 Paket
+      └─ BOX-0042 / Müşteri C / 6 Paket
+```
+
+`ShipmentPackage` tek bir palet, koli, paket veya barkodlanabilir yük birimidir. Her kayıt müşteri, teslim adresi, rota durağı, bağlı ürün/ambalaj, temel miktar ve durum bilgisi taşır. Bu sayede karışık bir paletin içindeki farklı müşterilere giden parçalar birbirinden ayrıştırılabilir.
+
+| Seviye | İzlenen bilgi |
+|---|---|
+| Araç | Plaka, araç tipi, kapasite, araç durumu, aktif rota |
+| Rota | Durak sırası, planlanan/gerçekleşen zaman, toplam durum |
+| Durak | Müşteri, seçilmiş adres, iletişim, teslim alan, kanıt, istisna |
+| Paket | Barkod, ürün, ambalaj, temel miktar, alıcı durak, teslim durumu |
+
+Araç ve sevkiyat durumları aynı şey değildir. Araç `Available`, `Assigned`, `Loading`, `InTransit`, `Maintenance` veya `OutOfService`; sevkiyat `Preparing`, `Loaded`, `InTransit`, `PartiallyDelivered`, `Delivered`, `Exception` veya `Returned` olabilir. Durak ve paket durumları ayrıca izlenir.
+
+Kullanıcı arayüzünde şu sorgu desteklenir:
+
+> **Barkod, müşteri, adres, araç veya sevkiyat numarasıyla arama yapıldığında yükün nerede olduğu, kime gideceği, hangi durakta bulunduğu ve teslim edilip edilmediği gösterilir.**
+
+## 13. Uygulama öncesi kabul kriterleri
 
 - [ ] Her ürün için `base_uom` tanımlanabiliyor.
 - [ ] Ürün altında birden fazla ambalaj seviyesi tanımlanabiliyor.
@@ -349,6 +381,11 @@ PALLET-001  Karışık Palet
 - [ ] Parçalı ambalaj açık kırılımla gösteriliyor.
 - [ ] Ambalaj katsayısı değiştiğinde geçmiş belge snapshot'ı bozulmuyor.
 - [ ] Public katalog kullanıcıya paket/koli içeriğini anlaşılır biçimde gösteriyor.
+- [ ] Araç tipi ve gerçek araç kapasitesi tanımlanabiliyor.
+- [ ] Bir sevkiyata araç, şoför ve çok duraklı rota atanabiliyor.
+- [ ] Her palet/koli/paket barkodu müşteri ve teslim adresiyle eşleştirilebiliyor.
+- [ ] Araç, sevkiyat, durak ve paket durumları ayrı ayrı takip edilebiliyor.
+- [ ] Kısmi teslim, teslim edilememe, iade ve teslim kanıtı kaydedilebiliyor.
 
 **Kapsam notu:** Bu belge yeni bir ürün/ambalaj gereksinimi olarak canonical tasarıma eklenmiştir. Ürünlerin gerçek ambalaj katsayıları, ürün ana verisi hazırlanırken operasyon sorumlusu tarafından doldurulmalıdır.
 
