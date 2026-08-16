@@ -40,7 +40,9 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 22. [`../design/mvp-test-strategy.md`](../design/mvp-test-strategy.md) — MVP unit, application, PostgreSQL integration, API, security, concurrency, backup ve release test stratejisi.
 23. [`../design/github-actions-cicd-plan.md`](../design/github-actions-cicd-plan.md) — MVP GitHub Actions CI/CD, migration/test/image/deployment gate’leri ve self-hosted on-prem release planı.
 24. [`../design/aspnet-clean-architecture-and-cqrs.md`](../design/aspnet-clean-architecture-and-cqrs.md) — ASP.NET Core Clean Architecture klasör yapısı, dependency yönü, CQRS handler ve architecture test sözleşmeleri.
-25. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
+25. [`../design/factoryerp-domain-code-design.md`](../design/factoryerp-domain-code-design.md) — FactoryErp.Domain temel entity, aggregate, quantity/packaging value object ve allocation invariant kod tasarımı.
+26. [`../design/allocation-cqrs-unit-test-code-design.md`](../design/allocation-cqrs-unit-test-code-design.md) — Allocation ve CQRS transaction unit test blueprint’leri, idempotency, rollback ve error branch testleri.
+27. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
 
 ## Arşiv okuma sırası
 
@@ -74,6 +76,8 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 28. [`02-architecture/06-mvp-test-strategy.md`](./02-architecture/06-mvp-test-strategy.md)
 29. [`02-architecture/07-github-actions-cicd-plan.md`](./02-architecture/07-github-actions-cicd-plan.md)
 30. [`02-architecture/08-aspnet-clean-architecture-and-cqrs.md`](./02-architecture/08-aspnet-clean-architecture-and-cqrs.md)
+31. [`02-architecture/09-factoryerp-domain-code-design.md`](./02-architecture/09-factoryerp-domain-code-design.md)
+32. [`02-architecture/10-allocation-cqrs-unit-test-code-design.md`](./02-architecture/10-allocation-cqrs-unit-test-code-design.md)
 
 ## Aşama sonucu
 
