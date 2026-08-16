@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-factory_erp}
+      POSTGRES_USER: ${POSTGRES_USER:-factory_erp_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      TZ: Europe/Istanbul
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-factory_erp_app} -d ${POSTGRES_DB:-factory_erp}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - data
+
+networks:
+  data:
+    internal: true
+
+volumes:
+  postgres_dev_data:
