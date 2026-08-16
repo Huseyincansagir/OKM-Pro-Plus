@@ -23,6 +23,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 5. [`../design/ui-mockup-review.md`](../design/ui-mockup-review.md)
 6. [`../design/grok-session-review.md`](../design/grok-session-review.md) — Grok notlarının karşılaştırmalı incelemesi.
 7. [`../design/open-decisions-solution-matrix.md`](../design/open-decisions-solution-matrix.md) — O-001–O-013 çözüm önerileri ve karar sahipleri.
+8. [`../design/open-decisions-workshop.md`](../design/open-decisions-workshop.md) — Karar atölyesi özeti, onay formu ve Design Gate kapanış planı.
 
 ## Arşiv okuma sırası
 
