@@ -149,7 +149,12 @@ Personel Kartı
 | `uretim-depo-quote-cart-desktop-mockup.png` | Public teklif sepeti |
 | `uretim-depo-quote-form-mobile-mockup.png` | Mobil teklif formu |
 | `uretim-depo-production-work-order-mockup.png` | Üretim iş emri |
-| `uretim-depo-shipment-mockup.png` | İrsaliye ve sevkiyat |
+| `uretim-depo-shipment-mockup.png` | İrsaliye ve temel sevkiyat |
+| `shipment-cargo-planning-desktop.png` | Araç kapasitesi, kargo planlama ve karışık palet |
+| `shipment-route-board-desktop.png` | Araç durumu, rota ve çok duraklı teslimat |
+| `shipment-package-tracking-desktop.png` | Barkod, müşteri/adres ve paket izleme |
+| `vehicle-detail-capacity-desktop.png` | Araç tipi, kapasite, aktif rota ve yük |
+| `mobile-shipment-stop-delivery.png` | Mobil durak teslimatı ve teslim kanıtı |
 | `uretim-depo-accounting-current-account-mockup.png` | Cari hesap ve ödeme |
 | `uretim-depo-hr-attendance-mockup.png` | Personel ve puantaj |
 
@@ -157,9 +162,9 @@ Personel Kartı
 
 Derin lacivert, uygulama navigasyonunu ve public üst barı; teal, ana işlemleri ve aktif durumları; amber, bekleyen ve dikkat gerektiren kayıtları; kırmızı, gecikme, hata ve kritik durumları; yeşil ise tamamlanan işlemleri temsil eder. Renkler her zaman metin ve ikonla desteklenir.
 
-Tüm web listelerinde standart olarak arama, gelişmiş filtre, durum rozeti, tarih aralığı, sıralama, sayfalama ve dışa aktarma bulunur. Detay ekranları özet kartları, sekmeler, bağlı belgeler, aktivite zaman çizelgesi ve sonraki işlem alanından oluşur. Kritik işlemler onay penceresinde işlem sonucunu ve stok/cari/personel etkisini gösterir.
+Tüm web listelerinde standart olarak arama, gelişmiş filtre, durum rozeti, tarih aralığı, sıralama, sayfalama ve dışa aktarma bulunur. Miktar içeren listelerde `Temel Birim / Ambalaj / Kırılım` toggle'ı ve ambalaj filtresi bulunur. Sevkiyat listelerinde araç/kargo tipi, kapasite kullanımı, rota/durak ve paket durumları filtrelenebilir. Detay ekranları özet kartları, sekmeler, bağlı belgeler, aktivite zaman çizelgesi ve sonraki işlem alanından oluşur. Kritik işlemler onay penceresinde işlem sonucunu ve stok/cari/personel etkisini gösterir.
 
-Mobilde aynı renk dili korunur; ancak ekranlar görev ve operasyon odaklıdır. Barkod tarama, stok sorgu, sayım, transfer, sevkiyat doğrulama ve üretim kaydı büyük dokunma alanlarıyla tasarlanır.
+Mobilde aynı renk dili korunur; ancak ekranlar görev ve operasyon odaklıdır. Barkod tarama, stok sorgu, sayım, transfer, sevkiyat doğrulama, rota/durak seçimi ve teslim kanıtı büyük dokunma alanlarıyla tasarlanır. Kullanıcı aktif durak dışındaki paketleri teslim edemez.
 
 ## 8. Kodlama öncesi tasarım kabul kriterleri
 

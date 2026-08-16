@@ -32,7 +32,7 @@ Sistemin yalnızca çalışmasını değil, yanlış kullanım altında da güve
 
 Ana akış:
 
-`Customer → Product → Quote Request → Quote → Order → Approval → Reservation → Delivery Note → Shipment → Invoice → Payment → Current Balance`
+`Customer → Product → Quote Request → Quote → Order → Approval → Reservation → Delivery Note → Shipment → Vehicle/RoutePlan → LoadPlan/LoadUnit → ShipmentPackage → RouteStop Delivery → Invoice → Payment → Current Balance`
 
 Üretim:
 
@@ -49,6 +49,12 @@ Ana akış:
 - Audit log silinememeli.
 - Belge numarası collision olmamalı.
 - Concurrent stock operations veri kaybı oluşturmamalı.
+- Aynı paket barkodu iki kez yüklenmemeli veya iki farklı müşteriye teslim edilmemeli.
+- Paket müşteri/adres/route stop eşleşmesi olmadan rota veya yük planı kilitlenememeli.
+- Araç kapasitesi, rota tarih çakışması ve palet/ölçü sınırları server-side doğrulanmalı.
+- Kısmi teslimde teslim edilen paketler kapanmalı; kalan paketler yanlışlıkla teslim edilmiş sayılmamalı.
+- Teslim kanıtı (imza/fotoğraf/not) yanlış müşteriye veya durağa bağlanmamalı.
+- `quantity_base` ile ambalaj görünümü arasında hesap farkı oluşmamalı.
 
 ## Security review
 
@@ -62,6 +68,9 @@ Kontrol et:
 - file upload abuse
 - broken access control
 - excessive data exposure
+- package/customer/address IDOR veya BOLA
+- başka müşterinin rota ve paket bilgilerinin görüntülenmesi
+- teslim kanıtı dosyalarının yetkisiz erişime açık olması
 - weak password/session handling
 - secret leakage
 - insecure default configuration
@@ -79,6 +88,8 @@ En az şu roller için pozitif ve negatif test yap:
 - Accounting
 - HR
 - Viewer
+- Dispatcher/Shipment Operator
+- Driver
 
 ## Performance
 
@@ -90,6 +101,9 @@ En az şu roller için pozitif ve negatif test yap:
 - stock lookup
 - barcode lookup
 - customer search
+- route board and stop query
+- package trace by barcode/customer/address
+- capacity validation and load-plan calculation
 - concurrent document creation
 
 N+1, missing indexes ve full-table scan risklerini ara.

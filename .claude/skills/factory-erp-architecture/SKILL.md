@@ -58,7 +58,9 @@ Temel entity grupları:
 - quote_requests, quote_request_items, quotes, quote_items
 - sales_orders, sales_order_items, sales_order_approvals
 - delivery_notes, delivery_note_items
-- shipments, shipment_items, vehicles, drivers
+- shipments, shipment_items, vehicle_types, vehicles, vehicle_capacities, drivers
+- route_plans, route_stops, shipment_packages
+- pallet_types, load_plans, load_units, load_unit_items
 - invoices, invoice_items
 - current_accounts, current_transactions, payments, payment_methods
 - production_orders, production_order_items, production_records, production_personnel, machines, machine_downtimes
@@ -76,6 +78,10 @@ Temel entity grupları:
 - N+1 sorgularına karşı projection ve uygun eager loading kullan.
 - Kısmi sevkiyat veya fatura kararı seçilmişse ordered/shipped/invoiced/remaining miktarlarını kalem seviyesinde modelle; allocation toplamının sevk edilen/faturalanmamış miktarı aşmasını engelle.
 - `PriceList` / `CustomerPriceGroup` yalnızca karar logunda seçilmişse zorunlu schema kapsamına al; seçilmemişse karar olarak kaydet.
+- Ambalaj dönüşümünü `ProductPackaging` altında tut; stok ve finans ledger'ını `quantity_base` ile koru; kullanıcı görünümünü toggle/filter ile değiştir ama ledger değerini değiştirme.
+- Ürün/ambalaj fiziksel profilinde boyut, ağırlık, hacim, dara, istifleme ve kapasite kurallarını tanımla; `LoadPlan` ağırlık, hacim, palet, ölçü ve alıcı durakları açısından doğrulansın.
+- `VehicleType` kapasite şablonudur; `Vehicle` gerçek plaka ve anlık durumdur; `RoutePlan`/`RouteStop` rota ve teslimat bağlamını, `ShipmentPackage` barkodlanabilir alıcı yükünü taşır.
+- Araç, sevkiyat, rota durağı ve paket state'lerini bağımsız state machine olarak tasarla; kısmi teslim, eksik, iade ve teslim kanıtını kaybetme.
 - BOM, lot/seri, e-belge adapter ve local deployment gibi konuları seçilen karara göre migration kapsamına al; öneriyi karar yerine koyma.
 
 ## Transaction sınırları
@@ -96,7 +102,15 @@ Temel entity grupları:
 
 `production completion + stock receipt + machine statistics + audit`
 
-Hepsi atomik olmalıdır.
+### Shipment planning and delivery
+
+`vehicle assignment + route plan + load plan validation + package/stop mapping + audit`
+
+### Package delivery
+
+`package barcode scan + recipient/stop validation + delivery proof + package status + audit`
+
+Kapasite planı ve teslimat durumları stok çıkışını ikinci kez üretmemelidir. Yük planı ve rota değişiklikleri versiyonlu/audit'li olmalıdır. Hepsi ilgili use-case sınırında atomik olmalıdır.
 
 ## API
 
@@ -116,6 +130,11 @@ DTO + validation + authorization + consistent error model kullan.
 /api/orders
 /api/delivery-notes
 /api/shipments
+/api/shipments/{shipmentId}/load-plan
+/api/shipments/{shipmentId}/route
+/api/shipments/{shipmentId}/packages
+/api/vehicles
+/api/vehicle-types
 /api/invoices
 /api/payments
 /api/current-accounts
@@ -136,7 +155,7 @@ Role yalnızca başlangıç seviyesi olmalı; gerçek erişim permission seviyes
 
 Örnek:
 
-`order.read`, `order.create`, `order.approve`, `invoice.create`, `payment.create`, `stock.adjust`, `production.complete`
+`order.read`, `order.create`, `order.approve`, `invoice.create`, `payment.create`, `stock.adjust`, `production.complete`, `shipment.read`, `shipment.create`, `shipment.load-plan`, `shipment.route-manage`, `shipment.package-assign`, `shipment.deliver`, `vehicle.manage`, `vehicle.status-update`
 
 ## Security architecture
 

@@ -73,6 +73,9 @@ En az:
 - database connectivity
 - disk usage
 - backup status
+- active shipment/route health
+- vehicle and delivery exception counts
+- package scan/failed-delivery queue
 
 izlenmeli.
 
@@ -86,8 +89,10 @@ Structured logs:
 - user id
 - action
 - error details where safe
+- shipment id, route plan id, vehicle id, route stop id, package barcode correlation fields where safe
+- load-plan validation result and delivery exception reason
 
-Passwords/token/secrets loglama.
+Passwords/token/secrets loglama; teslim kanıtı dosya içeriğini veya kişisel veriyi loglama.
 
 ## Upgrade strategy
 
@@ -111,6 +116,8 @@ Dokümante et:
 - database corruption
 - backup restore
 - storage loss
+- delivery-proof file loss or unauthorized exposure
+- route/load-plan state corruption
 - accidental user deletion
 - credential compromise
 

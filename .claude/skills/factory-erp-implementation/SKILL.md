@@ -11,7 +11,7 @@ description: Tasarımı kodlayan ana geliştirme skill'i. Backend, web, mobile, 
 
 ## Başlangıç koşulu
 
-`/design/implementation-ready.md` yoksa, `READY` değilse veya canonical artefact'lar arasında karar yayılımı doğrulanmamışsa yeni business feature implement etmeye başlama. Bir agent'ın dosyayı READY yazmış olması tek başına yeterli kanıt değildir; `/design/decision-log.md`, solution matrix, domain, workflow, database, screen inventory ve skill-impact review birlikte kontrol edilmelidir. Mevcut küçük altyapı düzeltmeleri gerekiyorsa yap, ancak domain tasarımını varsayarak gizlice değiştirme.
+`/design/implementation-ready.md` yoksa, `READY` değilse veya canonical artefact'lar arasında karar yayılımı doğrulanmamışsa yeni business feature implement etmeye başlama. Bir agent'ın dosyayı READY yazmış olması tek başına yeterli kanıt değildir; `/design/decision-log.md`, solution matrix, domain, workflow, database, screen inventory, UI design package ve skill-impact review birlikte kontrol edilmelidir. Ambalaj, fiziksel ölçü, araç kapasitesi, rota/durak, yük birimi ve `ShipmentPackage` kuralları implementation öncesi aynı canonical sürümde bulunmalıdır. Mevcut küçük altyapı düzeltmeleri gerekiyorsa yap, ancak domain tasarımını varsayarak gizlice değiştirme.
 
 ## Teknoloji
 
@@ -44,6 +44,12 @@ Varsayılan:
 Bir feature tamamlanmış sayılmaz; şu katmanların hepsi tamamlanmalı:
 
 `Database → Domain/Application → API → Authorization → Web/Mobile → Validation → Tests → Documentation`
+
+Sevkiyat/lojistik feature'larında ek kapsam:
+
+`VehicleType/Vehicle → Capacity → RoutePlan/RouteStop → LoadPlan/LoadUnit → ShipmentPackage → DeliveryProof`
+
+Kapasite planlama veya teslimat tracking ekranı fake package data ile tamamlanmış sayılmaz; paket barkodu, müşteri/adres, durak ve durum bağlantıları gerçek domain kaynaklarından gelmelidir.
 
 Mock endpoint veya fake frontend data ile bitirme.
 
@@ -80,6 +86,8 @@ PDF ve Excel çıktılarında aynı domain verisini kullan. Rapor ekranı ile ex
 - Responsive web.
 - Table yoğun operasyonlara uygun.
 - Mobilde görev odaklı akış.
+- Sevkiyat mobil akışında kullanıcı yalnızca aktif route stop'a atanmış `ShipmentPackage` kayıtlarını görebilmeli ve teslim edebilmeli.
+- Araç, sevkiyat, durak ve paket durumları ayrı badge/state olarak gösterilmeli; kapasite ve ambalaj görünümü toggle ile değişebilmeli.
 
 ## Mobile
 
@@ -103,6 +111,9 @@ Global API exception handler, standard error response ve kullanıcı dostu front
 Aşağıdaki hatalar kabul edilmez:
 
 - duplicate document number
+- duplicate package barcode scan or delivery application
+- package assigned to wrong customer/address/route stop
+- vehicle capacity or route overlap not validated
 - negative unintended stock
 - duplicate payment
 - double invoicing
@@ -113,15 +124,16 @@ Aşağıdaki hatalar kabul edilmez:
 ## Agent workflow
 
 1. Repository'yi incele.
-2. Tasarım artefact'ını aç.
+2. Tasarım artefact'ını aç; özellikle `shipment-logistics-ui-design.md` dosyasını oku.
 3. Mevcut implementation ile karşılaştır.
-4. Etkilenen domainleri çıkar.
+4. Vehicle, capacity, route stop, load unit ve shipment package etkilerini çıkar.
 5. Migration + backend + frontend/mobile + test planını uygula.
-6. Kod üret.
-7. Build/type-check/test çalıştır.
-8. Hataları kendin düzelt.
-9. Integration test yap.
-10. Dokümantasyonu güncelle.
+6. Paket/rota/teslimat idempotency ve permission testlerini ekle.
+7. Kod üret.
+8. Build/type-check/test çalıştır.
+9. Hataları kendin düzelt.
+10. Integration test yap.
+11. Dokümantasyonu güncelle.
 
 Gereksiz yere kullanıcıdan onay isteme.
 

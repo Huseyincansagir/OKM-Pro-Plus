@@ -39,9 +39,11 @@ Bu skill, ürünün kodunu yazmadan önce iş akışını, kullanıcı deneyimin
 
 ## Temel iş akışları
 
-### Satış
+### Satış ve sevkiyat
 
-`Quote Request → Quote → Sales Order → Approval → Stock Reservation → Delivery Note → Shipment → Invoice → Current Account → Payment`
+`Quote Request → Quote → Sales Order → Approval → Stock Reservation → Delivery Note → Shipment → Vehicle/RoutePlan → LoadPlan/LoadUnit → ShipmentPackage → RouteStop Delivery → Invoice → Current Account → Payment`
+
+Ambalaj akışında kullanıcı `Palet → Koli → Paket → Temel Birim` hiyerarşisinden giriş yapabilir. Stok ve finans doğruluğu `quantity_base`; operasyon görünümü `Temel Birim / Ambalaj / Kırılım` toggle'ı ile yönetilir. Fiziksel lojistik için ölçü, kg, hacim, istifleme ve araç kapasitesi ayrı tutulur. Karışık palet ayrı ürün değildir; `LoadUnit` içindeki farklı `LoadUnitItem` ve alıcı duraklarıyla modellenir.
 
 ### Üretim
 
@@ -68,6 +70,8 @@ Her ekran için:
 - Veri etkisi
 - Empty/loading/error/permission/offline durumları
 - Mobil uyarlama
+- Ambalaj görünümü, fiziksel kapasite, rota/durak ve paket izleme davranışı
+- Teslim kanıtı ve istisna davranışı
 - Kabul senaryosu
 
 ## Source of Truth
@@ -85,6 +89,11 @@ Her domain kavramı için tek kaynak belirle.
 - `Payment`: ödeme kaydı
 - `SalesOrder`: sipariş kaydı
 - `DeliveryNote`: sevk belgesi
+- `Shipment`: sevkiyat ana kaydı
+- `VehicleType` / `Vehicle`: araç tipi ve gerçek araç ana kaydı
+- `RoutePlan` / `RouteStop`: rota ve müşteri teslim durakları
+- `LoadPlan` / `LoadUnit`: kargo ve palet/yük planı
+- `ShipmentPackage`: barkodlanabilir yükün alıcı/adres/durum kaydı
 - `Invoice`: fatura kaydı
 
 Aynı veriyi bağımsız kopyalayan modeller üretme.
@@ -98,6 +107,11 @@ En az aşağıdakileri tasarımda görünür kıl:
 - Stok hareketlerinin geçmişi izlenebilir olmalıdır.
 - Finansal hareketler fiziksel olarak silinmemelidir.
 - Üretim tamamlanması, stoğa giriş davranışı tanımlanmadan geçerli sayılmaz.
+- Her ürünün `base_uom` değeri vardır; stok ledger'ı temel birimde tutulur.
+- Ambalaj toggle'ı ve filtresi miktar doğruluğunu değiştirmez.
+- `LoadPlan` bağlı shipment miktarını aşamaz; kapasite ağırlık, hacim, palet ve istifleme açısından doğrulanır.
+- Her `ShipmentPackage` müşteri/adres/durak bağlantısı olmadan rota kilitlenemez.
+- Araç, sevkiyat, durak ve paket durumları ayrı izlenir; kısmi teslim ve iade kaydı korunur.
 - Kritik state transition'lar audit log üretmelidir.
 
 ## Design Gate
@@ -107,6 +121,7 @@ Kodlama başlamadan önce şu dosyalar mevcut olmalı:
 - `/design/master-screen-inventory.md`
 - `/design/web-ux-architecture.md`
 - `/design/production-warehouse-deep-dive.md`
+- `/design/shipment-logistics-ui-design.md`
 - `/design/database-technical-architecture.md`
 - `/design/mobile-design.md`
 - `/design/public-catalog-design.md`
@@ -124,7 +139,8 @@ Aşağıdaki tutarsızlıklardan biri varsa implementation'a geçme:
 - Belgenin önceki/sonraki ilişkisi belli değil.
 - Stok/cari etkisi belirtilmemiş.
 - Kritik ağ kesintisi veya hata durumu tanımlanmamış.
-- Açık karar seçildikten sonra domain, workflow, database, screen inventory ve skill-impact artefact'larına yayılmamış.
+- Açık karar seçildikten sonra domain, workflow, database, screen inventory, UI design ve skill-impact artefact'larına yayılmamış.
+- Ambalaj, fiziksel lojistik, araç, rota, durak ve paket izleme entity/state/permission karşılıkları yok.
 - Kararın sahibi, tarihi ve kanıtı yok.
 
 Gate başarılıysa `/design/implementation-ready.md` oluştur.
@@ -136,6 +152,7 @@ Gate başarılıysa `/design/implementation-ready.md` oluştur.
   master-screen-inventory.md
   web-ux-architecture.md
   production-warehouse-deep-dive.md
+  shipment-logistics-ui-design.md
   database-technical-architecture.md
   mobile-design.md
   public-catalog-design.md

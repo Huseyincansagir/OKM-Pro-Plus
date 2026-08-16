@@ -21,6 +21,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`open-decisions-solution-matrix.md`](./open-decisions-solution-matrix.md) | O-001–O-013 için önerilen çözüm, sahip, risk ve etki matrisi |
 | [`open-decisions-workshop.md`](./open-decisions-workshop.md) | Karar atölyesi için yönetim özeti, karar formu ve Design Gate kapanış planı |
 | [`product-packaging-and-uom.md`](./product-packaging-and-uom.md) | Palet-koli-paket-temel birim hiyerarşisi ve miktar dönüşüm kuralları |
+| [`shipment-logistics-ui-design.md`](./shipment-logistics-ui-design.md) | Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı |
 | [`domain-model.md`](./domain-model.md) | Bounded context ve source-of-truth haritası |
 | [`business-workflows.md`](./business-workflows.md) | Sales, production ve personnel workflow'ları |
 | [`database-technical-architecture.md`](./database-technical-architecture.md) | PostgreSQL, API, transaction ve deployment ön taslağı |
