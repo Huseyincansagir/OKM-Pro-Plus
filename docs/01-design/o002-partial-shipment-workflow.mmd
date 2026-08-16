@@ -1,0 +1,20 @@
+flowchart TD
+    A[SalesOrder: Approved] --> B[StockReservation oluştur / güncelle]
+    B --> C[Depo sevk miktarını seçer]
+    C --> D{Sevk miktarı geçerli mi?}
+    D -- Hayır --> E[İşlemi reddet; stok, rezervasyon ve audit değişmez]
+    D -- Evet --> F[DeliveryNote taslağı; kalem bazında quantity_base snapshot]
+    F --> G{Barkod, depo, adres ve stok doğrulaması}
+    G -- Başarısız --> H[Prepared / NeedsCorrection; hata ve gerekçe göster]
+    H --> C
+    G -- Başarılı --> I[DeliveryNote kesinleştir]
+    I --> J[Atomik transaction: StockMovement SalesShipment; reservation consume/release; shipped_qty artır; remaining_qty hesapla; audit yaz]
+    J --> K[Shipment oluştur / yük planına bağla]
+    K --> L{Sipariş kalan miktarı var mı?}
+    L -- Evet --> M[SalesOrder: PartiallyShipped; remainder / backorder açık]
+    L -- Hayır --> N[SalesOrder: Completed veya Fulfilled]
+    M --> O{Kalan miktar için yeni sevk?}
+    O -- Evet --> C
+    O -- Hayır --> P[Rezervasyon policy'sine göre koru veya serbest bırak]
+    N --> Q[Sevkiyat/faturalama akışına devam]
+    P --> Q

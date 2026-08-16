@@ -29,6 +29,9 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`shipment-logistics-ui-design.md`](./shipment-logistics-ui-design.md) | Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı |
 | [`domain-model.md`](./domain-model.md) | Bounded context ve source-of-truth haritası |
 | [`business-workflows.md`](./business-workflows.md) | Sales, production ve personnel workflow'ları |
+| [`partial-shipment-invoicing-workflow.md`](./partial-shipment-invoicing-workflow.md) | O-002/O-003 kısmi sevkiyat ve kısmi fatura diyagramları, state, transaction ve audit akışı |
+| [`o002-partial-shipment-workflow.mmd`](./o002-partial-shipment-workflow.mmd) | O-002 editable Mermaid iş akışı kaynağı |
+| [`o003-partial-invoice-workflow.mmd`](./o003-partial-invoice-workflow.mmd) | O-003 editable Mermaid iş akışı kaynağı |
 | [`database-technical-architecture.md`](./database-technical-architecture.md) | PostgreSQL, API, transaction ve deployment ön taslağı |
 | [`decision-log.md`](./decision-log.md) | DECIDED, ASSUMED ve OPEN DECISION kayıtları |
 | [`decision-clarification-backlog.md`](./decision-clarification-backlog.md) | O-001–O-014 için karar toplantısı alt soruları ve Design Gate kapanış çıktıları |

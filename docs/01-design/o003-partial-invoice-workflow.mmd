@@ -1,0 +1,20 @@
+flowchart TD
+    A[DeliveryNote: Issued] --> B[Faturalanabilir allocation'ları getir]
+    B --> C[Muhasebe fatura miktarını seçer]
+    C --> D{invoice_qty <= remaining_to_invoice?}
+    D -- Hayır --> E[Hard error: double/over invoicing engellenir]
+    D -- Evet --> F[Invoice taslağı oluştur; DeliveryNoteItem allocation; vergi/fiyat snapshot]
+    F --> G{Vergi, fiyat, müşteri ve belge doğrulaması}
+    G -- Başarısız --> H[Draft / NeedsCorrection; cari hareket oluşturma]
+    H --> C
+    G -- Başarılı --> I[Faturayı kesinleştir]
+    I --> J[Atomik transaction: Invoice + InvoiceItem; allocation consume; CurrentTransaction Debit; audit yaz]
+    J --> K{remaining_to_invoice > 0 mı?}
+    K -- Evet --> L[DeliveryNote: PartiallyInvoiced; kalan faturalanabilir miktarı açık tut]
+    K -- Hayır --> M[DeliveryNote: Invoiced]
+    L --> N{Kalan miktar daha sonra faturalandırılacak mı?}
+    N -- Evet --> C
+    N -- Hayır --> O[Credit / waiver policy ile kalan miktarı kapat veya açık bırak]
+    M --> P[Invoice: Issued; cari bakiye güncellenir]
+    O --> P
+    P --> Q[Payment → CurrentTransaction Credit]

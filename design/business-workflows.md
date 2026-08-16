@@ -190,6 +190,8 @@ Aşağıdaki geçişler çözüm matrisi önerileridir; karar sahibi onayı ve i
 | O-003 | `Issued → PartiallyInvoiced → Invoiced` | DeliveryNoteItem allocation, invoiced/remaining miktarı ve duplicate invoice kontrolü |
 | O-012 | Quote/Order oluşturulurken `PriceList + CustomerPriceGroup` seçimi | Geçerlilik tarihi, fiyat snapshot, yetki ve para/vergi politikası |
 
+O-002 ve O-003 için ayrıntılı ana akış, istisna dalları, state ayrımı, transaction sınırları, permission ve audit matrisi [`partial-shipment-invoicing-workflow.md`](./partial-shipment-invoicing-workflow.md) içinde tutulur. Bu belge önerilen MVP akışıdır; karar sahibi onayı olmadan baseline state machine'e zorunlu kural olarak taşınmaz.
+
 ## 7. Audit kapsamı
 
 Aşağıdaki geçişler audit olmadan tamamlanamaz:
