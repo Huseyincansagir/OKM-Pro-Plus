@@ -1,12 +1,14 @@
 using FactoryErp.Application.Abstractions.Persistence;
 using FactoryErp.Application.Identity;
 using FactoryErp.Application.Products;
+using FactoryErp.Application.Production;
 using FactoryErp.Application.Sales;
 using FactoryErp.Application.Shipping;
 using FactoryErp.Infrastructure.Authentication;
 using FactoryErp.Infrastructure.Health;
 using FactoryErp.Infrastructure.Persistence;
 using FactoryErp.Infrastructure.Products;
+using FactoryErp.Infrastructure.Production;
 using FactoryErp.Infrastructure.Sales;
 using FactoryErp.Infrastructure.Shipping;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IProductCatalogService, ProductCatalogService>();
         services.AddScoped<CatalogSeeder>();
         services.AddScoped<ISalesCommandService, SalesCommandService>();
+        services.AddScoped<IProductionCommandService, ProductionCommandService>();
         services.AddScoped<SalesSeeder>();
         services.AddScoped<IShippingFinanceCommandService, DeliveryInvoiceFinanceService>();
         services.AddScoped<FinanceSeeder>();

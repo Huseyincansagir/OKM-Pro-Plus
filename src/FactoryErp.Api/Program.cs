@@ -68,6 +68,16 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "payment.apply"));
     options.AddPolicy(PermissionPolicies.CurrentAccountRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "current-account.read"));
+    options.AddPolicy(PermissionPolicies.ProductionCreate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "production.create"));
+    options.AddPolicy(PermissionPolicies.ProductionRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "production.read"));
+    options.AddPolicy(PermissionPolicies.ProductionStart, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "production.start"));
+    options.AddPolicy(PermissionPolicies.ProductionRecord, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "production.record"));
+    options.AddPolicy(PermissionPolicies.ProductionComplete, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "production.complete"));
 });
 
 var app = builder.Build();

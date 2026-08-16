@@ -73,6 +73,11 @@ public sealed class IdentitySeeder(
             ("10000000-0000-0000-0000-000000000022", "invoice.issue", "finance", "issue"),
             ("10000000-0000-0000-0000-000000000023", "payment.apply", "finance", "apply"),
             ("10000000-0000-0000-0000-000000000024", "current-account.read", "finance", "read"),
+            ("10000000-0000-0000-0000-000000000025", "production.create", "production", "create"),
+            ("10000000-0000-0000-0000-000000000026", "production.read", "production", "read"),
+            ("10000000-0000-0000-0000-000000000027", "production.start", "production", "start"),
+            ("10000000-0000-0000-0000-000000000028", "production.record", "production", "record"),
+            ("10000000-0000-0000-0000-000000000029", "production.complete", "production", "complete"),
         };
 
         foreach (var definition in definitions)
