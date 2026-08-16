@@ -25,7 +25,7 @@ public sealed class DeliveryInvoiceFinanceModelTests
     }
 
     [Fact]
-    public void Delivery_note_allocation_has_positive_quantity_and_unique_idempotency_key()
+    public void Delivery_note_allocation_has_kind_guard_and_active_source_target_unique_index()
     {
         using var context = CreateContext();
         var model = context.GetService<IDesignTimeModel>().Model;
@@ -33,12 +33,28 @@ public sealed class DeliveryInvoiceFinanceModelTests
 
         entity.GetCheckConstraints().Should().Contain(constraint =>
             constraint.Name == "ck_delivery_note_allocations_quantity_positive");
-        entity.GetIndexes().Should().Contain(index => index.IsUnique && index.Properties.Select(x => x.Name)
-            .SequenceEqual(new[] { nameof(DeliveryNoteItemAllocationRecord.IdempotencyKey) }));
+        entity.GetCheckConstraints().Should().Contain(constraint =>
+            constraint.Name == "ck_delivery_note_allocations_kind");
+        entity.GetIndexes().Should().Contain(index =>
+            index.IsUnique
+            && index.GetDatabaseName() == "ux_delivery_allocation_active_target"
+            && index.Properties.Select(x => x.Name).SequenceEqual(new[]
+            {
+                nameof(DeliveryNoteItemAllocationRecord.SalesOrderItemId),
+                nameof(DeliveryNoteItemAllocationRecord.DeliveryNoteItemId),
+            })
+            && index.GetFilter() == "status = 'Active' AND allocation_kind = 'Original'");
+        entity.GetIndexes().Should().Contain(index =>
+            !index.IsUnique
+            && index.GetDatabaseName() == "ix_delivery_allocation_idempotency_key"
+            && index.Properties.Select(x => x.Name).SequenceEqual(new[]
+            {
+                nameof(DeliveryNoteItemAllocationRecord.IdempotencyKey),
+            }));
     }
 
     [Fact]
-    public void Invoice_allocation_has_positive_quantity_and_unique_idempotency_key()
+    public void Invoice_allocation_has_kind_guard_and_active_source_target_unique_index()
     {
         using var context = CreateContext();
         var model = context.GetService<IDesignTimeModel>().Model;
@@ -46,8 +62,24 @@ public sealed class DeliveryInvoiceFinanceModelTests
 
         entity.GetCheckConstraints().Should().Contain(constraint =>
             constraint.Name == "ck_invoice_allocations_quantity_positive");
-        entity.GetIndexes().Should().Contain(index => index.IsUnique && index.Properties.Select(x => x.Name)
-            .SequenceEqual(new[] { nameof(InvoiceItemAllocationRecord.IdempotencyKey) }));
+        entity.GetCheckConstraints().Should().Contain(constraint =>
+            constraint.Name == "ck_invoice_allocations_kind");
+        entity.GetIndexes().Should().Contain(index =>
+            index.IsUnique
+            && index.GetDatabaseName() == "ux_invoice_allocation_active_target"
+            && index.Properties.Select(x => x.Name).SequenceEqual(new[]
+            {
+                nameof(InvoiceItemAllocationRecord.DeliveryNoteItemId),
+                nameof(InvoiceItemAllocationRecord.InvoiceItemId),
+            })
+            && index.GetFilter() == "status = 'Active' AND allocation_kind = 'Original'");
+        entity.GetIndexes().Should().Contain(index =>
+            !index.IsUnique
+            && index.GetDatabaseName() == "ix_invoice_allocation_idempotency_key"
+            && index.Properties.Select(x => x.Name).SequenceEqual(new[]
+            {
+                nameof(InvoiceItemAllocationRecord.IdempotencyKey),
+            }));
     }
 
     [Fact]

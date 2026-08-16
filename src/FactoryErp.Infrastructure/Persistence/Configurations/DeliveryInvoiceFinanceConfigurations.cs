@@ -70,6 +70,7 @@ public sealed class DeliveryNoteItemAllocationRecordConfiguration : IEntityTypeC
         builder.ToTable("delivery_note_item_allocations", table =>
         {
             table.HasCheckConstraint("ck_delivery_note_allocations_quantity_positive", "quantity_base > 0");
+            table.HasCheckConstraint("ck_delivery_note_allocations_kind", "allocation_kind in ('Original', 'Reversal')");
             table.HasCheckConstraint("ck_delivery_note_allocations_status", "status in ('Active', 'Reversed', 'Voided')");
         });
         builder.HasKey(x => x.Id);
@@ -79,6 +80,7 @@ public sealed class DeliveryNoteItemAllocationRecordConfiguration : IEntityTypeC
         builder.Property(x => x.QuantityBase).HasColumnName("quantity_base").HasPrecision(18, 6);
         builder.Property(x => x.BaseUomId).HasColumnName("base_uom_id");
         builder.Property(x => x.PackagingSnapshot).HasColumnName("packaging_snapshot").HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.AllocationKind).HasColumnName("allocation_kind").HasMaxLength(20).IsRequired();
         builder.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
         builder.Property(x => x.IdempotencyKey).HasColumnName("idempotency_key").HasMaxLength(160).IsRequired();
         builder.Property(x => x.PayloadHash).HasColumnName("payload_hash").HasMaxLength(128).IsRequired();
@@ -87,8 +89,16 @@ public sealed class DeliveryNoteItemAllocationRecordConfiguration : IEntityTypeC
         builder.Property(x => x.CreatedBy).HasColumnName("created_by");
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("timestamptz");
         builder.Property(x => x.RowVersion).HasColumnName("row_version").HasColumnType("bigint").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate().HasDefaultValue(1L);
-        builder.HasIndex(x => x.IdempotencyKey).IsUnique();
-        builder.HasIndex(x => new { x.SalesOrderItemId, x.Status });
+        builder.HasIndex(x => x.IdempotencyKey)
+            .HasDatabaseName("ix_delivery_allocation_idempotency_key");
+        builder.HasIndex(x => new { x.SalesOrderItemId, x.DeliveryNoteItemId })
+            .IsUnique()
+            .HasDatabaseName("ux_delivery_allocation_active_target")
+            .HasFilter("status = 'Active' AND allocation_kind = 'Original'");
+        builder.HasIndex(x => new { x.SalesOrderItemId, x.Status })
+            .HasDatabaseName("ix_delivery_allocation_source_status");
+        builder.HasIndex(x => new { x.DeliveryNoteItemId, x.Status })
+            .HasDatabaseName("ix_delivery_allocation_target_status");
         builder.HasOne<SalesOrderItemRecord>().WithMany().HasForeignKey(x => x.SalesOrderItemId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<DeliveryNoteItemRecord>().WithMany().HasForeignKey(x => x.DeliveryNoteItemId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<UnitOfMeasureRecord>().WithMany().HasForeignKey(x => x.BaseUomId).OnDelete(DeleteBehavior.Restrict);
@@ -186,6 +196,7 @@ public sealed class InvoiceItemAllocationRecordConfiguration : IEntityTypeConfig
         builder.ToTable("invoice_item_allocations", table =>
         {
             table.HasCheckConstraint("ck_invoice_allocations_quantity_positive", "quantity_base > 0");
+            table.HasCheckConstraint("ck_invoice_allocations_kind", "allocation_kind in ('Original', 'Reversal')");
             table.HasCheckConstraint("ck_invoice_allocations_status", "status in ('Active', 'Reversed', 'Voided')");
         });
         builder.HasKey(x => x.Id);
@@ -197,6 +208,7 @@ public sealed class InvoiceItemAllocationRecordConfiguration : IEntityTypeConfig
         builder.Property(x => x.PackagingSnapshot).HasColumnName("packaging_snapshot").HasColumnType("jsonb").IsRequired();
         builder.Property(x => x.PriceSnapshot).HasColumnName("price_snapshot").HasColumnType("jsonb").IsRequired();
         builder.Property(x => x.TaxSnapshot).HasColumnName("tax_snapshot").HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.AllocationKind).HasColumnName("allocation_kind").HasMaxLength(20).IsRequired();
         builder.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
         builder.Property(x => x.IdempotencyKey).HasColumnName("idempotency_key").HasMaxLength(160).IsRequired();
         builder.Property(x => x.PayloadHash).HasColumnName("payload_hash").HasMaxLength(128).IsRequired();
@@ -204,8 +216,16 @@ public sealed class InvoiceItemAllocationRecordConfiguration : IEntityTypeConfig
         builder.Property(x => x.CreditReason).HasColumnName("credit_reason").HasColumnType("text");
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("timestamptz");
         builder.Property(x => x.RowVersion).HasColumnName("row_version").HasColumnType("bigint").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate().HasDefaultValue(1L);
-        builder.HasIndex(x => x.IdempotencyKey).IsUnique();
-        builder.HasIndex(x => new { x.DeliveryNoteItemId, x.Status });
+        builder.HasIndex(x => x.IdempotencyKey)
+            .HasDatabaseName("ix_invoice_allocation_idempotency_key");
+        builder.HasIndex(x => new { x.DeliveryNoteItemId, x.InvoiceItemId })
+            .IsUnique()
+            .HasDatabaseName("ux_invoice_allocation_active_target")
+            .HasFilter("status = 'Active' AND allocation_kind = 'Original'");
+        builder.HasIndex(x => new { x.DeliveryNoteItemId, x.Status })
+            .HasDatabaseName("ix_invoice_allocation_source_status");
+        builder.HasIndex(x => new { x.InvoiceItemId, x.Status })
+            .HasDatabaseName("ix_invoice_allocation_target_status");
         builder.HasOne<DeliveryNoteItemRecord>().WithMany().HasForeignKey(x => x.DeliveryNoteItemId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<InvoiceItemRecord>().WithMany().HasForeignKey(x => x.InvoiceItemId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<UnitOfMeasureRecord>().WithMany().HasForeignKey(x => x.BaseUomId).OnDelete(DeleteBehavior.Restrict);

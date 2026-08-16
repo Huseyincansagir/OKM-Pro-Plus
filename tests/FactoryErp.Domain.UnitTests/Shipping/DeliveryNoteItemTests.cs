@@ -53,14 +53,14 @@ public sealed class DeliveryNoteItemTests
             PositiveQuantity.Create(5_000, 0),
             snapshot);
 
-        var missingReason = Assert.Throws<DomainException>(() => allocation.Reverse(Guid.NewGuid(), " ", Now.AddMinutes(1)));
+        var missingReason = Assert.Throws<DomainException>(() => allocation.Reverse(" ", Now.AddMinutes(1)));
         Assert.Equal("REVERSAL_REASON_REQUIRED", missingReason.Error.Code);
 
-        var reversalId = Guid.NewGuid();
-        allocation.Reverse(reversalId, "Depo sayım düzeltmesi", Now.AddMinutes(2));
+        allocation.Reverse("Depo sayım düzeltmesi", Now.AddMinutes(2));
 
+        Assert.Equal(AllocationKind.Original, allocation.Kind);
         Assert.Equal(AllocationStatus.Reversed, allocation.Status);
-        Assert.Equal(reversalId, allocation.ReversedFromId);
+        Assert.Null(allocation.ReversedFromId);
         Assert.Equal("Depo sayım düzeltmesi", allocation.ReversalReason);
     }
 
@@ -74,9 +74,9 @@ public sealed class DeliveryNoteItemTests
             Guid.NewGuid(),
             PositiveQuantity.Create(5_000, 0),
             CreateSnapshot());
-        allocation.Reverse(Guid.NewGuid(), "İlk reversal", Now.AddMinutes(1));
+        allocation.Reverse("İlk reversal", Now.AddMinutes(1));
 
-        var exception = Assert.Throws<DomainException>(() => allocation.Reverse(Guid.NewGuid(), "İkinci reversal", Now.AddMinutes(2)));
+        var exception = Assert.Throws<DomainException>(() => allocation.Reverse("İkinci reversal", Now.AddMinutes(2)));
 
         Assert.Equal("ALLOCATION_NOT_ACTIVE", exception.Error.Code);
     }
@@ -130,31 +130,83 @@ public sealed class DeliveryNoteItemTests
     }
 
     [Fact]
-    public void OverAllocation_IsRejectedWithTypedError()
+    public void AllocationScopeMismatch_IsRejectedWithTypedError()
     {
         var item = CreateDeliveryNoteItem();
-        var first = DeliveryNoteItemAllocation.Create(
+        var allocation = DeliveryNoteItemAllocation.Create(
+            Guid.NewGuid(),
+            Now,
+            item.SalesOrderItemId,
+            Guid.NewGuid(),
+            PositiveQuantity.Create(1_000, 0),
+            CreateSnapshot());
+
+        var exception = Assert.Throws<DomainException>(() =>
+            item.AddAllocation(allocation, NonNegativeQuantity.Create(10_000, 0), Now.AddMinutes(1)));
+
+        Assert.Equal("ALLOCATION_SCOPE_MISMATCH", exception.Error.Code);
+        Assert.Empty(item.Allocations);
+    }
+
+    [Fact]
+    public void ExactAllocationBoundary_IsAccepted()
+    {
+        var item = CreateDeliveryNoteItem();
+        var allocation = DeliveryNoteItemAllocation.Create(
             Guid.NewGuid(),
             Now,
             item.SalesOrderItemId,
             item.Id,
-            PositiveQuantity.Create(7_000, 0),
+            PositiveQuantity.Create(10_000, 0),
             CreateSnapshot());
-        item.AddAllocation(first, NonNegativeQuantity.Create(10_000, 0), Now.AddMinutes(1));
 
-        var second = DeliveryNoteItemAllocation.Create(
-            Guid.NewGuid(),
+        item.AddAllocation(allocation, NonNegativeQuantity.Create(10_000, 0), Now.AddMinutes(1));
+
+        Assert.Equal(10_000, item.ActiveAllocatedQuantity().BaseValue);
+        Assert.Single(item.Allocations);
+    }
+
+    [Fact]
+    public void DuplicateAllocation_IsRejectedWithTypedError()
+    {
+        var item = CreateDeliveryNoteItem();
+        var allocationId = Guid.NewGuid();
+        var allocation = DeliveryNoteItemAllocation.Create(
+            allocationId,
             Now,
             item.SalesOrderItemId,
             item.Id,
             PositiveQuantity.Create(4_000, 0),
             CreateSnapshot());
 
+        item.AddAllocation(allocation, NonNegativeQuantity.Create(10_000, 0), Now.AddMinutes(1));
+
         var exception = Assert.Throws<DomainException>(() =>
-            item.AddAllocation(second, NonNegativeQuantity.Create(10_000, 0), Now.AddMinutes(2)));
+            item.AddAllocation(allocation, NonNegativeQuantity.Create(10_000, 0), Now.AddMinutes(2)));
+
+        Assert.Equal("DUPLICATE_ALLOCATION", exception.Error.Code);
+        Assert.Equal(4_000, item.ActiveAllocatedQuantity().BaseValue);
+        Assert.Single(item.Allocations);
+    }
+
+    [Fact]
+    public void OverAllocation_IsRejectedWithTypedError()
+    {
+        var item = CreateDeliveryNoteItem();
+        var allocation = DeliveryNoteItemAllocation.Create(
+            Guid.NewGuid(),
+            Now,
+            item.SalesOrderItemId,
+            item.Id,
+            PositiveQuantity.Create(10_001, 0),
+            CreateSnapshot());
+
+        var exception = Assert.Throws<DomainException>(() =>
+            item.AddAllocation(allocation, NonNegativeQuantity.Create(10_000, 0), Now.AddMinutes(1)));
 
         Assert.Equal("OVER_ALLOCATION", exception.Error.Code);
-        Assert.Equal(7_000, item.ActiveAllocatedQuantity().BaseValue);
+        Assert.Equal(0, item.ActiveAllocatedQuantity().BaseValue);
+        Assert.Empty(item.Allocations);
     }
 
     [Fact]
@@ -176,7 +228,10 @@ public sealed class DeliveryNoteItemTests
 
         Assert.Equal(3_000, reversal.QuantityBase.BaseValue);
         Assert.True(reversal.QuantityBase.BaseValue > 0);
+        Assert.Equal(AllocationKind.Original, original.Kind);
+        Assert.Equal(AllocationKind.Reversal, reversal.Kind);
         Assert.Equal(original.Id, reversal.ReversedFromId);
         Assert.Equal(AllocationStatus.Active, reversal.Status);
+        Assert.False(reversal.IsActiveOriginal);
     }
 }

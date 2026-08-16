@@ -13,9 +13,14 @@ public sealed class DomainDependencyTests
             .InAssembly(typeof(Entity).Assembly)
             .ShouldNot()
             .HaveDependencyOnAny(
+                "FactoryErp.Application",
+                "FactoryErp.Infrastructure",
+                "FactoryErp.Api",
                 "Microsoft.AspNetCore",
                 "Microsoft.EntityFrameworkCore",
                 "Npgsql",
+                "Npgsql.EntityFrameworkCore.PostgreSQL",
+                "Microsoft.Data",
                 "Dapper",
                 "System.Data")
             .GetResult();

@@ -42,6 +42,7 @@ public sealed class DeliveryNoteItemAllocationRecord
     public decimal QuantityBase { get; set; }
     public Guid BaseUomId { get; set; }
     public string PackagingSnapshot { get; set; } = "{}";
+    public string AllocationKind { get; set; } = "Original";
     public string Status { get; set; } = "Active";
     public string IdempotencyKey { get; set; } = string.Empty;
     public string PayloadHash { get; set; } = string.Empty;
@@ -110,6 +111,7 @@ public sealed class InvoiceItemAllocationRecord
     public string PackagingSnapshot { get; set; } = "{}";
     public string PriceSnapshot { get; set; } = "{}";
     public string TaxSnapshot { get; set; } = "{}";
+    public string AllocationKind { get; set; } = "Original";
     public string Status { get; set; } = "Active";
     public string IdempotencyKey { get; set; } = string.Empty;
     public string PayloadHash { get; set; } = string.Empty;

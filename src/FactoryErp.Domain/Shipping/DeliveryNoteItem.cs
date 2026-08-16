@@ -3,6 +3,12 @@ using FactoryErp.Domain.Shared;
 
 namespace FactoryErp.Domain.Shipping;
 
+public enum AllocationKind
+{
+    Original = 0,
+    Reversal = 1
+}
+
 public enum AllocationStatus
 {
     Active = 0,
@@ -59,7 +65,8 @@ public sealed class DeliveryNoteItem : Entity
     public NonNegativeQuantity ActiveAllocatedQuantity()
     {
         var total = _allocations
-            .Where(allocation => allocation.Status == AllocationStatus.Active)
+            .Where(allocation => allocation.Kind == AllocationKind.Original
+                && allocation.Status == AllocationStatus.Active)
             .Sum(allocation => allocation.QuantityBase.BaseValue);
 
         return NonNegativeQuantity.Create(total, QuantityBase.Scale);
@@ -70,11 +77,31 @@ public sealed class DeliveryNoteItem : Entity
         NonNegativeQuantity sourceRemaining,
         DateTimeOffset now)
     {
-        if (allocation.Status != AllocationStatus.Active)
+        if (allocation.Kind != AllocationKind.Original
+            || allocation.Status != AllocationStatus.Active)
         {
             throw new DomainException(new(
-                "ALLOCATION_NOT_ACTIVE",
-                "Yalnızca aktif allocation eklenebilir."));
+                "ALLOCATION_KIND_INVALID",
+                "İrsaliye kalemine yalnızca aktif original allocation eklenebilir."));
+        }
+
+        if (allocation.SalesOrderItemId != SalesOrderItemId
+            || allocation.DeliveryNoteItemId != Id)
+        {
+            throw new DomainException(new(
+                "ALLOCATION_SCOPE_MISMATCH",
+                "Allocation source ve target kalemiyle eşleşmiyor."));
+        }
+
+        if (_allocations.Any(existing =>
+            existing.Kind == AllocationKind.Original
+            && existing.Status == AllocationStatus.Active
+            && existing.SalesOrderItemId == allocation.SalesOrderItemId
+            && existing.DeliveryNoteItemId == allocation.DeliveryNoteItemId))
+        {
+            throw new DomainException(new(
+                "DUPLICATE_ALLOCATION",
+                "Aynı source-target çifti için aktif allocation zaten mevcut."));
         }
 
         if (allocation.QuantityBase.BaseValue > sourceRemaining.BaseValue)
@@ -137,6 +164,7 @@ public sealed class DeliveryNoteItemAllocation : Entity
         Guid deliveryNoteItemId,
         PositiveQuantity quantityBase,
         QuantitySnapshot quantitySnapshot,
+        AllocationKind kind,
         Guid? reversedFromId,
         string? reversalReason)
         : base(id, now)
@@ -148,6 +176,7 @@ public sealed class DeliveryNoteItemAllocation : Entity
         DeliveryNoteItemId = deliveryNoteItemId;
         QuantityBase = quantityBase;
         QuantitySnapshot = quantitySnapshot;
+        Kind = kind;
         ReversedFromId = reversedFromId;
         ReversalReason = reversalReason;
         Status = AllocationStatus.Active;
@@ -157,6 +186,10 @@ public sealed class DeliveryNoteItemAllocation : Entity
     public Guid DeliveryNoteItemId { get; }
     public PositiveQuantity QuantityBase { get; }
     public QuantitySnapshot QuantitySnapshot { get; }
+    public AllocationKind Kind { get; }
+    public bool IsActiveOriginal
+        => Kind == AllocationKind.Original && Status == AllocationStatus.Active;
+    public bool IsReversal => Kind == AllocationKind.Reversal;
     public AllocationStatus Status { get; private set; }
     public Guid? ReversedFromId { get; private set; }
     public string? ReversalReason { get; private set; }
@@ -168,7 +201,7 @@ public sealed class DeliveryNoteItemAllocation : Entity
         Guid deliveryNoteItemId,
         PositiveQuantity quantityBase,
         QuantitySnapshot quantitySnapshot)
-        => new(id, now, salesOrderItemId, deliveryNoteItemId, quantityBase, quantitySnapshot, null, null);
+        => new(id, now, salesOrderItemId, deliveryNoteItemId, quantityBase, quantitySnapshot, AllocationKind.Original, null, null);
 
     public static DeliveryNoteItemAllocation CreateReversal(
         Guid reversalId,
@@ -176,11 +209,12 @@ public sealed class DeliveryNoteItemAllocation : Entity
         DeliveryNoteItemAllocation original,
         string reason)
     {
-        if (original.Status != AllocationStatus.Active)
+        if (original.Kind != AllocationKind.Original
+            || original.Status != AllocationStatus.Active)
         {
             throw new DomainException(new(
                 "ALLOCATION_NOT_ACTIVE",
-                "Yalnızca aktif allocation için reversal oluşturulabilir."));
+                "Yalnızca aktif original allocation için reversal oluşturulabilir."));
         }
 
         DomainGuard.AgainstBlank(reason, "REVERSAL_REASON_REQUIRED", "Reversal gerekçesi zorunludur.");
@@ -192,23 +226,22 @@ public sealed class DeliveryNoteItemAllocation : Entity
             original.DeliveryNoteItemId,
             original.QuantityBase,
             original.QuantitySnapshot,
+            AllocationKind.Reversal,
             original.Id,
             reason.Trim());
     }
 
-    public void Reverse(Guid reversalId, string reason, DateTimeOffset now)
+    public void Reverse(string reason, DateTimeOffset now)
     {
-        if (Status != AllocationStatus.Active)
+        if (Kind != AllocationKind.Original || Status != AllocationStatus.Active)
         {
             throw new DomainException(new(
                 "ALLOCATION_NOT_ACTIVE",
-                "Yalnızca aktif allocation tersine çevrilebilir."));
+                "Yalnızca aktif original allocation tersine çevrilebilir."));
         }
 
-        DomainGuard.AgainstEmpty(reversalId, "REVERSAL_ID_REQUIRED", "Reversal kimliği zorunludur.");
         DomainGuard.AgainstBlank(reason, "REVERSAL_REASON_REQUIRED", "Reversal gerekçesi zorunludur.");
         Status = AllocationStatus.Reversed;
-        ReversedFromId = reversalId;
         ReversalReason = reason.Trim();
         Touch(now);
     }
