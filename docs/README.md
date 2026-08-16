@@ -33,6 +33,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 15. [`../design/shipment-logistics-ui-design.md`](../design/shipment-logistics-ui-design.md) — Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı.
 16. [`../design/partial-shipment-invoicing-workflow.md`](../design/partial-shipment-invoicing-workflow.md) — O-002/O-003 kısmi sevkiyat ve kısmi fatura iş akışı, state, transaction ve audit tasarımı.
 17. [`../design/quantity-error-handling-and-allocation-sql.md`](../design/quantity-error-handling-and-allocation-sql.md) — Quantity mismatch/concurrency API hata sözleşmesi, allocation DDL ve PostgreSQL sorguları.
+18. [`../design/p0-p1-decision-recommendations.md`](../design/p0-p1-decision-recommendations.md) — P0/P1 öneri paketi, MVP sınırları, gerekçeler, riskler ve karar toplantısı onay listesi.
 
 ## Arşiv okuma sırası
 
