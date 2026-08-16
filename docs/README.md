@@ -25,6 +25,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 7. [`../design/open-decisions-solution-matrix.md`](../design/open-decisions-solution-matrix.md) — O-001–O-013 çözüm önerileri ve karar sahipleri.
 8. [`../design/open-decisions-workshop.md`](../design/open-decisions-workshop.md) — Karar atölyesi özeti, onay formu ve Design Gate kapanış planı.
 9. [`../design/product-packaging-and-uom.md`](../design/product-packaging-and-uom.md) — Palet-koli-paket-temel birim hiyerarşisi ve miktar dönüşüm kuralları.
+10. [`../design/shipment-logistics-ui-design.md`](../design/shipment-logistics-ui-design.md) — Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı.
 
 ## Arşiv okuma sırası
 
@@ -37,6 +38,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 7. [`02-architecture/01-database-technical-architecture.md`](./02-architecture/01-database-technical-architecture.md)
 8. [`01-design/14-implementation-readiness.md`](./01-design/14-implementation-readiness.md)
 9. [`01-design/17-product-packaging-and-uom.md`](./01-design/17-product-packaging-and-uom.md)
+10. [`01-design/18-shipment-logistics-ui-design.md`](./01-design/18-shipment-logistics-ui-design.md)
 
 ## Aşama sonucu
 
