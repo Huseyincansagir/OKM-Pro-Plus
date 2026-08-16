@@ -16,6 +16,9 @@ Bu skill, ürünün kodunu yazmadan önce iş akışını, kullanıcı deneyimin
 - Modülleri bağımsız ekranlar olarak değil ortak belge ve veri akışları olarak tasarla.
 - Public müşteri deneyimini iç ERP'den ayır.
 - Mobil uygulamayı masaüstünün küçültülmüş kopyası yapma; görev odaklı tasarla.
+- Mobil barkod akışında önce barkod türünü, ürün/ambalaj/yük birimi bağlamını ve işlem yetkisini doğrula; sonra işlem formunu aç.
+- `Temel Birim / Ambalaj / Kırılım` toggle'ını yalnızca görünüm kontrolü olarak tasarla; işlem yapılacak ambalaj seviyesini ayrı ve açık göster.
+- Duplicate barkod taramasını kısa süreli kilitle; bilinmeyen barkod, yanlış depo/rota ve aktif durak dışı paketlerde güvenli blokaj sun.
 - Finansal ve stok hareketlerinde silme yerine iptal/ters kayıt yaklaşımını koru.
 - Gereksiz kullanıcı onayı istemeden makul varsayımlar yap.
 - Belirsiz veya iş riski oluşturan kararları `/design/decision-log.md` içinde tut.
@@ -70,6 +73,8 @@ Her ekran için:
 - Veri etkisi
 - Empty/loading/error/permission/offline durumları
 - Mobil uyarlama
+- Barkod türü, kamera/manuel giriş ve duplicate tarama davranışı
+- Toggle görünümü ile işlem seviyesi ayrımı
 - Ambalaj görünümü, fiziksel kapasite, rota/durak ve paket izleme davranışı
 - Teslim kanıtı ve istisna davranışı
 - Kabul senaryosu
@@ -108,7 +113,9 @@ En az aşağıdakileri tasarımda görünür kıl:
 - Finansal hareketler fiziksel olarak silinmemelidir.
 - Üretim tamamlanması, stoğa giriş davranışı tanımlanmadan geçerli sayılmaz.
 - Her ürünün `base_uom` değeri vardır; stok ledger'ı temel birimde tutulur.
-- Ambalaj toggle'ı ve filtresi miktar doğruluğunu değiştirmez.
+- Ambalaj toggle'ı ve filtresi miktar doğruluğunu değiştirmez; işlem seviyesi ayrı kaydedilir.
+- Barkod tarama başarısı ürün, ambalaj/yük birimi ve işlem bağlamı doğrulanmadan stok/teslim hareketi başlatmaz.
+- Duplicate barkod taraması idempotent olmalı; aynı okutma ikinci stok veya teslim hareketi üretmemelidir.
 - `LoadPlan` bağlı shipment miktarını aşamaz; kapasite ağırlık, hacim, palet ve istifleme açısından doğrulanır.
 - Her `ShipmentPackage` müşteri/adres/durak bağlantısı olmadan rota kilitlenemez.
 - Araç, sevkiyat, durak ve paket durumları ayrı izlenir; kısmi teslim ve iade kaydı korunur.
@@ -124,6 +131,7 @@ Kodlama başlamadan önce şu dosyalar mevcut olmalı:
 - `/design/shipment-logistics-ui-design.md`
 - `/design/database-technical-architecture.md`
 - `/design/mobile-design.md`
+- `/design/mobile-barcode-and-quantity-ux.md`
 - `/design/public-catalog-design.md`
 - `/design/visual-design-system.md`
 - `/design/decision-log.md`

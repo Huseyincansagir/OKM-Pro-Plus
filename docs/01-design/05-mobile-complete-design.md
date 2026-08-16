@@ -67,7 +67,7 @@ Tara sekmesi
 → Kayıt numarası
 ```
 
-Tarama ekranında kamera görüntüsü, çerçeve, flaş, manuel kod girişi ve “Barkodu okutun” açıklaması bulunur. Barkod bulunamazsa kullanıcı manuel ürün aramasına geçebilir. Aynı barkodun art arda okutulması duplicate hareket oluşturmayacak şekilde kısa süreli kilitlenir.
+Tarama ekranında kamera görüntüsü, çerçeve, flaş, manuel kod girişi ve “Barkodu okutun” açıklaması bulunur. Başarılı okuma sonrası sistem barkodun ürün, ambalaj veya yük birimi türünü ayırt eder; ürün, işlem bağlamı ve yetki doğrulanmadan işlem formu açılmaz. Barkod bulunamazsa kullanıcı manuel ürün aramasına geçebilir. Aynı barkodun art arda okutulması duplicate hareket oluşturmayacak şekilde kısa süreli kilitlenir. Detaylı kararlar için `mobile-barcode-and-quantity-ux.md` okunmalıdır.
 
 Ürün sonuç ekranında ürün görseli, ürün adı, ürün kodu, barkod, temel birimde toplam stok, seçili depo, rezerve miktar ve kullanılabilir miktar gösterilir. Ambalaj görünümü de ayrıca sunulur; örneğin `5 Koli (10.000 adet)`. Mobilde ortak üçlü toggle kullanılır:
 
@@ -75,7 +75,7 @@ Tarama ekranında kamera görüntüsü, çerçeve, flaş, manuel kod girişi ve 
 [ Temel Birim ] [ Ambalaj ] [ Kırılım ]
 ```
 
-Kullanıcının seçimi stok doğruluğunu değiştirmez. Depo/saha işlemlerinde varsayılan `Ambalaj`, sayım ve karma stoklarda varsayılan `Kırılım`, finansal özetlerde varsayılan `Temel Birim` görünümüdür. Hızlı işlemler role göre değişir:
+Kullanıcının seçimi stok doğruluğunu değiştirmez. Toggle yalnızca görünümü değiştirir; işlem yapılacak seviye ayrıca seçilir ve miktar alanının yanında gösterilir. Örneğin `Görünüm: Ambalaj`, `İşlem seviyesi: Koli`, `Miktar: 5`, `Karşılık: 10.000 adet`. Depo/saha işlemlerinde varsayılan `Ambalaj`, sayım ve karma stoklarda varsayılan `Kırılım`, finansal özetlerde varsayılan `Temel Birim` görünümüdür. `quantity_base` her işlemde doğruluk kaynağıdır. Hızlı işlemler role göre değişir:
 
 | Rol | İşlemler |
 |---|---|
@@ -113,7 +113,7 @@ Transfer ekranında kaynak depo, hedef depo ve konum seçilir. Ürün barkodla e
 
 İşlerim ekranında sevke hazır ve hazırlanmakta olan sevkiyatlar kart halinde listelenir. Kartta sevkiyat no, müşteri, irsaliye, teslim tarihi, ürün adedi ve öncelik bulunur.
 
-Sevkiyat detayı ürün doğrulama ekranına açılır. Her satırda beklenen, okutulan ve kalan miktar hem temel birimde hem de ambalaj görünümünde gösterilir. `Temel Birim / Ambalaj / Kırılım` toggle'ı aynı satıra uygulanır. Örneğin `5 Koli (10.000 adet)`. Barkod okutuldukça okutulan temel miktar artar. Fark varsa sistem uyarır ve sevkiyatı tamamlamadan önce açıklama ister.
+Sevkiyat detayı ürün doğrulama ekranına açılır. Her satırda beklenen, okutulan ve kalan miktar hem temel birimde hem de ambalaj görünümünde gösterilir. `Temel Birim / Ambalaj / Kırılım` toggle'ı aynı satıra uygulanır; işlem seviyesi ayrı alanda seçilir. Örneğin `Görünüm: Ambalaj · İşlem seviyesi: Koli · 5 Koli (10.000 adet)`. Barkod okutuldukça okutulan temel miktar artar. Barkodun müşteri, teslim adresi, aktif rota durağı ve yük birimi eşleşmesi yapılmadan teslim/yükleme aksiyonu açılmaz. Fark varsa sistem uyarır ve sevkiyatı tamamlamadan önce açıklama ister.
 
 Kargo planı varsa mobilde ayrıca araç plakası, araç tipi, kapasitesi, kullanılan kg/m³/palet, aktif palet barkodu ve palet içeriği gösterilir. Kullanıcı yeni bir palet barkodu açabilir, koli/paket barkodlarını ilgili palete ekleyebilir ve karışık paletin toplam ağırlık/hacmini görebilir. Her paket barkodu için ürün, ambalaj seviyesi, temel miktar, müşteri, teslim adresi, rota durağı ve teslim durumu gösterilir. Plan kilitli değilse mobilde yalnızca taslak düzenleme; kilitli plan üzerinde ise barkodla yükleme doğrulama yapılır.
 
@@ -149,6 +149,10 @@ Durum: InTransit · Durak 2 / 4
 ```
 
 Durakta kullanıcı yalnızca o adrese atanmış paketleri görür. Kısmi teslim için teslim edilen barkodlar seçilir; eksik, hasarlı veya teslim edilemeyen paketlerde neden ve fotoğraf/not zorunlu tutulur. Teslim alan kişi ve zaman bilgisi kaydedilerek rota ilerlemesi güncellenir.
+
+### Mobil barkod ve miktar UX referansı
+
+Barkod okuma, toggle ve işlem seviyesi davranışının ayrıntılı canonical tanımı `mobile-barcode-and-quantity-ux.md` dosyasındadır. Bu dosya; bilinmeyen barkod, duplicate tarama, yanlış depo/rota, kapalı ambalaj, offline işlem, kısmi teslim ve sayım farkı kabul kriterlerini içerir.
 
 ## 10. Üretim operasyonu
 

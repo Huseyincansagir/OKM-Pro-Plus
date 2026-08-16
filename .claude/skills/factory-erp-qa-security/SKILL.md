@@ -50,6 +50,9 @@ Ana akış:
 - Belge numarası collision olmamalı.
 - Concurrent stock operations veri kaybı oluşturmamalı.
 - Aynı paket barkodu iki kez yüklenmemeli veya iki farklı müşteriye teslim edilmemeli.
+- Aynı barkodun art arda mobil taranması ikinci stok, transfer, sayım veya teslim hareketi üretmemeli.
+- Bilinmeyen barkod ürün/ambalaj/yük birimi eşleşmesi olmadan işlem başlatmamalı.
+- `Temel Birim / Ambalaj / Kırılım` toggle değişimi `quantity_base` veya işlem seviyesini sessizce değiştirmemeli.
 - Paket müşteri/adres/route stop eşleşmesi olmadan rota veya yük planı kilitlenememeli.
 - Araç kapasitesi, rota tarih çakışması ve palet/ölçü sınırları server-side doğrulanmalı.
 - Kısmi teslimde teslim edilen paketler kapanmalı; kalan paketler yanlışlıkla teslim edilmiş sayılmamalı.
@@ -71,6 +74,8 @@ Kontrol et:
 - package/customer/address IDOR veya BOLA
 - başka müşterinin rota ve paket bilgilerinin görüntülenmesi
 - teslim kanıtı dosyalarının yetkisiz erişime açık olması
+- mobil kullanıcıya aktif durağı dışındaki paketlerin gösterilmesi veya teslim ettirilmesi
+- barkod/ambalaj detayında excessive data exposure
 - weak password/session handling
 - secret leakage
 - insecure default configuration
@@ -100,6 +105,8 @@ En az şu roller için pozitif ve negatif test yap:
 - report generation
 - stock lookup
 - barcode lookup
+- mobile camera scan response and duplicate-scan lock
+- quantity toggle and base-unit conversion response
 - customer search
 - route board and stop query
 - package trace by barcode/customer/address

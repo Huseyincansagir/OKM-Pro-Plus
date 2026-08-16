@@ -62,6 +62,7 @@ Başlıklar güçlü ve kısa tutulacaktır. Sayfa başlığı 28–32 px aralı
 | Paket izleme | Barkod, alıcı, adres, durak ve teslim durumu | Yeni mockup turu |
 | Araç detayı | Araç tipi, kapasite, aktif rota, yük ve bakım durumu | Yeni mockup turu |
 | Mobil durak teslimatı | Aktif durak, barkod doğrulama, teslim kanıtı ve istisna | Yeni mockup turu |
+| Mobil barkod ve miktar | Barkod sonucu, üçlü toggle, işlem seviyesi ve temel miktar önizlemesi | `../docs/05-assets/mockups/mobile-barcode-quantity-toggle-flow.png` |
 
 ## 6. Görsel kabul kriterleri
 

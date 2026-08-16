@@ -59,6 +59,7 @@ Mockup'larda marka adı ve logo üç farklı biçimde kullanılmıştır (`MaviK
 | Paket izleme | `docs/05-assets/mockups/shipment-package-tracking-desktop.png` | Barkod, müşteri, adres, durak, durum ve detay drawer'ı görünür |
 | Araç detayı | `docs/05-assets/mockups/vehicle-detail-capacity-desktop.png` | Araç tipi, kapasite, aktif rota, yük ve bakım geçmişi görünür |
 | Mobil durak teslimatı | `docs/05-assets/mockups/mobile-shipment-stop-delivery.png` | Aktif durak sınırı, barkod, teslim kanıtı ve istisna aksiyonları görünür |
+| Mobil barkod ve miktar | `docs/05-assets/mockups/mobile-barcode-quantity-toggle-flow.png` | Toggle ile işlem seviyesi ayrımı, 5 Koli = 10.000 adet önizlemesi ve işlem bağlamı görünür |
 
 Bu görseller UI kararlarını doğrulayan mockup'lardır; production code veya gerçek veri seed'i değildir. Marka kararı kesinleşene kadar nötr `Factory ERP` adı korunur.
 

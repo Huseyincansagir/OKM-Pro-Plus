@@ -87,6 +87,8 @@ PDF ve Excel çıktılarında aynı domain verisini kullan. Rapor ekranı ile ex
 - Table yoğun operasyonlara uygun.
 - Mobilde görev odaklı akış.
 - Sevkiyat mobil akışında kullanıcı yalnızca aktif route stop'a atanmış `ShipmentPackage` kayıtlarını görebilmeli ve teslim edebilmeli.
+- Barkod tarama sonucu ürün, ambalaj/yük birimi ve işlem bağlamı doğrulanmadan işlem formu veya kesinleştirme aksiyonu açılmamalı.
+- `Temel Birim / Ambalaj / Kırılım` toggle'ı yalnızca görünümü değiştirmeli; işlem seviyesi ayrı state ve `quantity_base` önizlemesiyle yönetilmeli.
 - Araç, sevkiyat, durak ve paket durumları ayrı badge/state olarak gösterilmeli; kapasite ve ambalaj görünümü toggle ile değişebilmeli.
 
 ## Mobile
@@ -112,6 +114,8 @@ Aşağıdaki hatalar kabul edilmez:
 
 - duplicate document number
 - duplicate package barcode scan or delivery application
+- duplicate barcode scan must not create a second stock/transfer/count/delivery movement
+- toggle change must not change `quantity_base` or selected operation quantity
 - package assigned to wrong customer/address/route stop
 - vehicle capacity or route overlap not validated
 - negative unintended stock
@@ -128,12 +132,13 @@ Aşağıdaki hatalar kabul edilmez:
 3. Mevcut implementation ile karşılaştır.
 4. Vehicle, capacity, route stop, load unit ve shipment package etkilerini çıkar.
 5. Migration + backend + frontend/mobile + test planını uygula.
-6. Paket/rota/teslimat idempotency ve permission testlerini ekle.
-7. Kod üret.
-8. Build/type-check/test çalıştır.
-9. Hataları kendin düzelt.
-10. Integration test yap.
-11. Dokümantasyonu güncelle.
+6. Paket/rota/teslimat ve barkod idempotency/permission testlerini ekle.
+7. Toggle görünümünün işlem seviyesini ve `quantity_base` değerini yanlışlıkla değiştirmediğini test et.
+8. Kod üret.
+9. Build/type-check/test çalıştır.
+10. Hataları kendin düzelt.
+11. Integration test yap.
+12. Dokümantasyonu güncelle.
 
 Gereksiz yere kullanıcıdan onay isteme.
 

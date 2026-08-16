@@ -155,6 +155,7 @@ Personel Kartı
 | `shipment-package-tracking-desktop.png` | Barkod, müşteri/adres ve paket izleme |
 | `vehicle-detail-capacity-desktop.png` | Araç tipi, kapasite, aktif rota ve yük |
 | `mobile-shipment-stop-delivery.png` | Mobil durak teslimatı ve teslim kanıtı |
+| `mobile-barcode-quantity-toggle-flow.png` | Mobil barkod sonucu, üçlü toggle ve işlem seviyesi |
 | `uretim-depo-accounting-current-account-mockup.png` | Cari hesap ve ödeme |
 | `uretim-depo-hr-attendance-mockup.png` | Personel ve puantaj |
 
