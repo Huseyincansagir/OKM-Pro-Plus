@@ -32,13 +32,15 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 1. [`00-project-brief/01-project-discovery-report.md`](./00-project-brief/01-project-discovery-report.md)
 2. [`01-design/00-complete-ui-design-package.md`](./01-design/00-complete-ui-design-package.md)
 3. [`01-design/01-master-screen-inventory.md`](./01-design/01-master-screen-inventory.md)
-4. [`01-design/12-business-workflows.md`](./01-design/12-business-workflows.md) ve [`01-design/13-decision-log.md`](./01-design/13-decision-log.md)
-5. [`01-design/16-ui-mockup-review.md`](./01-design/16-ui-mockup-review.md)
-6. [`02-architecture/00-domain-model.md`](./02-architecture/00-domain-model.md)
-7. [`02-architecture/01-database-technical-architecture.md`](./02-architecture/01-database-technical-architecture.md)
-8. [`01-design/14-implementation-readiness.md`](./01-design/14-implementation-readiness.md)
-9. [`01-design/17-product-packaging-and-uom.md`](./01-design/17-product-packaging-and-uom.md)
-10. [`01-design/18-shipment-logistics-ui-design.md`](./01-design/18-shipment-logistics-ui-design.md)
+4. [`01-design/02-web-ux-architecture.md`](./01-design/02-web-ux-architecture.md)
+5. [`01-design/05-mobile-complete-design.md`](./01-design/05-mobile-complete-design.md)
+6. [`01-design/16-ui-mockup-review.md`](./01-design/16-ui-mockup-review.md)
+7. [`02-architecture/00-domain-model.md`](./02-architecture/00-domain-model.md)
+8. [`02-architecture/01-database-technical-architecture.md`](./02-architecture/01-database-technical-architecture.md)
+9. [`01-design/14-implementation-readiness.md`](./01-design/14-implementation-readiness.md)
+10. [`01-design/17-product-packaging-and-uom.md`](./01-design/17-product-packaging-and-uom.md)
+11. [`01-design/18-shipment-logistics-ui-design.md`](./01-design/18-shipment-logistics-ui-design.md)
+12. [`01-design/19-mobile-barcode-and-quantity-ux.md`](./01-design/19-mobile-barcode-and-quantity-ux.md)
 
 ## Aşama sonucu
 
