@@ -42,6 +42,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`aspnet-clean-architecture-and-cqrs.md`](./aspnet-clean-architecture-and-cqrs.md) | ASP.NET Core Clean Architecture klasör yapısı, dependency yönü, CQRS handler ve architecture test sözleşmeleri |
 | [`factoryerp-domain-code-design.md`](./factoryerp-domain-code-design.md) | FactoryErp.Domain temel entity, aggregate, quantity/packaging value object ve allocation invariant kod tasarımı |
 | [`allocation-cqrs-unit-test-code-design.md`](./allocation-cqrs-unit-test-code-design.md) | Allocation ve CQRS transaction unit test blueprint’leri, idempotency, rollback ve error branch testleri |
+| [`pre-implementation-readiness-review.md`](./pre-implementation-readiness-review.md) | Kodlama öncesi MVP readiness incelemesi, residual riskler, test piramidi, CI gate’leri ve ilk implementation slice planı |
 | [`architecture-decision-baseline.md`](./architecture-decision-baseline.md) | Araştırılmış ve kabul edilmiş ADR-001–ADR-011 teknik baseline, gerekçeler, riskler ve acceptance testleri |
 | [`research-findings-architecture-decisions.md`](./research-findings-architecture-decisions.md) | EF Core, PostgreSQL, Npgsql, domain events, value objects ve GitHub Actions kaynaklı araştırma notları |
 | [`docker-compose-deployment-plan.md`](./docker-compose-deployment-plan.md) | Docker Compose servisleri, network, HTTPS, backup/restore ve operasyon kabul kriterleri |

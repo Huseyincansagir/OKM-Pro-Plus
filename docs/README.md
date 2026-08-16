@@ -45,6 +45,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 27. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
 28. [`../design/architecture-decision-baseline.md`](../design/architecture-decision-baseline.md) — Araştırılmış ve kabul edilmiş ADR-001–ADR-011 teknik baseline, gerekçeler, riskler ve acceptance testleri.
 29. [`../design/research-findings-architecture-decisions.md`](../design/research-findings-architecture-decisions.md) — EF Core, PostgreSQL, Npgsql, domain events, value objects ve GitHub Actions kaynaklı araştırma notları.
+30. [`../design/pre-implementation-readiness-review.md`](../design/pre-implementation-readiness-review.md) — Kodlama öncesi MVP readiness incelemesi, residual riskler, test piramidi, CI gate’leri ve ilk implementation slice planı.
 
 ## Arşiv okuma sırası
 
@@ -82,6 +83,7 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 32. [`02-architecture/10-allocation-cqrs-unit-test-code-design.md`](./02-architecture/10-allocation-cqrs-unit-test-code-design.md)
 33. [`02-architecture/11-architecture-decision-baseline.md`](./02-architecture/11-architecture-decision-baseline.md)
 34. [`02-architecture/12-research-findings-architecture-decisions.md`](./02-architecture/12-research-findings-architecture-decisions.md)
+35. [`02-architecture/13-pre-implementation-readiness-review.md`](./02-architecture/13-pre-implementation-readiness-review.md)
 
 ## Aşama sonucu
 

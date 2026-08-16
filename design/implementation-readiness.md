@@ -8,7 +8,7 @@ READY FOR ARCHITECTURE
 ARCHITECTURE:
 ACCEPTED FOR MVP HANDOFF
 IMPLEMENTATION:
-READY FOR SCAFFOLD
+READY FOR SCAFFOLD — CONDITIONAL
 NEXT SKILL:
 factory-erp-implementation
 ```
@@ -80,6 +80,6 @@ Implementation gate **READY FOR SCAFFOLD** durumundadır. İlk implementation sl
 4. Domain unit test project’i.
 5. Architecture dependency testleri.
 
-Bu slice’ın build, unit test, architecture test ve documentation acceptance kanıtları alınmadan API, EF migration, web, mobile, production worker veya external adapter feature’ları başlatılmayacaktır.
+Bu slice’ın build, unit test, architecture test ve documentation acceptance kanıtları alınmadan API, EF migration, web, mobile, production worker veya external adapter feature’ları başlatılmayacaktır. Ayrıntılı kontrol listesi ve test planı [`pre-implementation-readiness-review.md`](./pre-implementation-readiness-review.md) içinde tutulur.
 
 Production implementation devam ederken karar değişirse ilgili ADR yeniden açılır, implementation durdurulur ve canonical artefact’lar güncellenir.
