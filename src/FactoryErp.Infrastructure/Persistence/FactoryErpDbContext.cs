@@ -43,6 +43,18 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<SalesOrderRecord> SalesOrders => Set<SalesOrderRecord>();
     public DbSet<SalesOrderItemRecord> SalesOrderItems => Set<SalesOrderItemRecord>();
     public DbSet<SalesOrderApprovalRecord> SalesOrderApprovals => Set<SalesOrderApprovalRecord>();
+    public DbSet<DeliveryNoteRecord> DeliveryNotes => Set<DeliveryNoteRecord>();
+    public DbSet<DeliveryNoteItemRecord> DeliveryNoteItems => Set<DeliveryNoteItemRecord>();
+    public DbSet<DeliveryNoteItemAllocationRecord> DeliveryNoteItemAllocations => Set<DeliveryNoteItemAllocationRecord>();
+    public DbSet<TaxCodeRecord> TaxCodes => Set<TaxCodeRecord>();
+    public DbSet<InvoiceRecord> Invoices => Set<InvoiceRecord>();
+    public DbSet<InvoiceItemRecord> InvoiceItems => Set<InvoiceItemRecord>();
+    public DbSet<InvoiceItemAllocationRecord> InvoiceItemAllocations => Set<InvoiceItemAllocationRecord>();
+    public DbSet<CurrentAccountRecord> CurrentAccounts => Set<CurrentAccountRecord>();
+    public DbSet<CurrentTransactionRecord> CurrentTransactions => Set<CurrentTransactionRecord>();
+    public DbSet<PaymentMethodRecord> PaymentMethods => Set<PaymentMethodRecord>();
+    public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
+    public DbSet<PaymentAllocationRecord> PaymentAllocations => Set<PaymentAllocationRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

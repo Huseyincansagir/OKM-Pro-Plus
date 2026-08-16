@@ -52,6 +52,22 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "quote-request.read"));
     options.AddPolicy(PermissionPolicies.QuoteRequestReview, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "quote-request.review"));
+    options.AddPolicy(PermissionPolicies.DeliveryNoteCreate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "delivery-note.create"));
+    options.AddPolicy(PermissionPolicies.DeliveryNoteRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "delivery-note.read"));
+    options.AddPolicy(PermissionPolicies.DeliveryNoteIssue, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "delivery-note.issue"));
+    options.AddPolicy(PermissionPolicies.InvoiceCreate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "invoice.create"));
+    options.AddPolicy(PermissionPolicies.InvoiceRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "invoice.read"));
+    options.AddPolicy(PermissionPolicies.InvoiceIssue, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "invoice.issue"));
+    options.AddPolicy(PermissionPolicies.PaymentApply, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "payment.apply"));
+    options.AddPolicy(PermissionPolicies.CurrentAccountRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "current-account.read"));
 });
 
 var app = builder.Build();

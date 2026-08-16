@@ -11,4 +11,12 @@ public static class PermissionPolicies
     public const string QuoteRequestSubmit = "permission:quote-request.submit";
     public const string QuoteRequestRead = "permission:quote-request.read";
     public const string QuoteRequestReview = "permission:quote-request.review";
+    public const string DeliveryNoteCreate = "permission:delivery-note.create";
+    public const string DeliveryNoteRead = "permission:delivery-note.read";
+    public const string DeliveryNoteIssue = "permission:delivery-note.issue";
+    public const string InvoiceCreate = "permission:invoice.create";
+    public const string InvoiceRead = "permission:invoice.read";
+    public const string InvoiceIssue = "permission:invoice.issue";
+    public const string PaymentApply = "permission:payment.apply";
+    public const string CurrentAccountRead = "permission:current-account.read";
 }

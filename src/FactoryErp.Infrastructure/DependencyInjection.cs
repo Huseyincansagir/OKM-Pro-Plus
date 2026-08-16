@@ -2,11 +2,13 @@ using FactoryErp.Application.Abstractions.Persistence;
 using FactoryErp.Application.Identity;
 using FactoryErp.Application.Products;
 using FactoryErp.Application.Sales;
+using FactoryErp.Application.Shipping;
 using FactoryErp.Infrastructure.Authentication;
 using FactoryErp.Infrastructure.Health;
 using FactoryErp.Infrastructure.Persistence;
 using FactoryErp.Infrastructure.Products;
 using FactoryErp.Infrastructure.Sales;
+using FactoryErp.Infrastructure.Shipping;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +47,8 @@ public static class DependencyInjection
         services.AddScoped<CatalogSeeder>();
         services.AddScoped<ISalesCommandService, SalesCommandService>();
         services.AddScoped<SalesSeeder>();
+        services.AddScoped<IShippingFinanceCommandService, DeliveryInvoiceFinanceService>();
+        services.AddScoped<FinanceSeeder>();
 
         services.AddDbContext<FactoryErpDbContext>(options =>
             options.UseNpgsql(

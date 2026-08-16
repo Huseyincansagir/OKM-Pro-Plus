@@ -22,4 +22,7 @@ await catalogSeeder.SeedAsync();
 var salesSeeder = scope.ServiceProvider.GetRequiredService<FactoryErp.Infrastructure.Sales.SalesSeeder>();
 await salesSeeder.SeedAsync();
 
-Console.WriteLine("Factory ERP database migration and optional foundation/catalog/sales seed completed.");
+var financeSeeder = scope.ServiceProvider.GetRequiredService<FactoryErp.Infrastructure.Shipping.FinanceSeeder>();
+await financeSeeder.SeedAsync();
+
+Console.WriteLine("Factory ERP database migration and optional foundation/catalog/sales/finance seed completed.");
