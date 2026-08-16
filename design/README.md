@@ -1,6 +1,6 @@
 # Factory ERP — Design Source of Truth
 
-Bu klasör, kodlama öncesi `DISCOVER → DESIGN` aşamasının **canonical çıktılarıdır**. Production code, database migration veya API endpoint bu tasarım setinden sonra; `implementation-ready.md` başarı durumuna geçtiğinde başlatılmalıdır.
+Bu klasör, `DISCOVER → DESIGN → DESIGN GATE → ARCHITECTURE` aşamalarının canonical çıktılarıdır. Production code, gerçek database migration veya API implementation’ı Architecture acceptance ve `implementation-ready.md` başarı durumundan sonra başlatılmalıdır.
 
 Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv paketini korur. Aynı artefact iki yerde bulunuyorsa `/design` canonical kabul edilir; numbered docs kopyası karar değişikliklerinde senkronize edilmelidir.
 
@@ -34,6 +34,9 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`o002-partial-shipment-workflow.mmd`](./o002-partial-shipment-workflow.mmd) | O-002 editable Mermaid iş akışı kaynağı |
 | [`o003-partial-invoice-workflow.mmd`](./o003-partial-invoice-workflow.mmd) | O-003 editable Mermaid iş akışı kaynağı |
 | [`database-technical-architecture.md`](./database-technical-architecture.md) | PostgreSQL, API, transaction ve deployment ön taslağı |
+| [`architecture-api-contracts.md`](./architecture-api-contracts.md) | ASP.NET Core endpoint, DTO, ProblemDetails, idempotency, authorization ve state command sözleşmeleri |
+| [`architecture-efcore-and-migration-plan.md`](./architecture-efcore-and-migration-plan.md) | EF Core aggregate/entity mapping, PostgreSQL migration sırası, constraint ve seed planı |
+| [`docker-compose-deployment-plan.md`](./docker-compose-deployment-plan.md) | Docker Compose servisleri, network, HTTPS, backup/restore ve operasyon kabul kriterleri |
 | [`decision-log.md`](./decision-log.md) | DECIDED, ASSUMED ve OPEN DECISION kayıtları |
 | [`decision-clarification-backlog.md`](./decision-clarification-backlog.md) | O-001–O-014 için karar toplantısı alt soruları ve Design Gate kapanış çıktıları |
 | [`p0-p1-decision-recommendations.md`](./p0-p1-decision-recommendations.md) | Kabul edilen P0/P1 baseline, MVP sınırları, gerekçeler, riskler ve Architecture handoff listesi |
@@ -69,4 +72,4 @@ IMPLEMENTATION:
 NOT READY
 ```
 
-Tasarım artefact'ları tamamlanmış ve O-001–O-014 karar paketi kabul edilmiştir. Design Gate `READY FOR ARCHITECTURE` durumundadır; production implementation hâlâ Architecture acceptance tamamlanana kadar kapalıdır. Öncelikli sonraki skill `factory-erp-architecture`'dır.
+O-001–O-014 karar paketi kabul edilmiş, Architecture artefact’ları üretim aşamasına alınmıştır. Design Gate `READY FOR ARCHITECTURE` durumundan Architecture çalışma durumuna geçmiştir; production implementation hâlâ Architecture acceptance tamamlanana kadar kapalıdır.

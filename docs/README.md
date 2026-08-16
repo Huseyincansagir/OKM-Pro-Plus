@@ -23,8 +23,8 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 5. [`../design/ui-mockup-review.md`](../design/ui-mockup-review.md)
 6. [`../design/grok-session-review.md`](../design/grok-session-review.md) — Grok notlarının karşılaştırmalı incelemesi.
 7. [`../design/open-decisions-solution-matrix.md`](../design/open-decisions-solution-matrix.md) — O-001–O-014 çözüm önerileri ve karar sahipleri.
-8. [`../design/open-decisions-workshop.md`](../design/open-decisions-workshop.md) — Karar atölyesi özeti, onay formu ve Design Gate kapanış planı.
-9. [`../design/decision-clarification-backlog.md`](../design/decision-clarification-backlog.md) — O-001–O-014 karar alt soruları, ortak UX netleştirmeleri ve gate kapanış kanıtları.
+8. [`../design/open-decisions-workshop.md`](../design/open-decisions-workshop.md) — Kabul edilen karar paketi, karar kanıtı ve Architecture handoff özeti.
+9. [`../design/decision-clarification-backlog.md`](../design/decision-clarification-backlog.md) — O-001–O-014 karar alt soruları ve artefact yayılım kontrolü.
 10. [`../design/product-packaging-and-uom.md`](../design/product-packaging-and-uom.md) — Palet-koli-paket-temel birim hiyerarşisi ve miktar dönüşüm kuralları.
 11. [`../design/mobile-toggle-api-and-schema.md`](../design/mobile-toggle-api-and-schema.md) — Mobil Palet/Koli/Paket toggle database, API ve idempotency sözleşmesi.
 12. [`../design/mobile-toggle-screen-by-screen-review.md`](../design/mobile-toggle-screen-by-screen-review.md) — Toggle'ın ekran bazlı görünürlük, varsayılan ve aksiyon UX incelemesi.
@@ -33,7 +33,10 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 15. [`../design/shipment-logistics-ui-design.md`](../design/shipment-logistics-ui-design.md) — Araç, kargo planı, rota/durak, karışık palet ve paket izleme UI tasarımı.
 16. [`../design/partial-shipment-invoicing-workflow.md`](../design/partial-shipment-invoicing-workflow.md) — O-002/O-003 kısmi sevkiyat ve kısmi fatura iş akışı, state, transaction ve audit tasarımı.
 17. [`../design/quantity-error-handling-and-allocation-sql.md`](../design/quantity-error-handling-and-allocation-sql.md) — Quantity mismatch/concurrency API hata sözleşmesi, allocation DDL ve PostgreSQL sorguları.
-18. [`../design/p0-p1-decision-recommendations.md`](../design/p0-p1-decision-recommendations.md) — P0/P1 öneri paketi, MVP sınırları, gerekçeler, riskler ve karar toplantısı onay listesi.
+18. [`../design/p0-p1-decision-recommendations.md`](../design/p0-p1-decision-recommendations.md) — Kabul edilen P0/P1 baseline, MVP sınırları, gerekçeler, riskler ve Architecture handoff listesi.
+19. [`../design/architecture-api-contracts.md`](../design/architecture-api-contracts.md) — ASP.NET Core endpoint, DTO, ProblemDetails, idempotency, authorization ve state command sözleşmeleri.
+20. [`../design/architecture-efcore-and-migration-plan.md`](../design/architecture-efcore-and-migration-plan.md) — EF Core aggregate/entity mapping, PostgreSQL migration sırası, constraint ve seed planı.
+21. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
 
 ## Arşiv okuma sırası
 
@@ -45,23 +48,32 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 6. [`01-design/16-ui-mockup-review.md`](./01-design/16-ui-mockup-review.md)
 7. [`02-architecture/00-domain-model.md`](./02-architecture/00-domain-model.md)
 8. [`02-architecture/01-database-technical-architecture.md`](./02-architecture/01-database-technical-architecture.md)
-9. [`01-design/14-implementation-readiness.md`](./01-design/14-implementation-readiness.md)
-10. [`01-design/17-product-packaging-and-uom.md`](./01-design/17-product-packaging-and-uom.md)
-11. [`01-design/18-shipment-logistics-ui-design.md`](./01-design/18-shipment-logistics-ui-design.md)
-12. [`01-design/19-mobile-barcode-and-quantity-ux.md`](./01-design/19-mobile-barcode-and-quantity-ux.md)
-13. [`01-design/20-logistics-planning-rules-and-algorithms.md`](./01-design/20-logistics-planning-rules-and-algorithms.md)
-14. [`01-design/21-mobile-toggle-api-and-schema.md`](./01-design/21-mobile-toggle-api-and-schema.md)
-15. [`01-design/22-mobile-toggle-screen-by-screen-review.md`](./01-design/22-mobile-toggle-screen-by-screen-review.md)
-16. [`01-design/23-vehicle-capacity-matching.md`](./01-design/23-vehicle-capacity-matching.md)
-17. [`01-design/24-decision-clarification-backlog.md`](./01-design/24-decision-clarification-backlog.md)
-18. [`01-design/25-partial-shipment-invoicing-workflow.md`](./01-design/25-partial-shipment-invoicing-workflow.md)
+9. [`02-architecture/02-architecture-api-contracts.md`](./02-architecture/02-architecture-api-contracts.md)
+10. [`02-architecture/03-architecture-efcore-and-migration-plan.md`](./02-architecture/03-architecture-efcore-and-migration-plan.md)
+11. [`02-architecture/04-docker-compose-deployment-plan.md`](./02-architecture/04-docker-compose-deployment-plan.md)
+12. [`01-design/14-implementation-readiness.md`](./01-design/14-implementation-readiness.md)
+13. [`01-design/17-product-packaging-and-uom.md`](./01-design/17-product-packaging-and-uom.md)
+14. [`01-design/18-shipment-logistics-ui-design.md`](./01-design/18-shipment-logistics-ui-design.md)
+15. [`01-design/19-mobile-barcode-and-quantity-ux.md`](./01-design/19-mobile-barcode-and-quantity-ux.md)
+16. [`01-design/20-logistics-planning-rules-and-algorithms.md`](./01-design/20-logistics-planning-rules-and-algorithms.md)
+17. [`01-design/21-mobile-toggle-api-and-schema.md`](./01-design/21-mobile-toggle-api-and-schema.md)
+18. [`01-design/22-mobile-toggle-screen-by-screen-review.md`](./01-design/22-mobile-toggle-screen-by-screen-review.md)
+19. [`01-design/23-vehicle-capacity-matching.md`](./01-design/23-vehicle-capacity-matching.md)
+20. [`01-design/24-decision-clarification-backlog.md`](./01-design/24-decision-clarification-backlog.md)
+21. [`01-design/25-partial-shipment-invoicing-workflow.md`](./01-design/25-partial-shipment-invoicing-workflow.md)
+22. [`01-design/26-quantity-error-handling-and-allocation-sql.md`](./01-design/26-quantity-error-handling-and-allocation-sql.md)
+23. [`01-design/27-p0-p1-decision-recommendations.md`](./01-design/27-p0-p1-decision-recommendations.md)
+24. [`02-architecture/02-architecture-api-contracts.md`](./02-architecture/02-architecture-api-contracts.md)
+25. [`02-architecture/03-architecture-efcore-and-migration-plan.md`](./02-architecture/03-architecture-efcore-and-migration-plan.md)
+26. [`02-architecture/04-docker-compose-deployment-plan.md`](./02-architecture/04-docker-compose-deployment-plan.md)
 
 ## Aşama sonucu
 
 ```text
-DISCOVER → DESIGN
-DESIGN STATUS: BLOCKED
-RECOMMENDED NEXT SKILL: factory-erp-architecture
+DISCOVER → DESIGN → DESIGN GATE → ARCHITECTURE
+DESIGN STATUS: READY FOR ARCHITECTURE
+ARCHITECTURE: IN PROGRESS
+IMPLEMENTATION: NOT READY
 ```
 
-Blocker kararlar ve sahipleri canonical [`../design/decision-log.md`](../design/decision-log.md) içinde tutulur. `/design/implementation-ready.md` `NOT READY` kaldığı sürece business feature implementasyonu başlatılmaz.
+Karar baseline’ı canonical [`../design/decision-log.md`](../design/decision-log.md) içinde tutulur. `/design/implementation-ready.md` `IMPLEMENTATION: NOT READY` kaldığı sürece business feature implementasyonu başlatılmaz.

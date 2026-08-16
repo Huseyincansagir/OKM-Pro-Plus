@@ -422,6 +422,8 @@ Commit
 
 ## 8. API ve uygulama katmanı
 
+Endpoint, DTO, ProblemDetails, idempotency, authorization ve command/state sözleşmelerinin ayrıntılı Architecture kaynağı [`architecture-api-contracts.md`](./architecture-api-contracts.md) belgesidir.
+
 Önerilen backend katmanları:
 
 ```text
@@ -464,6 +466,8 @@ Controller katmanları yalnızca request/response, authorization ve application 
 ```
 
 ## 9. Docker Compose servisleri
+
+Ayrıntılı servis, network, port, secret, health-check, backup/restore ve release prosedürü [`docker-compose-deployment-plan.md`](./docker-compose-deployment-plan.md) içinde canonical olarak tutulur.
 
 ```yaml
 services:
@@ -529,6 +533,9 @@ Aşağıdaki maddeler proje sahibinin 2026-08-16 tarihinde kabul ettiği O-001�
 
 `QUANTITY_BASE_MISMATCH`, `QUANTITY_CONCURRENCY_CONFLICT`, standart `application/problem+json` hata yanıtları, idempotency davranışı, allocation DDL'leri ve örnek PostgreSQL sorguları [`quantity-error-handling-and-allocation-sql.md`](./quantity-error-handling-and-allocation-sql.md) içinde canonical olarak tutulur. Bu belge, burada tanımlanan tablo grupları, transaction sınırları ve O-002/O-003 gate koşullarıyla birlikte okunmalıdır.
 
-## 15. Kodlama öncesi çıkış kriteri
+## 15. Architecture çıkış kriteri
 
-Bu taslak, kabul edilen kararların entity ilişkileri, belge yaşam döngüleri, transaction sınırları, permission modeli ve deployment bileşenlerine aktarılması için Architecture girdisidir. Migration yazımı, gerçek API contract’ları ve acceptance testleri `factory-erp-architecture` aşamasında üretilecektir; production code ve migration implementation’ı Architecture acceptance tamamlanmadan başlamaz.
+EF Core aggregate/entity, mapping, migration sıra ve constraint planının ayrıntılı kaynağı [`architecture-efcore-and-migration-plan.md`](./architecture-efcore-and-migration-plan.md); API contract kaynağı [`architecture-api-contracts.md`](./architecture-api-contracts.md); Docker/backup/deployment kaynağı [`docker-compose-deployment-plan.md`](./docker-compose-deployment-plan.md) belgeleridir.
+
+Bu taslak, kabul edilen kararların entity ilişkileri, belge yaşam döngüleri, transaction sınırları, permission modeli ve deployment bileşenlerine aktarılması için Architecture girdisidir.
+Migration yazımı, gerçek API contract’ları ve acceptance testleri `factory-erp-architecture` aşamasında üretilecektir; production code ve migration implementation’ı Architecture acceptance tamamlanmadan başlamaz.
