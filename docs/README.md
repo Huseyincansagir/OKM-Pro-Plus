@@ -36,7 +36,9 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 18. [`../design/p0-p1-decision-recommendations.md`](../design/p0-p1-decision-recommendations.md) — Kabul edilen P0/P1 baseline, MVP sınırları, gerekçeler, riskler ve Architecture handoff listesi.
 19. [`../design/architecture-api-contracts.md`](../design/architecture-api-contracts.md) — ASP.NET Core endpoint, DTO, ProblemDetails, idempotency, authorization ve state command sözleşmeleri.
 20. [`../design/architecture-efcore-and-migration-plan.md`](../design/architecture-efcore-and-migration-plan.md) — EF Core aggregate/entity mapping, PostgreSQL migration sırası, constraint ve seed planı.
-21. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
+21. [`../design/postgresql-18-migration-sql-specification.md`](../design/postgresql-18-migration-sql-specification.md) — 0001–0018 migration adımlarının ayrıntılı PostgreSQL SQL şeması.
+22. [`../design/mvp-test-strategy.md`](../design/mvp-test-strategy.md) — MVP unit, application, PostgreSQL integration, API, security, concurrency, backup ve release test stratejisi.
+23. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
 
 ## Arşiv okuma sırası
 
@@ -66,6 +68,8 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 24. [`02-architecture/02-architecture-api-contracts.md`](./02-architecture/02-architecture-api-contracts.md)
 25. [`02-architecture/03-architecture-efcore-and-migration-plan.md`](./02-architecture/03-architecture-efcore-and-migration-plan.md)
 26. [`02-architecture/04-docker-compose-deployment-plan.md`](./02-architecture/04-docker-compose-deployment-plan.md)
+27. [`02-architecture/05-postgresql-18-migration-sql-specification.md`](./02-architecture/05-postgresql-18-migration-sql-specification.md)
+28. [`02-architecture/06-mvp-test-strategy.md`](./02-architecture/06-mvp-test-strategy.md)
 
 ## Aşama sonucu
 
