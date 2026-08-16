@@ -38,6 +38,8 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`architecture-efcore-and-migration-plan.md`](./architecture-efcore-and-migration-plan.md) | EF Core aggregate/entity mapping, PostgreSQL migration sırası, constraint ve seed planı |
 | [`postgresql-18-migration-sql-specification.md`](./postgresql-18-migration-sql-specification.md) | 0001–0018 migration adımlarının ayrıntılı PostgreSQL tablo, FK, constraint, index, seed ve rollback SQL şeması |
 | [`mvp-test-strategy.md`](./mvp-test-strategy.md) | MVP unit, application, PostgreSQL integration, API, security, concurrency, backup ve release test stratejisi |
+| [`github-actions-cicd-plan.md`](./github-actions-cicd-plan.md) | MVP GitHub Actions CI/CD, migration/test/image/deployment gate’leri ve self-hosted on-prem release planı |
+| [`aspnet-clean-architecture-and-cqrs.md`](./aspnet-clean-architecture-and-cqrs.md) | ASP.NET Core Clean Architecture klasör yapısı, dependency yönü, CQRS handler ve architecture test sözleşmeleri |
 | [`docker-compose-deployment-plan.md`](./docker-compose-deployment-plan.md) | Docker Compose servisleri, network, HTTPS, backup/restore ve operasyon kabul kriterleri |
 | [`decision-log.md`](./decision-log.md) | DECIDED, ASSUMED ve OPEN DECISION kayıtları |
 | [`decision-clarification-backlog.md`](./decision-clarification-backlog.md) | O-001–O-014 için karar toplantısı alt soruları ve Design Gate kapanış çıktıları |

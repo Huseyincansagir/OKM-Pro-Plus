@@ -38,7 +38,9 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 20. [`../design/architecture-efcore-and-migration-plan.md`](../design/architecture-efcore-and-migration-plan.md) — EF Core aggregate/entity mapping, PostgreSQL migration sırası, constraint ve seed planı.
 21. [`../design/postgresql-18-migration-sql-specification.md`](../design/postgresql-18-migration-sql-specification.md) — 0001–0018 migration adımlarının ayrıntılı PostgreSQL SQL şeması.
 22. [`../design/mvp-test-strategy.md`](../design/mvp-test-strategy.md) — MVP unit, application, PostgreSQL integration, API, security, concurrency, backup ve release test stratejisi.
-23. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
+23. [`../design/github-actions-cicd-plan.md`](../design/github-actions-cicd-plan.md) — MVP GitHub Actions CI/CD, migration/test/image/deployment gate’leri ve self-hosted on-prem release planı.
+24. [`../design/aspnet-clean-architecture-and-cqrs.md`](../design/aspnet-clean-architecture-and-cqrs.md) — ASP.NET Core Clean Architecture klasör yapısı, dependency yönü, CQRS handler ve architecture test sözleşmeleri.
+25. [`../design/docker-compose-deployment-plan.md`](../design/docker-compose-deployment-plan.md) — Docker Compose servisleri, network, HTTPS, backup/restore ve deployment kabul kriterleri.
 
 ## Arşiv okuma sırası
 
@@ -70,6 +72,8 @@ Bu klasör, projenin paylaşım, sunum, görsel asset, özgün gereksinim ve sü
 26. [`02-architecture/04-docker-compose-deployment-plan.md`](./02-architecture/04-docker-compose-deployment-plan.md)
 27. [`02-architecture/05-postgresql-18-migration-sql-specification.md`](./02-architecture/05-postgresql-18-migration-sql-specification.md)
 28. [`02-architecture/06-mvp-test-strategy.md`](./02-architecture/06-mvp-test-strategy.md)
+29. [`02-architecture/07-github-actions-cicd-plan.md`](./02-architecture/07-github-actions-cicd-plan.md)
+30. [`02-architecture/08-aspnet-clean-architecture-and-cqrs.md`](./02-architecture/08-aspnet-clean-architecture-and-cqrs.md)
 
 ## Aşama sonucu
 
