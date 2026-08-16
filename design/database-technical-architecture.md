@@ -167,6 +167,9 @@ AvailableBaseQuantity = OnHandBaseQuantity - ReservedBaseQuantity
 | `load_plans` | Shipment'a bağlı taslak/doğrulanmış/kilitli kargo planı |
 | `load_units` | Palet, karışık palet, kafes, koli grubu veya loose yük birimi |
 | `load_unit_items` | Yük birimindeki ürün, ambalaj seviyesi, temel miktar, ağırlık ve hacim |
+| `load_unit_stop_allocations` | Karışık palet/yük birimi içindeki miktarın hangi route stop'a gittiği ve boşaltma sırası |
+| `load_plan_validation_results` | Hard error, soft warning, kural kodu, etkilenen entity ve çözüm durumu |
+| `load_plan_manual_changes` | Algoritma önerisi ile kullanıcı değişikliğinin eski/yeni ataması ve gerekçesi |
 | `invoices` | Fatura başlığı |
 | `invoice_items` | Fatura kalemleri |
 
@@ -190,16 +193,20 @@ Araç durumu ile rota/sevkiyat durumu birbirinden ayrıdır. Önerilen araç dur
 
 | Tablo | Ana alanlar |
 |---|---|
-| `load_plans` | `shipment_id`, `vehicle_capacity_id`, `status`, `version`, `total_weight`, `total_volume`, `pallet_count`, `validation_summary`, `locked_at` |
-| `load_units` | `load_plan_id`, `pallet_type_id`, `unit_code`, `unit_type`, `is_mixed`, `length`, `width`, `height`, `tare_weight`, `gross_weight`, `volume`, `stackable`, `status` |
-| `load_unit_items` | `load_unit_id`, `shipment_item_id`, `product_id`, `packaging_id`, `entered_quantity`, `quantity_base`, `net_weight`, `volume`, `packaging_snapshot` |
+| `load_plans` | `shipment_id`, `vehicle_capacity_id`, `status`, `version`, `algorithm_name`, `algorithm_version`, `feasibility_status`, `fit_score`, `total_weight`, `total_volume`, `pallet_count`, `utilization_snapshot`, `capacity_snapshot`, `input_snapshot_hash`, `validation_summary`, `replanned_from_id`, `locked_at`, `locked_by` |
+| `load_units` | `load_plan_id`, `pallet_type_id`, `unit_code`, `unit_type`, `is_mixed`, `length`, `width`, `height`, `tare_weight`, `gross_weight`, `volume`, `stackable`, `max_stack_count`, `placement_zone`, `unloading_priority`, `status` |
+| `load_unit_items` | `load_unit_id`, `shipment_item_id`, `product_id`, `packaging_id`, `entered_quantity`, `quantity_base`, `net_weight`, `volume`, `compatibility_snapshot`, `stack_level`, `orientation`, `packaging_snapshot` |
+| `load_unit_stop_allocations` | `load_unit_item_id`, `route_stop_id`, `package_count`, `quantity_base`, `unloading_sequence`, `access_priority`, `shipment_package_id` |
+| `load_plan_validation_results` | `load_plan_id`, `severity`, `rule_code`, `entity_type`, `entity_id`, `message`, `suggested_action`, `is_resolved`, `resolved_by`, `resolved_at` |
+| `load_plan_manual_changes` | `load_plan_id`, `entity_type`, `entity_id`, `previous_value`, `new_value`, `reason`, `changed_by`, `changed_at` |
 | `route_plans` | `shipment_id`, `vehicle_id`, `driver_id`, `status`, `version`, `planned_start_at`, `planned_end_at`, `actual_start_at`, `actual_end_at` |
 | `route_stops` | `route_plan_id`, `sequence_no`, `customer_id`, `address_id`, `planned_arrival_at`, `actual_arrival_at`, `status`, `recipient_name`, `proof_file_id`, `exception_reason` |
 | `shipment_packages` | `shipment_id`, `route_stop_id`, `load_unit_id`, `parent_package_id`, `barcode`, `package_type`, `packaging_id`, `quantity_base`, `status`, `scanned_at`, `delivered_at` |
-| `vehicle_types` | `code`, `name`, `inner_length`, `inner_width`, `inner_height`, `max_gross_weight`, `max_volume`, `max_pallet_count`, `is_active` |
-| `vehicles` | `vehicle_type_id`, `plate_number`, `status`, `current_route_plan_id`, `last_known_location_text`, `last_status_at` |
+| `vehicle_types` | `code`, `name`, `inner_length`, `inner_width`, `inner_height`, `door_width`, `door_height`, `max_gross_weight`, `max_volume`, `max_pallet_count`, `allowed_pallet_types`, `unloading_sides`, `is_active` |
+| `vehicle_capacities` | `vehicle_type_id`, `effective_from`, `effective_to`, `max_gross_weight`, `max_net_weight`, `max_volume`, `max_pallet_count`, `max_height`, `capacity_policy_snapshot` |
+| `vehicles` | `vehicle_type_id`, `plate_number`, `status`, `current_route_plan_id`, `last_known_location_text`, `last_status_at`, `maintenance_until` |
 
-Plan doğrulaması ağırlık, hacim, palet adedi, ölçü, istifleme ve sevkiyat kalan miktarını birlikte kontrol eder. `Locked` plan değişikliği versiyon ve audit kaydı üretir; gerçek yükleme barkodla ayrıca doğrulanır. `shipment_packages` kayıtları sayesinde “hangi palet/koli/paket hangi müşterinin hangi adresine gidecek?” sorusu tekil barkod ve route stop üzerinden cevaplanır.
+Plan doğrulaması ağırlık, hacim, palet adedi, ölçü, kapı açıklığı, istifleme, uyumluluk, durak erişimi ve sevkiyat kalan miktarını birlikte kontrol eder. Hard constraint ihlalleri `Infeasible`; soft constraint ihlalleri `FeasibleWithWarnings` sonucu üretir. `algorithm_version`, `capacity_snapshot`, `input_snapshot_hash` ve validation sonuçları geçmiş planın neden o şekilde üretildiğini açıklamak için saklanır. `Locked` plan değişikliği versiyon ve audit kaydı üretir; gerçek yükleme barkodla ayrıca doğrulanır. `shipment_packages` ve `load_unit_stop_allocations` kayıtları sayesinde “hangi palet/koli/paket hangi müşterinin hangi adresine gidecek ve hangi sırayla boşaltılacak?” sorusu cevaplanır.
 
 ### 4.5 Cari ve finans
 
@@ -287,6 +294,10 @@ Belge ve ledger tablolarında fiziksel silme yapılmamalıdır. Master data tabl
 | Sipariş | Customer + Status + CreatedAt index |
 | Fatura | Customer + DueDate + PaymentStatus index |
 | Audit | EntityType + EntityId + CreatedAt index |
+| Load plan validation | LoadPlan + Severity + IsResolved index |
+| Route stop package | RouteStop + Status + PlannedArrival index |
+| Shipment package barcode | Shipment + Barcode unique aktif index |
+| Vehicle availability | Vehicle + Status + MaintenanceUntil index |
 | Bildirim | RecipientUser + IsRead + CreatedAt index |
 | Public talep | CreatedAt + Status index |
 

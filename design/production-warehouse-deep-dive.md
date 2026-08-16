@@ -302,7 +302,7 @@ Sevkiyat oluştur
 → Sevk et
 ```
 
-Sistem ilk sürümde uygunluk ön kontrolü ve manuel palet atama desteği sunar; matematiksel olarak optimal plan garantisi vermez. Depo sorumlusu öneriyi düzenleyip planı kilitler. Plan kilitlenmeden yükleme tamamlanamaz.
+Sistem ilk sürümde hard constraint uygunluk kontrolü, soft constraint uyarıları ve açıklanabilir `First Fit Decreasing + constraint validation` önerisi sunar; matematiksel olarak optimal plan garantisi vermez. Depo sorumlusu öneriyi düzenleyip yeniden planlayabilir, gerekçe girer ve planı kilitler. Önerinin araç fit sonucu, algorithm/version bilgisi, validation summary ve manuel değişiklikleri saklanır. Plan kilitlenmeden yükleme tamamlanamaz. Ayrıntılı kural sınıfları ve algoritma akışı `logistics-planning-rules-and-algorithms.md` dosyasındadır.
 
 ### Araç, rota ve müşteri durakları
 
@@ -331,6 +331,8 @@ Depo ekranında paket barkodu okutulduğunda sistem ürün, ambalaj seviyesi, te
 | Miktar | Yük planı irsaliye/sevkiyat kalan temel miktarını aşamaz |
 | Karışık palet | Farklı ürünler yalnızca fiziksel uyumluluk varsa aynı palete atanır |
 | Gerçek yük | Barkodla planlanan-gerçekleşen farkı gösterilir; farkta açıklama istenir |
+| Algorithm result | `Feasible`, `FeasibleWithWarnings`, `Infeasible`, araç fit gerekçesi ve kural kodları gösterilir |
+| Manual replan | Eski/yeni atama, kullanıcı, zaman, gerekçe ve yeni validation sonucu kaydedilir |
 | Araç durumu | Araç `Available/Assigned/Loading/InTransit/Maintenance` durumlarından biriyle izlenir |
 | Rota/durak | Durak sırası, müşteri/adres, varış ve teslim kanıtı birlikte tutulur |
 | Paket alıcısı | Her palet/koli/paket barkodu müşteri ve teslim adresiyle eşleştirilir |

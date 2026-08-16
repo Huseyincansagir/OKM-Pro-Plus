@@ -338,6 +338,26 @@ PALLET-001  Karışık Palet
 - Plan kilitlendikten sonra değişiklik yeni versiyon/audit kaydı üretir.
 - Gerçek yükleme sırasında barkodla doğrulama yapılır; planlanan ve gerçekleşen yük farkı açıklama gerektirir.
 
+### 11.1 Detaylı lojistik kural ve algoritma referansı
+
+Ayrıntılı hard constraint, soft constraint, araç kapasite eşleştirme, karışık palet, durak erişimi ve açıklanabilir heuristik planlama kuralları `logistics-planning-rules-and-algorithms.md` dosyasında tanımlıdır.
+
+MVP planlama sırası:
+
+```text
+Normalize et
+→ Hard constraint verisini kontrol et
+→ Uygun araç adaylarını çıkar
+→ Kalemleri fiziksel uyumluluk ve hacim/ağırlığa göre sırala
+→ First Fit Decreasing + kısıt kontrolü ile LoadUnit ata
+→ Durak erişimini kontrol et
+→ Uygunluk ve kullanım özetini üret
+→ Depo sorumlusuna manuel düzenleme sun
+→ Planı versiyon/audit ile kilitle
+```
+
+Hard constraint ihlali planı bloke eder. Soft constraint ihlali açıklanabilir uyarı veya skor üretir. Sistem ilk sürümde optimal 3D yükleme veya kesin rota optimizasyonu garantisi vermez.
+
 ## 12. Araç, rota ve alıcı paket takibi
 
 Kargo planı tamamlandığında sevkiyata bir `VehicleType`, gerçek `Vehicle`, `Driver` ve çok duraklı `RoutePlan` atanır. Araç tipi kapasite şablonunu; gerçek araç plaka, aktiflik ve anlık durum bilgisini taşır.

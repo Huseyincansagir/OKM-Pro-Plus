@@ -63,6 +63,7 @@
 | O-011 | Şirket içi server işletim sistemi ve LAN/HTTPS modeli | Docker, reverse proxy, sertifika ve mobil erişim kurulumu etkilenir. | Sistem yöneticisi |
 | O-012 | Fiyat listesi ve müşteri bazlı fiyatlandırma | Quote ve order fiyatının ürün kartından mı, fiyat listesinden mi geleceği netleşmelidir. | Satış + yönetim |
 | O-013 | Final marka adı, logo ve ürün görseli lisansı | Manus mockup'larında MaviKağıt, NAVIS ve Napkinova adları birlikte kullanılmıştır; uygulama token'ları, header ve public katalog tek marka altında sabitlenmelidir. | Proje sahibi + pazarlama |
+| O-014 | Kargo planlama otomasyon seviyesi ve araç eşleştirme politikası | Sezgisel otomatik öneri yalnızca uygunluk ön kontrolü mü yapacak, yoksa araç/palet/rota atamasını otomatik kilitleyecek mi; manuel override ve optimalite beklentisi netleşmelidir. | Depo + sevkiyat yöneticisi |
 
 ## 5. Karar yönetimi kuralları
 

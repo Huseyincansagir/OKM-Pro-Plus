@@ -4,7 +4,7 @@
 **Durum:** Kodlama öncesi canonical UI tasarımı
 **Marka:** Karar verilene kadar nötr `Factory ERP`
 **Arayüz dili:** Türkçe; entity, property, route ve API isimleri İngilizce
-**İlgili ana tasarım:** `visual-design-system.md`, `master-screen-inventory.md`, `production-warehouse-deep-dive.md`
+**İlgili ana tasarım:** `visual-design-system.md`, `master-screen-inventory.md`, `production-warehouse-deep-dive.md`, `logistics-planning-rules-and-algorithms.md`
 
 ## 1. Tasarım amacı
 
@@ -84,9 +84,29 @@ Renk tek başına kullanılmaz; her rozet metin, ikon ve gerekirse açıklama il
 
 ### Ana aksiyonlar
 
-`Uygunluğu Hesapla`, `Palet Ekle`, `Kalem Ata`, `Duraklara Dağıt`, `Barkod Yazdır`, `Planı Kilitle`.
+`Uygunluğu Hesapla`, `Alternatif Araçları Gör`, `Palet Ekle`, `Kalem Ata`, `Duraklara Dağıt`, `Yeniden Planla`, `Barkod Yazdır`, `Planı Kilitle`.
 
-Plan kilitleme öncesi ağırlık, hacim, palet sayısı, ölçü, istifleme, kalan miktar ve alıcı durağı kontrolleri yapılır. Bloke uyarı varsa plan kilitlenemez; warning varsa yetkili override ve açıklama istenir.
+Plan kilitleme öncesi ağırlık, hacim, palet sayısı, ölçü, kapı açıklığı, uyumluluk, istifleme, kalan miktar ve alıcı durağı kontrolleri yapılır. Bloke uyarı varsa plan kilitlenemez; warning varsa yetkili override ve açıklama istenir.
+
+### Algoritma önerisi ve açıklanabilirlik paneli
+
+Kargo planı ekranında sistemin önerisi kullanıcıya kapalı bir skor olarak verilmez. `Araç Uygunluğu`, `Kapasite Kullanımı`, `Kural Sonuçları`, `Durak Erişimi` ve `Algoritma Bilgisi` ayrı gösterilir.
+
+```text
+Öneri: 34 ABC 123 · Panelvan
+Sonuç: Uyarılarla Uygun
+
+✓ Ağırlık: 426 / 650 kg
+✓ Hacim: 2,4 / 4,5 m³
+✓ Palet: 2 / 4
+✓ Kapı açıklığı: Uygun
+⚠ Müşteri C yükü Müşteri B paketinin arkasında
+
+Algoritma: FFD-constraint-v1
+[Alternatif araçları gör] [Yeniden planla] [Manuel düzenle]
+```
+
+Hard constraint ihlali kırmızı blokaj olarak gösterilir. Soft constraint uyarısı sarı açıklama ve önerilen düzeltme aksiyonuyla gösterilir. Depo sorumlusu manuel palet/araç değişikliği yaptığında “Öneriden farklı planlandı” etiketi, gerekçe ve yeni validation sonucu görünür.
 
 ## 4. Ekran 2 — Rota ve teslimat panosu
 
@@ -190,6 +210,9 @@ Mobilde kullanıcı başka bir durağın paketini yanlışlıkla teslim edemez. 
 | Durum | Davranış |
 |---|---|
 | Kapasite yetersiz | Plan kilitleme engellenir; hangi sınırın aşıldığı gösterilir |
+| Hard constraint ihlali | Plan `Uygun Değil` olur; kilitleme engellenir |
+| Soft constraint uyarısı | Plan `Uyarılarla Uygun` olur; açıklama veya yetkili override gerekir |
+| Araç alternatifi | Elenen araçlar nedenleriyle listelenir; uygun adaylar skor ve kullanım özetiyle karşılaştırılır |
 | Paket durağa bağlı değil | Yükleme/teslim aksiyonu engellenir |
 | Araç bakımda | Yeni sevkiyata atanamaz |
 | Araçta başka rota var | Çakışan tarih ve kapasite uyarısı gösterilir |
@@ -213,6 +236,7 @@ Mockup'larda marka kararı kesinleşene kadar yalnızca nötr `Factory ERP` kull
 ## 10. Kabul kriterleri
 
 - [ ] Kargo planı kapasite, palet ve durak dağılımını aynı bağlamda gösteriyor.
+- [ ] Araç adayları hard constraint sonuçları ve açıklanabilir kullanım skoruyla karşılaştırılabiliyor.
 - [ ] Karışık palet farklı ürünleri ve farklı alıcı duraklarını taşıyabiliyor.
 - [ ] Her barkod müşteri, teslim adresi ve rota durağıyla sorgulanabiliyor.
 - [ ] Araç tipi ve gerçek araç durumu ayrı ekranlarda yönetiliyor.

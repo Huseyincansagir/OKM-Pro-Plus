@@ -1,4 +1,4 @@
-# Factory ERP — O-001–O-013 Açık Karar Çözüm Matrisi
+# Factory ERP — O-001–O-014 Açık Karar Çözüm Matrisi
 
 **Durum:** Proje yönetimi için öneri; karar sahibi onayı olmadan `DECIDED` sayılmaz.  
 **Kullanım:** Her satır karar toplantısında seçilmeli veya gerekçeli biçimde revize edilmelidir.
@@ -22,6 +22,7 @@
 | O-011 | Şirket serverı, LAN ve HTTPS | **Local-first kesinleştirilebilir;** işletim sistemi, reverse proxy ve sertifika seçimi ayrı teknik karar olarak kalmalı. Öneri: Ubuntu LTS + Docker Compose + Nginx/Traefik + şirket LAN HTTPS. | Deployment topology, DNS/sertifika, mobil erişim, firewall ve health check gerekir. | Sistem yöneticisi | Mobil/public erişim, güvenlik ve kurulum planı belirsiz kalır. |
 | O-012 | Fiyat listesi ve müşteri grubu | `PriceList`, `CustomerPriceGroup`, `ProductPrice` modeli kullan; teklif/sipariş oluşunca uygulanan fiyatı snapshot olarak kilitle. Public katalog fiyat göstermez. | Price validity, currency/tax, customer mapping, quote/order snapshot ve permission gerekir. | Satış + yönetim | Fiyat geçmişi ve müşteri bazlı ticari koşullar izlenemez. |
 | O-013 | Marka, logo, token ve görsel lisans | Kodlamadan önce tek marka adı, logo, favicon, renk token’ları, font ve ürün görseli lisans/placeholder politikası onaylansın. Geçici olarak nötr `Factory ERP` kullan. | Web/mobile/public theme token’ları, asset manifest, favicon ve public header etkilenir. | Proje sahibi + pazarlama | Mockup markaları production’a taşınır, UX ve hukuki risk oluşur. |
+| O-014 | Kargo planlama otomasyon seviyesi ve araç eşleştirme | **MVP’de açıklanabilir uygunluk ön kontrolü + First Fit Decreasing sezgisel öneri + depo sorumlusu manuel onayı önerilir.** Hard constraint ihlali kilidi engellesin; soft warning açıklama/override ile ilerlesin. Optimal 3D packing, aks optimizasyonu ve kesin trafik rotası MVP dışında kalsın. | `VehicleFit`, `LoadPlan`, `LoadUnit`, `LoadUnitStopAllocation`, validation severity, algorithm/version snapshot, manual replan/audit ve yeni workflow state’leri gerekir. | Depo + sevkiyat yöneticisi | Otomasyon seviyesi netleşmezse UI, transaction, permission ve operasyon sorumluluğu yeniden tasarlanır. |
 
 ## Varsayılan karar paketi
 
@@ -41,6 +42,7 @@ O-010  Günlük full + 14 gün + aylık restore testi; RPO/RTO onayı ayrı
 O-011  Local-first; Ubuntu/Docker/Reverse Proxy teknik seçimi Architecture’da
 O-012  PriceList + CustomerPriceGroup; order snapshot
 O-013  Tek marka ve asset politikası kodlamadan önce zorunlu
+O-014  Heuristik araç/palet önerisi + hard constraint validation + manuel depo onayı; optimalite garantisi yok
 ```
 
 Bu paket **öneridir**, karar sahibi onayı olmadan `decision-log.md` içinde `DECIDED` olarak işlenmemelidir.

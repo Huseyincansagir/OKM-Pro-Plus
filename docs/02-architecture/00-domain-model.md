@@ -255,6 +255,11 @@ Shipment
 - `Vehicle` aynı anda kapasitesi uygun birden fazla sevkiyat taşıyabilir; her sevkiyat ve durak için yük dağılımı izlenebilir olmalıdır.
 - Araç ana durumu ile sevkiyat durumu ayrı tutulur. Araç `Available`, `Assigned`, `Loading`, `InTransit`, `Maintenance` olabilir; sevkiyat `Preparing`, `Loaded`, `InTransit`, `PartiallyDelivered`, `Delivered`, `Exception` olabilir.
 - Bir durakta teslim edilen paketler, diğer durakların kalan yükünden ayrıştırılır; teslimat kanıtı ve teslim alan kişi route stop üzerinde tutulur.
+- Hard constraint ihlali (`weight`, `volume`, `dimension`, `door`, `stacking`, `compatibility`, `quantity`, `package ownership`, `route overlap`) planı `Infeasible` yapar; soft constraint ihlali açıklanabilir warning/penalty üretir.
+- Araç eşleştirmesi aktiflik, bakım, zaman çakışması, toplam brüt ağırlık, hacim, palet/slot, iç ölçü, kapı açıklığı, istifleme ve durak erişimi sırasıyla kontrol edilerek yapılır.
+- MVP algoritması açıklanabilir `First Fit Decreasing + constraint validation` yaklaşımıdır; matematiksel optimalite iddia edilmez.
+- `LoadPlan` sonucu `Feasibility`, `VehicleFit`, `Utilization`, `ValidationSummary`, `AlgorithmMetadata` ve `ManualChanges` bilgilerini taşımalıdır.
+- Shipment miktarı, araç/rota, fiziksel profil, palet tipi, alıcı durağı veya gerçek yük değiştiğinde plan yeniden doğrulanmalı; `Locked` plan sessizce değiştirilememelidir.
 
 ## 9. Tasarım sonucu
 

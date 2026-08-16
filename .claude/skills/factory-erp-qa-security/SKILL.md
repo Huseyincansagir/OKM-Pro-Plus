@@ -58,6 +58,11 @@ Ana akış:
 - Kısmi teslimde teslim edilen paketler kapanmalı; kalan paketler yanlışlıkla teslim edilmiş sayılmamalı.
 - Teslim kanıtı (imza/fotoğraf/not) yanlış müşteriye veya durağa bağlanmamalı.
 - `quantity_base` ile ambalaj görünümü arasında hesap farkı oluşmamalı.
+- Hard constraint ihlalleri ile soft warning'ler farklı sonuç ve yetki davranışı üretmeli.
+- Araç adayları bakım, zaman çakışması, kg, m³, palet, ölçü ve kapı açıklığı kurallarına göre doğru elenmeli.
+- First Fit Decreasing önerisi aynı input snapshot ve algorithm version ile tekrarlanabilir olmalı.
+- Karışık palet uyumluluk, istifleme ve durak erişim kurallarını ihlal ederse bloke veya açıklanabilir warning üretmeli.
+- Plan kilitlendikten sonra yapılan manuel değişiklik yeni version, audit ve validation sonucu üretmeli.
 
 ## Security review
 
@@ -111,6 +116,10 @@ En az şu roller için pozitif ve negatif test yap:
 - route board and stop query
 - package trace by barcode/customer/address
 - capacity validation and load-plan calculation
+- vehicle candidate scoring and rejection reasons
+- mixed-pallet constraint validation
+- route stop access validation
+- load-plan replan and validation result query
 - concurrent document creation
 
 N+1, missing indexes ve full-table scan risklerini ara.

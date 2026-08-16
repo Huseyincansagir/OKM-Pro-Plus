@@ -1,7 +1,7 @@
 # Factory ERP-Lite
 ## Açık Kararlar ve Design Gate Karar Atölyesi
 
-> **Amaç:** O-001–O-013 arasındaki açık kararları; önerilen MVP çözümü, karar sahibi, mimari etkisi ve kapanış kriterleriyle birlikte proje yönetimi ekibinin onayına sunmak.
+> **Amaç:** O-001–O-014 arasındaki açık kararları; önerilen MVP çözümü, karar sahibi, mimari etkisi ve kapanış kriterleriyle birlikte proje yönetimi ekibinin onayına sunmak.
 
 | Alan | Durum |
 |---|---|
@@ -19,7 +19,7 @@
 
 Factory ERP-Lite için ekran envanteri, UX mimarisi, mobil operasyon akışları, public katalog tasarımı, domain modeli, iş akışları ve PostgreSQL teknik ön taslağı hazırlanmıştır. Bu artefact'lar kodlamaya başlamadan önce gerekli tasarım omurgasını oluşturur.
 
-Bununla birlikte O-001–O-013 arasındaki **13 açık karar**, veri modeli, belge durumları, yetki politikaları, entegrasyon sınırları, public erişim güvenliği ve deployment davranışını doğrudan etkiler. Bu nedenle Design Gate şu anda **BLOCKED** durumundadır. Karar sahipleri seçimleri, gerekçeleri ve karar tarihlerini yazılı biçimde onaylamadan production code yazılmamalıdır.
+Bununla birlikte O-001–O-014 arasındaki **14 açık karar**, veri modeli, belge durumları, yetki politikaları, entegrasyon sınırları, public erişim güvenliği ve deployment davranışını doğrudan etkiler. Bu nedenle Design Gate şu anda **BLOCKED** durumundadır. Karar sahipleri seçimleri, gerekçeleri ve karar tarihlerini yazılı biçimde onaylamadan production code yazılmamalıdır.
 
 > **Toplantının temel çıktısı:** Her O maddesi için `seçim + karar sahibi + tarih + gerekçe + etkilenen artefact listesi` kaydedilmiş olmalıdır.
 
@@ -84,6 +84,18 @@ Açık kararlar beş çalışma grubunda ele alınmalıdır.
 | Müşteri, risk ve public | O-006, O-007, O-009 | Satış yönetimi, yönetim, hukuk/uyum |
 | Personel ve altyapı | O-008, O-010, O-011 | İK, muhasebe, sistem yöneticisi |
 | Marka ve görsel varlık | O-013 | Proje sahibi, pazarlama |
+| Lojistik otomasyon ve kapasite | O-014 | Depo ve sevkiyat yöneticisi |
+
+### O-014 — Kargo planlama otomasyon seviyesi
+
+| Alan | Öneri |
+|---|---|
+| MVP | Hard constraint doğrulaması + açıklanabilir `First Fit Decreasing` sezgisel öneri + depo sorumlusu manuel onayı |
+| Blokaj | Ağırlık, hacim, ölçü, kapı, palet, uyumluluk, istifleme, miktar, paket sahibi veya rota çakışması ihlalinde kilitleme engellenir |
+| Uyarı | Soft constraint ihlali warning/penalty olarak gösterilir; override için yetki ve gerekçe gerekir |
+| Otopilot sınırı | Optimal 3D packing, aks ağırlığı ve kesin trafik rotası MVP dışında; sistem optimalite garantisi vermez |
+| Karar sahibi | Depo ve sevkiyat yöneticisi |
+| Etkilenen artefact'lar | Domain, database, workflow, UI, QA/security, architecture ve implementation skill'leri |
 
 ---
 
@@ -206,6 +218,7 @@ Toplantı, kararları tek oturumda aceleyle kapatmak yerine sahiplik ve etki zin
 | 4 | Üretim ve kalite | O-004, O-005 | BOM ve lot/seri MVP sınırı |
 | 5 | Personel ve operasyon | O-008, O-010, O-011 | Bordro, backup ve local server hedefleri |
 | 6 | Marka | O-013 | Tek marka ve asset politikası |
+| 7 | Lojistik otomasyon ve kapasite | O-014 | Hard/soft constraint, heuristik öneri ve manuel onay sınırı |
 
 Her çalışma bloğunun sonunda karar sahibi, seçilen seçenek, gerekçe ve teknik yayılım notu toplantı tutanağına işlenmelidir.
 
@@ -215,7 +228,7 @@ Her çalışma bloğunun sonunda karar sahibi, seçilen seçenek, gerekçe ve te
 
 Design Gate ancak aşağıdaki koşulların tamamı sağlandığında `READY FOR ARCHITECTURE` olarak değerlendirilebilir:
 
-1. O-001–O-013 maddelerinin her biri için proje sahibi veya yetkili karar sahibi tarafından onay verilmiş olmalıdır.
+1. O-001–O-014 maddelerinin her biri için proje sahibi veya yetkili karar sahibi tarafından onay verilmiş olmalıdır.
 2. Her kararda karar tarihi, gerekçe ve etkilenen artefact listesi bulunmalıdır.
 3. `decision-log.md`, domain model, business workflows, database technical architecture ve screen inventory birbiriyle tutarlı olmalıdır.
 4. Karar bağımlı permission, audit, integration ve deployment etkileri açıkça tanımlanmalıdır.
@@ -252,7 +265,7 @@ Aşağıdaki şablon her O maddesi için doldurulup [`decision-log.md`](./decisi
 
 | Adım | Durum |
 |---|---|
-| Karar atölyesinde O-001–O-013 seçimlerini yapmak | Bekliyor |
+| Karar atölyesinde O-001–O-014 seçimlerini yapmak | Bekliyor |
 | Karar sahibi, tarih, gerekçe ve artefact listesini kaydetmek | Bekliyor |
 | Canonical `/design/` belgelerine kararları yaymak | Bekliyor |
 | Numbered `/docs/` mirror kopyalarını senkronize etmek | Bekliyor |
@@ -265,13 +278,14 @@ Aşağıdaki şablon her O maddesi için doldurulup [`decision-log.md`](./decisi
 ## Canonical referanslar
 
 - [`decision-log.md`](./decision-log.md) — DECIDED, ASSUMED ve OPEN DECISION kayıtları.
-- [`open-decisions-solution-matrix.md`](./open-decisions-solution-matrix.md) — O-001–O-013 için önerilen MVP çözümleri ve etki matrisi.
+- [`open-decisions-solution-matrix.md`](./open-decisions-solution-matrix.md) — O-001–O-014 için önerilen MVP çözümleri ve etki matrisi.
 - [`implementation-readiness.md`](./implementation-readiness.md) — Design Gate değerlendirmesi.
 - [`implementation-ready.md`](./implementation-ready.md) — Kodlama öncesi geçiş kontrolü.
 - [`domain-model.md`](./domain-model.md) — Bounded context ve source-of-truth modeli.
 - [`business-workflows.md`](./business-workflows.md) — Satış, üretim ve personel iş akışları.
 - [`database-technical-architecture.md`](./database-technical-architecture.md) — PostgreSQL, transaction, API ve deployment ön taslağı.
 - [`master-screen-inventory.md`](./master-screen-inventory.md) — Web, mobil ve public ekran envanteri.
+- [`logistics-planning-rules-and-algorithms.md`](./logistics-planning-rules-and-algorithms.md) — Hard/soft lojistik kuralları, araç kapasite eşleştirme ve karışık palet algoritması.
 
 **Belge durumu:** Karar toplantısı taslağı — karar sahibi onayı alınana kadar öneri niteliğindedir.
 
@@ -313,5 +327,6 @@ Hızlı bir yönetim kararı gerekiyorsa aşağıdaki paket başlangıç öneris
 | O-011 | Local-first; Ubuntu/Docker/reverse proxy seçimi Architecture aşamasında |
 | O-012 | `PriceList` + `CustomerPriceGroup` + order price snapshot |
 | O-013 | Tek marka ve asset politikası kodlamadan önce zorunlu |
+| O-014 | Heuristik araç/palet önerisi + hard constraint validation + manuel depo onayı; optimalite garantisi yok |
 
 > **Son karar:** Bu paketin tamamı veya herhangi bir satırı proje sahibi tarafından onaylanmadan `DECIDED` olarak işaretlenmeyecektir.

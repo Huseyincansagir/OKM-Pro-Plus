@@ -89,6 +89,8 @@ PDF ve Excel çıktılarında aynı domain verisini kullan. Rapor ekranı ile ex
 - Sevkiyat mobil akışında kullanıcı yalnızca aktif route stop'a atanmış `ShipmentPackage` kayıtlarını görebilmeli ve teslim edebilmeli.
 - Barkod tarama sonucu ürün, ambalaj/yük birimi ve işlem bağlamı doğrulanmadan işlem formu veya kesinleştirme aksiyonu açılmamalı.
 - `Temel Birim / Ambalaj / Kırılım` toggle'ı yalnızca görünümü değiştirmeli; işlem seviyesi ayrı state ve `quantity_base` önizlemesiyle yönetilmeli.
+- Kargo planı ekranında hard constraint, soft warning, vehicle-fit gerekçesi, algorithm/version ve manuel değişiklik açıklaması görünür olmalı.
+- First Fit Decreasing veya seçilen heuristik deterministik input snapshot ile çalışmalı; matematiksel optimalite garanti ediliyorsa ayrıca kanıtlanmadan böyle sunulmamalı.
 - Araç, sevkiyat, durak ve paket durumları ayrı badge/state olarak gösterilmeli; kapasite ve ambalaj görünümü toggle ile değişebilmeli.
 
 ## Mobile
@@ -118,6 +120,9 @@ Aşağıdaki hatalar kabul edilmez:
 - toggle change must not change `quantity_base` or selected operation quantity
 - package assigned to wrong customer/address/route stop
 - vehicle capacity or route overlap not validated
+- hard/soft constraint severity not preserved
+- algorithm version or input snapshot missing for a generated load plan
+- manual replan without reason/audit/version
 - negative unintended stock
 - duplicate payment
 - double invoicing

@@ -82,6 +82,9 @@ Temel entity grupları:
 - Ürün/ambalaj fiziksel profilinde boyut, ağırlık, hacim, dara, istifleme ve kapasite kurallarını tanımla; `LoadPlan` ağırlık, hacim, palet, ölçü ve alıcı durakları açısından doğrulansın.
 - `VehicleType` kapasite şablonudur; `Vehicle` gerçek plaka ve anlık durumdur; `RoutePlan`/`RouteStop` rota ve teslimat bağlamını, `ShipmentPackage` barkodlanabilir alıcı yükünü taşır.
 - Araç, sevkiyat, rota durağı ve paket state'lerini bağımsız state machine olarak tasarla; kısmi teslim, eksik, iade ve teslim kanıtını kaybetme.
+- Kargo planlamada hard constraint ile soft constraint ayrımını açıkça modelle; `Infeasible`, `FeasibleWithWarnings` ve `Feasible` sonuçlarını sakla.
+- Vehicle-fit ve LoadPlan önerisinin `algorithm_name`, `algorithm_version`, input/capacity snapshot, score, validation summary ve manual change audit bilgilerini koru; optimalite iddiası yoksa UI/API bunu açıkça belirtmeli.
+- Plan değişikliği shipment miktarı, araç/rota, fiziksel profil, palet veya gerçek yük değiştiğinde versioned replan üretmeli; locked plan sessizce güncellenmemeli.
 - BOM, lot/seri, e-belge adapter ve local deployment gibi konuları seçilen karara göre migration kapsamına al; öneriyi karar yerine koyma.
 
 ## Transaction sınırları
@@ -133,6 +136,9 @@ DTO + validation + authorization + consistent error model kullan.
 /api/shipments/{shipmentId}/load-plan
 /api/shipments/{shipmentId}/route
 /api/shipments/{shipmentId}/packages
+/api/shipments/{shipmentId}/vehicle-fit
+/api/shipments/{shipmentId}/load-plan/validate
+/api/shipments/{shipmentId}/load-plan/replan
 /api/vehicles
 /api/vehicle-types
 /api/invoices
@@ -155,7 +161,7 @@ Role yalnızca başlangıç seviyesi olmalı; gerçek erişim permission seviyes
 
 Örnek:
 
-`order.read`, `order.create`, `order.approve`, `invoice.create`, `payment.create`, `stock.adjust`, `production.complete`, `shipment.read`, `shipment.create`, `shipment.load-plan`, `shipment.route-manage`, `shipment.package-assign`, `shipment.deliver`, `vehicle.manage`, `vehicle.status-update`
+`order.read`, `order.create`, `order.approve`, `invoice.create`, `payment.create`, `stock.adjust`, `production.complete`, `shipment.read`, `shipment.create`, `shipment.load-plan`, `shipment.vehicle-fit`, `shipment.plan-suggest`, `shipment.route-manage`, `shipment.package-assign`, `shipment.plan-replan`, `shipment.plan-override`, `shipment.deliver`, `vehicle.manage`, `vehicle.status-update`
 
 ## Security architecture
 

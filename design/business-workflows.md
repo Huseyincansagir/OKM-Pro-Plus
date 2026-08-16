@@ -34,8 +34,12 @@ Public Quote Request
 | Araç ve rota atama | Sevkiyat sorumlusu | Araç tipi/kapasite, araç, şoför, müşteri adresleri, durak sırası | `RoutePlan.Planned` | `route-plan.assign` | RoutePlan, RouteStop, vehicle status `Assigned` | Yok | Yok | Rota ve araç ataması |
 | Paketleri müşteri/durağa bağlama | Depo/sevkiyat | Palet/koli/paket barkodu, müşteri, teslim adresi, durak | `ShipmentPackage.Assigned` | `shipment-package.assign` | ShipmentPackage, route stop, load unit link | Yok | Yok | Alıcı eşleştirme |
 | Kargo planı oluşturma | Depo/sevkiyat | Sevkiyat kalemleri, araç/kargo kapasitesi, palet tipi | `LoadPlan.Draft` | `load-plan.create` | LoadPlan, kapasite snapshot | Yok | Yok | Plan oluşturma |
-| Karışık palet yerleştirme | Depo | Ürün/ambalaj kalemi, LoadUnit, temel miktar, kg, hacim | `LoadPlan.Validating` | `load-plan.assign` | LoadUnit, LoadUnitItem | Yok | Yok | Palet kalemi atama |
-| Kargo planı doğrulama/kilitleme | Depo sorumlusu | Ağırlık, hacim, palet, ölçü, istifleme ve kalan miktar kontrolleri | `LoadPlan.Locked` | `load-plan.lock` | Validation summary, version, locked_at | Yok | Yok | Kilitleme ve audit |
+| Araç adaylarını çıkarma | Sistem/depo | Aktif araçlar, bakım, tarih çakışması, kapasite, kapı ve palet tipi | `LoadPlan.CandidateSelection` | `load-plan.vehicle-fit` | VehicleFit snapshot, elenen aday gerekçeleri | Yok | Yok | Uygun araç listesi |
+| Sezgisel plan önerisi | Sistem | Normalize kalemler, uyumluluk, ağırlık, hacim, istifleme ve durak sırası | `LoadPlan.Proposed` | `load-plan.suggest` | LoadUnit, LoadUnitItem, score, algorithm metadata | Yok | Yok | First Fit Decreasing önerisi |
+| Karışık palet yerleştirme | Depo | Ürün/ambalaj kalemi, LoadUnit, temel miktar, kg, hacim, alıcı durak | `LoadPlan.Validating` | `load-plan.assign` | LoadUnit, LoadUnitItem, stop allocation | Yok | Yok | Palet kalemi atama |
+| Kural doğrulama | Sistem/depo | Hard/soft constraint sonuçları, durak erişimi ve kapasite kullanımı | `LoadPlan.NeedsReview` veya `LoadPlan.Valid` | `load-plan.validate` | ValidationResult, utilization, warnings, feasibility | Yok | Yok | Hata/uyarı ayrımı |
+| Manuel düzenleme/replan | Depo sorumlusu | Öneri, palet ataması, gerekçe, yetki | `LoadPlan.Replanning` | `load-plan.replan` | ManualChange, yeni version, tekrar validation | Yok | Yok | Kullanıcı değişikliği |
+| Kargo planı doğrulama/kilitleme | Depo sorumlusu | Hard error yok, soft warning açıklaması/override'ı, rota ve paket bağlantısı | `LoadPlan.Locked` | `load-plan.lock` | Validation summary, version, locked_at | Yok | Yok | Kilitleme ve audit |
 | Yükleme doğrulama | Depo/sevkiyat | Palet/koli barkodu, planlanan-gerçekleşen karşılaştırması | `Loaded` | `shipment.load-verify` | Actual load, discrepancy, proof | Tekrar stok düşülmez | Yok | Fark varsa açıklama |
 | Sevk etme | Depo/sevkiyat | Kilitli kargo planı, yükleme sonucu ve çıkış bilgisi | `InTransit` | `shipment.depart` | Shipment/route state, vehicle `InTransit`, departure | Tekrar stok düşülmez | Yok | Araç çıkışı |
 | Durağa varış | Şoför/sevkiyat | Rota, durak, varış zamanı | `RouteStop.InProgress` | `route-stop.arrive` | Stop actual arrival, vehicle location/status | Yok | Yok | Durağa varış |
@@ -55,7 +59,9 @@ Public Quote Request
 - Ödeme idempotency/reference kontrolü olmadan ikinci kez cari hesaba uygulanamaz.
 - Sipariş ret veya iptal durumundan onaylı duruma geri dönemez.
 - LoadPlan, bağlı shipment kalemlerinin temel miktarlarını aşamaz; taslak plan shipment miktarını değiştiremez.
-- Palet uygunluğu ağırlık, hacim, palet kapasitesi, ölçü ve istifleme kurallarının tamamıyla doğrulanır.
+- Palet uygunluğu ağırlık, hacim, palet kapasitesi, ölçü, kapı açıklığı, uyumluluk, istifleme ve durak erişimi kurallarının tamamıyla doğrulanır.
+- Hard constraint ihlali `Infeasible` sonucu üretir ve plan kilitlenemez; soft constraint warning olarak saklanır ve gerekirse yetkili override ister.
+- Algoritma önerisi `algorithm_name/version`, input snapshot, araç fit sonucu ve validation sonucu ile açıklanabilir olmalıdır.
 - `LoadPlan.Locked` olmadan yükleme tamamlanamaz; gerçek yük planlanan miktardan farklıysa fark açıklaması gerekir.
 - Her `ShipmentPackage` bir müşteri ve `RouteStop` ile eşleştirilmeden sevkiyat planı kilitlenemez; ortak palet içindeki farklı alıcılar barkod/paket seviyesinde ayrıştırılır.
 - Araç kapasitesi ağırlık, hacim, palet ve ölçü sınırlarının tamamıyla doğrulanır; araç ana durumu ile sevkiyat durumu ayrı tutulur.
@@ -65,11 +71,14 @@ Public Quote Request
 
 ```text
 Shipment oluştur
-  → Araç/kargo tipi seç
-  → Otomatik kapasite ön kontrolü
+  → Araç/kargo tipi ve tarih aralığı seç
+  → Uygun araç adaylarını çıkar; elenen adayların nedenlerini göster
   → LoadPlan taslağı
-  → Tekli veya karışık palet ataması
-  → Ağırlık/hacim/istifleme doğrulaması
+  → Kalemleri normalize et ve fiziksel kısıtları kontrol et
+  → First Fit Decreasing + kısıt kontrolü ile tekli/karışık palet öner
+  → Durak erişim sırası ve kapasite kullanımını doğrula
+  → Hard error / soft warning ayrımını göster
+  → Depo sorumlusuna manuel düzenleme ve replan sun
   → LoadPlan kilitle
   → Palet/koli barkoduyla yüklemeyi doğrula
   → Müşteri/durak paket eşleştirmesini kontrol et
@@ -149,7 +158,7 @@ Her belge state'i explicit enum veya state machine ile tanımlanır. Frontend du
 | RoutePlan | Draft → Planned → Locked → InProgress → Completed/Exception | Rota değişikliği versiyon ve audit gerektirir |
 | RouteStop | Pending → InProgress → Delivered/Partial/Failed/Skipped | Teslim kanıtı ve istisna nedeni zorunlu olabilir |
 | ShipmentPackage | Planned → Assigned → Loaded → InTransit → Delivered/Missing/Returned | Barkod ve müşteri/adres bağlantısı korunur |
-| LoadPlan | Draft → Validating → Locked → Loaded/Discrepancy | Kilitli plan değişikliği yeni versiyon ve audit gerektirir |
+| LoadPlan | Draft → CandidateSelection → Proposed → Validating → Valid/NeedsReview → Replanning → Locked → Loaded/Discrepancy | Hard error kilidi engeller; kilitli plan değişikliği yeni versiyon ve audit gerektirir |
 | Invoice | Draft → Issued → PartiallyPaid/Paid/Overdue | İptal veya credit/reversal |
 | ProductionOrder | Planned → Released → InProgress/Paused → Completed | Cancelled sonrası geri dönüş yok |
 | LeaveRequest | Pending → Approved/Rejected | Geri çekme yalnızca policy ile |

@@ -24,6 +24,7 @@ Bu skill, ürünün kodunu yazmadan önce iş akışını, kullanıcı deneyimin
 - Belirsiz veya iş riski oluşturan kararları `/design/decision-log.md` içinde tut.
 - Agent, Grok, ChatGPT veya başka bir yardımcı tarafından üretilen öneriyi proje sahibi onayı olmadan `DECIDED` yapma.
 - Açık kararlar için `/design/open-decisions-solution-matrix.md` içinde seçenek, varsayılan MVP, sahip, risk ve etki zinciri yaz.
+- Kargo planlama otomasyon seviyesi ve araç eşleştirme politikası O-014 olarak açık tutulmalı; öneri karar sahibi onayı olmadan `DECIDED` yapılmamalı.
 
 ## Uygulanacak sıra
 
@@ -129,6 +130,7 @@ Kodlama başlamadan önce şu dosyalar mevcut olmalı:
 - `/design/web-ux-architecture.md`
 - `/design/production-warehouse-deep-dive.md`
 - `/design/shipment-logistics-ui-design.md`
+- `/design/logistics-planning-rules-and-algorithms.md`
 - `/design/database-technical-architecture.md`
 - `/design/mobile-design.md`
 - `/design/mobile-barcode-and-quantity-ux.md`
@@ -149,6 +151,7 @@ Aşağıdaki tutarsızlıklardan biri varsa implementation'a geçme:
 - Kritik ağ kesintisi veya hata durumu tanımlanmamış.
 - Açık karar seçildikten sonra domain, workflow, database, screen inventory, UI design ve skill-impact artefact'larına yayılmamış.
 - Ambalaj, fiziksel lojistik, araç, rota, durak ve paket izleme entity/state/permission karşılıkları yok.
+- Hard/soft lojistik constraint, vehicle-fit, algorithm/version snapshot ve manual replan/audit karşılığı yok.
 - Kararın sahibi, tarihi ve kanıtı yok.
 
 Gate başarılıysa `/design/implementation-ready.md` oluştur.
