@@ -16,4 +16,7 @@ await dbContext.Database.MigrateAsync();
 var identitySeeder = scope.ServiceProvider.GetRequiredService<FactoryErp.Infrastructure.Authentication.IdentitySeeder>();
 await identitySeeder.SeedBootstrapAdminAsync(builder.Configuration);
 
-Console.WriteLine("Factory ERP database migration and optional bootstrap seed completed.");
+var catalogSeeder = scope.ServiceProvider.GetRequiredService<FactoryErp.Infrastructure.Products.CatalogSeeder>();
+await catalogSeeder.SeedAsync();
+
+Console.WriteLine("Factory ERP database migration and optional foundation/catalog seed completed.");

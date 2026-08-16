@@ -1,8 +1,10 @@
 using FactoryErp.Application.Abstractions.Persistence;
 using FactoryErp.Application.Identity;
+using FactoryErp.Application.Products;
 using FactoryErp.Infrastructure.Authentication;
 using FactoryErp.Infrastructure.Health;
 using FactoryErp.Infrastructure.Persistence;
+using FactoryErp.Infrastructure.Products;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +39,8 @@ public static class DependencyInjection
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
         services.AddScoped<IAuditWriter, EfAuditWriter>();
+        services.AddScoped<IProductCatalogService, ProductCatalogService>();
+        services.AddScoped<CatalogSeeder>();
 
         services.AddDbContext<FactoryErpDbContext>(options =>
             options.UseNpgsql(

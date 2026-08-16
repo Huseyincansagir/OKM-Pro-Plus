@@ -18,6 +18,18 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<SystemSettingRecord> SystemSettings => Set<SystemSettingRecord>();
     public DbSet<DocumentSequenceRecord> DocumentSequences => Set<DocumentSequenceRecord>();
     public DbSet<OutboxMessageRecord> OutboxMessages => Set<OutboxMessageRecord>();
+    public DbSet<UnitOfMeasureRecord> UnitsOfMeasure => Set<UnitOfMeasureRecord>();
+    public DbSet<ProductCategoryRecord> ProductCategories => Set<ProductCategoryRecord>();
+    public DbSet<ProductRecord> Products => Set<ProductRecord>();
+    public DbSet<ProductPackagingRecord> ProductPackagings => Set<ProductPackagingRecord>();
+    public DbSet<ProductBarcodeRecord> ProductBarcodes => Set<ProductBarcodeRecord>();
+    public DbSet<ProductImageRecord> ProductImages => Set<ProductImageRecord>();
+    public DbSet<WarehouseRecord> Warehouses => Set<WarehouseRecord>();
+    public DbSet<WarehouseLocationRecord> WarehouseLocations => Set<WarehouseLocationRecord>();
+    public DbSet<StockRecord> Stocks => Set<StockRecord>();
+    public DbSet<StockMovementRecord> StockMovements => Set<StockMovementRecord>();
+    public DbSet<ProductionOrderRecord> ProductionOrders => Set<ProductionOrderRecord>();
+    public DbSet<ProductionRecord> ProductionRecords => Set<ProductionRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
