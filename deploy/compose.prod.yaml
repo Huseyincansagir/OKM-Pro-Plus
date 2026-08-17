@@ -1,0 +1,95 @@
+name: factory-erp
+
+services:
+  postgres:
+    image: postgres:16.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-factory_erp}
+      POSTGRES_USER: ${POSTGRES_USER:-factory_erp_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the deployment environment}
+      TZ: ${DEFAULT_TIMEZONE:-Europe/Istanbul}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - data
+
+  migrator:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: migrator
+    image: ${APP_IMAGE_REPOSITORY:-factory-erp}/migrator:${APP_IMAGE_TAG:-local}
+    profiles: ["migration"]
+    restart: "no"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${APP_ENVIRONMENT:-Production}
+      POSTGRES_CONNECTION_STRING: Host=postgres;Port=5432;Database=${POSTGRES_DB:-factory_erp};Username=${POSTGRES_USER:-factory_erp_app};Password=${POSTGRES_PASSWORD}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:?Set BOOTSTRAP_ADMIN_USERNAME for the migration job}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Set BOOTSTRAP_ADMIN_PASSWORD for the migration job}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: api
+    image: ${APP_IMAGE_REPOSITORY:-factory-erp}/api:${APP_IMAGE_TAG:-local}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${APP_ENVIRONMENT:-Production}
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__FactoryErp: Host=postgres;Port=5432;Database=${POSTGRES_DB:-factory_erp};Username=${POSTGRES_USER:-factory_erp_app};Password=${POSTGRES_PASSWORD}
+      Authentication__Issuer: ${JWT_ISSUER:?Set JWT_ISSUER in the deployment environment}
+      Authentication__Audience: ${JWT_AUDIENCE:?Set JWT_AUDIENCE in the deployment environment}
+      Authentication__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in the deployment environment}
+      Authentication__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-30}
+      Authentication__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-14}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8080/health/ready || exit 1"]
+      interval: 10s
+      timeout: 3s
+      start_period: 15s
+      retries: 12
+    networks:
+      - internal
+      - data
+
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${PROXY_HTTP_PORT:-8080}:80"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - edge
+      - internal
+
+volumes:
+  postgres_data:
+
+networks:
+  edge:
+    internal: false
+  internal:
+    internal: true
+  data:
+    internal: true
