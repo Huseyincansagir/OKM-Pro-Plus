@@ -185,6 +185,39 @@ public sealed class LoadPlan : AggregateRoot
             : LoadPlanStatus.Valid;
     }
 
+    public void Lock(
+        Guid actorId,
+        DateTimeOffset now,
+        bool approval,
+        bool hasOpenHardErrors,
+        bool hasOpenWarnings,
+        bool warningOverrideApproved)
+    {
+        LoadPlanLockPolicy.EnsureLockAllowed(
+            Status,
+            FeasibilityStatus,
+            hasOpenHardErrors,
+            hasOpenWarnings,
+            approval,
+            warningOverrideApproved,
+            VehicleId,
+            VehicleCapacityId,
+            InputSnapshotHash);
+        DomainGuard.AgainstEmpty(actorId, "LOAD_PLAN_LOCK_ACTOR_REQUIRED", "LoadPlan lock actor zorunludur.");
+
+        foreach (var loadUnit in _loadUnits.OrderBy(x => x.UnitCode, StringComparer.Ordinal))
+        {
+            loadUnit.LockForPlan();
+        }
+
+        ApprovedBy = actorId;
+        ApprovedAt = now;
+        LockedBy = actorId;
+        LockedAt = now;
+        Status = LoadPlanStatus.Locked;
+        Touch(now);
+    }
+
     public void Supersede()
     {
         if (Status != LoadPlanStatus.Locked)
@@ -256,7 +289,6 @@ public sealed class LoadPlan : AggregateRoot
         plan.RestoreUpdatedAt(updatedAt);
         plan.VehicleId = vehicleId;
         plan.VehicleCapacityId = vehicleCapacityId;
-        plan.Status = status;
         plan.FeasibilityStatus = feasibilityStatus;
         plan.AlgorithmName = NormalizeOptional(algorithmName);
         plan.AlgorithmVersion = NormalizeOptional(algorithmVersion);
@@ -414,6 +446,26 @@ public sealed class LoadUnit : Entity
             maxStackCount,
             placementZone,
             unloadingPriority);
+    }
+
+    public void MarkValidated()
+    {
+        if (Status is not LoadUnitStatus.Draft)
+        {
+            throw new DomainException(new("LOAD_UNIT_INVALID_TRANSITION", $"{Status} durumundaki LoadUnit validated yapılamaz."));
+        }
+
+        Status = LoadUnitStatus.Validated;
+    }
+
+    public void LockForPlan()
+    {
+        if (Status is LoadUnitStatus.Loaded or LoadUnitStatus.Cancelled)
+        {
+            throw new DomainException(new("LOAD_UNIT_INVALID_TRANSITION", $"{Status} durumundaki LoadUnit lock edilemez."));
+        }
+
+        Status = LoadUnitStatus.Locked;
     }
 
     public void AddItem(LoadUnitItem item)

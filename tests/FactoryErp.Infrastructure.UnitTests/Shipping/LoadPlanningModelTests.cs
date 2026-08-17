@@ -83,6 +83,47 @@ public sealed class LoadPlanningModelTests
         }));
     }
 
+    [Fact]
+    public void Validation_results_have_unique_keys_and_resolution_integrity_constraints()
+    {
+        using var context = CreateContext();
+        var entity = context.GetService<IDesignTimeModel>().Model.FindEntityType(typeof(LoadPlanValidationResultRecord))!;
+
+        entity.GetTableName().Should().Be("load_plan_validation_results");
+        entity.GetCheckConstraints().Select(x => x.Name).Should().Contain(new[]
+        {
+            "ck_load_plan_validation_severity",
+            "ck_load_plan_validation_resolution",
+            "ck_load_plan_validation_resolution_pair",
+        });
+        entity.GetIndexes().Should().Contain(x => x.IsUnique && x.Properties.Select(p => p.Name).SequenceEqual(new[]
+        {
+            nameof(LoadPlanValidationResultRecord.LoadPlanId), nameof(LoadPlanValidationResultRecord.ValidationKey),
+        }));
+    }
+
+    [Fact]
+    public void Manual_changes_have_audit_checks_and_deterministic_lookup_indexes()
+    {
+        using var context = CreateContext();
+        var entity = context.GetService<IDesignTimeModel>().Model.FindEntityType(typeof(LoadPlanManualChangeRecord))!;
+
+        entity.GetTableName().Should().Be("load_plan_manual_changes");
+        entity.GetCheckConstraints().Select(x => x.Name).Should().Contain(new[]
+        {
+            "ck_load_plan_manual_change_type",
+            "ck_load_plan_manual_change_entity",
+        });
+        entity.GetIndexes().Should().Contain(x => x.Properties.Select(p => p.Name).SequenceEqual(new[]
+        {
+            nameof(LoadPlanManualChangeRecord.LoadPlanId), nameof(LoadPlanManualChangeRecord.CreatedAt),
+        }));
+        entity.GetIndexes().Should().Contain(x => x.Properties.Select(p => p.Name).SequenceEqual(new[]
+        {
+            nameof(LoadPlanManualChangeRecord.LoadPlanId), nameof(LoadPlanManualChangeRecord.EntityType), nameof(LoadPlanManualChangeRecord.EntityId),
+        }));
+    }
+
     private static FactoryErpDbContext CreateContext()
     {
         var connectionString = Environment.GetEnvironmentVariable("FactoryErpTestConnectionString")

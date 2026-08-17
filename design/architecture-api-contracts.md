@@ -295,8 +295,11 @@ Başarılı response:
 | POST | `/shipments/{id}/vehicle-fit/evaluate` | `shipment.vehicle-fit` | Tüm adayları değerlendirir |
 | GET | `/shipments/{id}/vehicle-fit/candidates` | `shipment.vehicle-fit` | Uygun/elenen adaylar |
 | POST | `/shipments/{id}/load-plan/suggest` | `shipment.plan-suggest` | FFD önerisi |
-| POST | `/shipments/{id}/load-plan/validate` | `shipment.load-plan` | Hard/soft validation |
-| POST | `/shipments/{id}/load-plan/lock` | `shipment.plan-lock` | Manuel onay sonrası kilitler |
+| POST | `/load-plans/{id}/validate` | `shipment.load-plan` | Hard/soft validation; server-side re-evaluation |
+| GET | `/load-plans/{id}/validation-results` | `shipment.read` | Validation projection |
+| POST | `/load-plans/{id}/manual-changes` | `shipment.load-plan` | Before/after snapshot + audit; plan `NeedsReview` |
+| POST | `/load-plans/{id}/warning-resolutions` | `shipment.load-plan` | Warning resolution; `Override` için `shipment.plan-override` |
+| POST | `/load-plans/{id}/lock` | `shipment.plan-lock` | Approval, warning guard ve domain lock |
 | POST | `/shipments/{id}/load-plan/replan` | `shipment.plan-replan` | Yeni version + reason |
 | POST | `/shipments/{id}/route` | `shipment.route-manage` | RoutePlan/RouteStop |
 | POST | `/shipments/{id}/packages/assign` | `shipment.package-assign` | Package ve stop allocation |

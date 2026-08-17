@@ -1,5 +1,6 @@
 using FactoryErp.Application.Shipping;
 using FactoryErp.Domain.Common;
+using FactoryErp.Domain.Shipping;
 using FactoryErp.Infrastructure.Persistence;
 using FactoryErp.Infrastructure.Persistence.Entities;
 using FactoryErp.Infrastructure.Shipping;
@@ -136,6 +137,241 @@ public sealed class LoadPlanIntegrationTests
         finally
         {
             await CleanupAsync(fixture, shipmentId, routePlanId, Guid.Empty, profileId, foreignRoutePlanId);
+        }
+    }
+
+    [Fact]
+    public async Task Validate_creates_deterministic_results_and_replays_idempotently()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b4-validate");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b4-validate");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            await using var context = CreateContext();
+            var service = CreateLoadPlanService(context);
+            var created = await service.CreateLoadPlanAsync(
+                shipmentId,
+                BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                actorId,
+                "l4b4-validate-create-" + Guid.NewGuid(),
+                "l4b4-validate",
+                CancellationToken.None);
+            loadPlanId = created.Id;
+
+            var request = new ValidateLoadPlanRequest();
+            var key = "l4b4-validate-command-" + Guid.NewGuid();
+            var result = await service.ValidateLoadPlanAsync(loadPlanId, request, created.RowVersion, actorId, key, "l4b4-validate", CancellationToken.None);
+            var replay = await service.ValidateLoadPlanAsync(loadPlanId, request, result.LoadPlan.RowVersion, actorId, key, "l4b4-validate", CancellationToken.None);
+
+            result.Results.Should().NotBeEmpty();
+            result.Results.Should().Contain(x => x.Code == "LOAD_PLAN_INFEASIBLE");
+            replay.Results.Select(x => x.Id).Should().BeEquivalentTo(result.Results.Select(x => x.Id));
+            result.LoadPlan.Status.Should().Be("NeedsReview");
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
+        }
+    }
+
+    [Fact]
+    public async Task Lock_rejects_open_hard_validation_errors_even_with_approval()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b4-lock-hard");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b4-lock-hard");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            await using var context = CreateContext();
+            var service = CreateLoadPlanService(context);
+            var created = await service.CreateLoadPlanAsync(
+                shipmentId,
+                BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                actorId,
+                "l4b4-lock-create-" + Guid.NewGuid(),
+                "l4b4-lock-hard",
+                CancellationToken.None);
+            loadPlanId = created.Id;
+            var validated = await service.ValidateLoadPlanAsync(loadPlanId, new ValidateLoadPlanRequest(), created.RowVersion, actorId, "l4b4-lock-validate-" + Guid.NewGuid(), "l4b4-lock-hard", CancellationToken.None);
+
+            var action = () => service.LockLoadPlanAsync(
+                loadPlanId,
+                new LockLoadPlanRequest(true, []),
+                validated.LoadPlan.RowVersion,
+                actorId,
+                "l4b4-lock-command-" + Guid.NewGuid(),
+                "l4b4-lock-hard",
+                CancellationToken.None);
+
+            await action.Should().ThrowAsync<DomainException>()
+                .Where(x => x.Error.Code == "LOAD_PLAN_INFEASIBLE");
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
+        }
+    }
+
+    [Fact]
+    public async Task Lock_succeeds_with_approval_and_vehicle_capacity_snapshot()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var vehicleTypeId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var capacityId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            await InsertLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b4-lock-success");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b4-lock-success");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            await using var context = CreateContext();
+            var service = CreateLoadPlanService(context);
+            var created = await service.CreateLoadPlanAsync(
+                shipmentId,
+                BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                actorId,
+                "l4b4-lock-success-create-" + Guid.NewGuid(),
+                "l4b4-lock-success",
+                CancellationToken.None);
+            loadPlanId = created.Id;
+            var plan = await context.LoadPlans.SingleAsync(x => x.Id == loadPlanId);
+            plan.VehicleId = vehicleId;
+            plan.VehicleCapacityId = capacityId;
+            plan.InputSnapshotHash = "sha256:l4b4-lock-success";
+            plan.FeasibilityStatus = nameof(LoadPlanFeasibilityStatus.Feasible);
+            plan.Status = nameof(LoadPlanStatus.Valid);
+            plan.ValidationSummary = "{\"hardErrors\":0,\"warnings\":0}";
+            await context.SaveChangesAsync();
+
+            var locked = await service.LockLoadPlanAsync(
+                loadPlanId,
+                new LockLoadPlanRequest(true, []),
+                plan.RowVersion,
+                actorId,
+                "l4b4-lock-success-command-" + Guid.NewGuid(),
+                "l4b4-lock-success",
+                CancellationToken.None);
+
+            locked.Status.Should().Be("Locked");
+            locked.VehicleId.Should().Be(vehicleId);
+            locked.VehicleCapacityId.Should().Be(capacityId);
+            locked.LoadUnits.Single().Status.Should().Be("Locked");
+            locked.ApprovedBy.Should().Be(actorId);
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
+            await CleanupLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+        }
+    }
+
+    [Fact]
+    public async Task Warning_resolution_and_manual_change_are_audited()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b4-audit");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b4-audit");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            await using var context = CreateContext();
+            var service = CreateLoadPlanService(context);
+            var created = await service.CreateLoadPlanAsync(
+                shipmentId,
+                BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                actorId,
+                "l4b4-audit-create-" + Guid.NewGuid(),
+                "l4b4-audit",
+                CancellationToken.None);
+            loadPlanId = created.Id;
+            var validated = await service.ValidateLoadPlanAsync(loadPlanId, new ValidateLoadPlanRequest(), created.RowVersion, actorId, "l4b4-audit-validate-" + Guid.NewGuid(), "l4b4-audit", CancellationToken.None);
+            var warning = validated.Results.First(x => x.Severity == "Warning");
+            var resolved = await service.ResolveValidationResultAsync(
+                loadPlanId,
+                warning.Id,
+                new ResolveLoadPlanValidationRequest("Overridden", "Depo sorumlusu kontrol etti."),
+                validated.LoadPlan.RowVersion,
+                actorId,
+                "l4b4-audit-warning-" + Guid.NewGuid(),
+                "l4b4-audit",
+                CancellationToken.None);
+
+            var itemId = created.LoadUnits.Single().Items.Single().Id;
+            var manualKey = "l4b4-audit-manual-" + Guid.NewGuid();
+            var manualRequest = new CreateLoadPlanManualChangeRequest("ChangeQuantity", "LoadUnitItem", itemId, "{\"quantityBase\":4000}", "{\"quantityBase\":3500}", "Manuel depo düzeltmesi");
+            var stale = () => service.CreateManualChangeAsync(
+                loadPlanId,
+                manualRequest,
+                validated.LoadPlan.RowVersion - 1,
+                actorId,
+                "l4b4-audit-stale-" + Guid.NewGuid(),
+                "l4b4-audit",
+                CancellationToken.None);
+            await stale.Should().ThrowAsync<DomainException>()
+                .Where(x => x.Error.Code == "RESOURCE_VERSION_CONFLICT");
+
+            var changed = await service.CreateManualChangeAsync(
+                loadPlanId,
+                manualRequest,
+                validated.LoadPlan.RowVersion,
+                actorId,
+                manualKey,
+                "l4b4-audit",
+                CancellationToken.None);
+            var mismatch = () => service.CreateManualChangeAsync(
+                loadPlanId,
+                manualRequest with { Reason = "Farklı gerekçe" },
+                validated.LoadPlan.RowVersion,
+                actorId,
+                manualKey,
+                "l4b4-audit",
+                CancellationToken.None);
+
+            await mismatch.Should().ThrowAsync<DomainException>()
+                .Where(x => x.Error.Code == "IDEMPOTENCY_PAYLOAD_MISMATCH");
+            resolved.ResolutionStatus.Should().Be("Overridden");
+            changed.Status.Should().Be("NeedsReview");
+            (await context.LoadPlanManualChanges.CountAsync(x => x.LoadPlanId == loadPlanId)).Should().Be(1);
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
         }
     }
 
@@ -340,6 +576,51 @@ public sealed class LoadPlanIntegrationTests
         await context.SaveChangesAsync();
     }
 
+    private static async Task InsertLockResourcesAsync(Guid vehicleTypeId, Guid vehicleId, Guid capacityId)
+    {
+        await using var context = CreateContext();
+        var now = DateTimeOffset.UtcNow;
+        context.VehicleTypes.Add(new VehicleTypeRecord
+        {
+            Id = vehicleTypeId,
+            Code = "L4B4-" + vehicleTypeId.ToString("N")[..8],
+            Name = "L4-B4 Lock Vehicle Type",
+            IsActive = true,
+        });
+        context.Vehicles.Add(new VehicleRecord
+        {
+            Id = vehicleId,
+            VehicleTypeId = vehicleTypeId,
+            PlateNumber = "L4B4-" + vehicleId.ToString("N")[..8],
+            Status = "Available",
+            LastStatusAt = now,
+            RowVersion = 1,
+        });
+        context.VehicleCapacities.Add(new VehicleCapacityRecord
+        {
+            Id = capacityId,
+            VehicleTypeId = vehicleTypeId,
+            EffectiveFrom = now.AddHours(-1),
+            MaxGrossWeight = 1000,
+            TareWeight = 100,
+            MaxUsableVolume = 30,
+            MaxPalletCount = 10,
+            MaxLoadHeight = 1800,
+            CapacityPolicySnapshot = "{\"source\":\"l4b4-test\"}",
+            RowVersion = 1,
+        });
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task CleanupLockResourcesAsync(Guid vehicleTypeId, Guid vehicleId, Guid capacityId)
+    {
+        await using var context = CreateContext();
+        context.VehicleCapacities.RemoveRange(context.VehicleCapacities.Where(x => x.Id == capacityId));
+        context.Vehicles.RemoveRange(context.Vehicles.Where(x => x.Id == vehicleId));
+        context.VehicleTypes.RemoveRange(context.VehicleTypes.Where(x => x.Id == vehicleTypeId));
+        await context.SaveChangesAsync();
+    }
+
     private static async Task CleanupAsync(
         DeliveryFixture? fixture,
         Guid shipmentId,
@@ -350,6 +631,8 @@ public sealed class LoadPlanIntegrationTests
     {
         await using var context = CreateContext();
         var planIds = loadPlanId == Guid.Empty ? Array.Empty<Guid>() : new[] { loadPlanId };
+        context.LoadPlanManualChanges.RemoveRange(context.LoadPlanManualChanges.Where(x => planIds.Contains(x.LoadPlanId)));
+        context.LoadPlanValidationResults.RemoveRange(context.LoadPlanValidationResults.Where(x => planIds.Contains(x.LoadPlanId)));
         var unitIds = await context.LoadUnits.Where(x => planIds.Contains(x.LoadPlanId)).Select(x => x.Id).ToArrayAsync();
         var itemIds = await context.LoadUnitItems.Where(x => unitIds.Contains(x.LoadUnitId)).Select(x => x.Id).ToArrayAsync();
         context.LoadUnitStopAllocations.RemoveRange(context.LoadUnitStopAllocations.Where(x => itemIds.Contains(x.LoadUnitItemId)));

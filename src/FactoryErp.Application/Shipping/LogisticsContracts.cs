@@ -412,7 +412,51 @@ public sealed record LoadUnitStopAllocationDto(
     int SequenceNo,
     DateTimeOffset CreatedAt);
 
-public interface ILoadPlanCommandService
+public interface ILoadPlanValidationCommandService
+{
+    Task<LoadPlanValidationDto> ValidateLoadPlanAsync(
+        Guid loadPlanId,
+        ValidateLoadPlanRequest request,
+        long expectedRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadPlanValidationResultDto> ResolveValidationResultAsync(
+        Guid loadPlanId,
+        Guid validationResultId,
+        ResolveLoadPlanValidationRequest request,
+        long expectedRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadPlanDto> CreateManualChangeAsync(
+        Guid loadPlanId,
+        CreateLoadPlanManualChangeRequest request,
+        long expectedRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadPlanDto> LockLoadPlanAsync(
+        Guid loadPlanId,
+        LockLoadPlanRequest request,
+        long expectedRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<LoadPlanValidationResultDto>> GetValidationResultsAsync(
+        Guid loadPlanId,
+        CancellationToken cancellationToken = default);
+}
+
+public interface ILoadPlanCommandService : ILoadPlanValidationCommandService
 {
     Task<LoadPlanDto> CreateLoadPlanAsync(
         Guid shipmentId,
@@ -484,3 +528,46 @@ public interface IVehicleFitCommandService
         Guid loadPlanId,
         CancellationToken cancellationToken = default);
 }
+
+
+public sealed record ValidateLoadPlanRequest;
+
+public sealed record LoadPlanValidationResultDto(
+    Guid Id,
+    Guid LoadPlanId,
+    string ValidationKey,
+    string Severity,
+    string Code,
+    string Message,
+    string? EntityType,
+    Guid? EntityId,
+    string ResolutionStatus,
+    Guid? ResolvedBy,
+    DateTimeOffset? ResolvedAt,
+    string? ResolutionReason,
+    DateTimeOffset CreatedAt);
+
+public sealed record LoadPlanValidationDto(
+    LoadPlanDto LoadPlan,
+    IReadOnlyCollection<LoadPlanValidationResultDto> Results);
+
+public sealed record ResolveLoadPlanValidationRequest(
+    string ResolutionStatus,
+    string Reason);
+
+public sealed record CreateLoadPlanManualChangeRequest(
+    string ChangeType,
+    string EntityType,
+    Guid EntityId,
+    string BeforeJson,
+    string AfterJson,
+    string Reason);
+
+public sealed record LockLoadPlanRequest(
+    bool Approval,
+    IReadOnlyCollection<WarningResolutionInput>? WarningResolutions);
+
+public sealed record WarningResolutionInput(
+    Guid ValidationResultId,
+    string Action,
+    string Reason);

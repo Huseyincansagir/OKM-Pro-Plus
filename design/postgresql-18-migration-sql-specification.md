@@ -1586,3 +1586,62 @@ Her adım için şu acceptance kaydı tutulur: migration name, start/end timesta
 | 0017–0018 | Seed update/idempotent | Kod/seed forward-fix |
 
 Bu belge gerçek migration class veya SQL deployment script’i değildir. `factory-erp-architecture` acceptance tamamlandıktan sonra EF Core migration dosyaları bu sözleşmeyi executable hale getirebilir.
+
+
+## 22. L4-B4 forward implementation — LoadPlan validation and lock evidence
+
+Architecture SQL tasarımının executable EF Core karşılığı aşağıdaki forward migration ile uygulanmıştır:
+
+```text
+20260817103404_AddLoadPlanValidationAndManualChanges
+```
+
+Migration iki tablo oluşturur:
+
+```sql
+CREATE TABLE load_plan_validation_results (
+    id uuid PRIMARY KEY,
+    load_plan_id uuid NOT NULL REFERENCES load_plans(id) ON DELETE RESTRICT,
+    validation_key varchar(160) NOT NULL,
+    severity varchar(20) NOT NULL,
+    code varchar(100) NOT NULL,
+    message text NOT NULL,
+    entity_type varchar(80),
+    entity_id uuid,
+    resolution_status varchar(30) NOT NULL,
+    resolved_by uuid REFERENCES users(id) ON DELETE RESTRICT,
+    resolved_at timestamptz,
+    resolution_reason text,
+    created_at timestamptz NOT NULL,
+    CONSTRAINT ck_load_plan_validation_severity CHECK (severity IN ('HardError', 'Warning', 'Info')),
+    CONSTRAINT ck_load_plan_validation_resolution CHECK (resolution_status IN ('Open', 'Resolved', 'Overridden', 'NotApplicable')),
+    CONSTRAINT ck_load_plan_validation_resolution_pair CHECK (
+        (resolution_status = 'Open' AND resolved_by IS NULL AND resolved_at IS NULL)
+        OR (resolution_status <> 'Open' AND resolved_by IS NOT NULL AND resolved_at IS NOT NULL AND resolution_reason IS NOT NULL)
+    )
+);
+
+CREATE UNIQUE INDEX ux_load_plan_validation_key
+    ON load_plan_validation_results(load_plan_id, validation_key);
+
+CREATE TABLE load_plan_manual_changes (
+    id uuid PRIMARY KEY,
+    load_plan_id uuid NOT NULL REFERENCES load_plans(id) ON DELETE RESTRICT,
+    actor_user_id uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    change_type varchar(60) NOT NULL,
+    entity_type varchar(80) NOT NULL,
+    entity_id uuid NOT NULL,
+    before_json jsonb NOT NULL,
+    after_json jsonb NOT NULL,
+    reason text NOT NULL,
+    created_at timestamptz NOT NULL,
+    CONSTRAINT ck_load_plan_manual_change_type CHECK (change_type IN ('AddLoadUnit', 'RemoveLoadUnit', 'MovePackage', 'ChangeQuantity', 'ChangeStopAllocation', 'ChangeVehicle', 'ChangeCapacity', 'Other')),
+    CONSTRAINT ck_load_plan_manual_change_entity CHECK (entity_id <> '00000000-0000-0000-0000-000000000000')
+);
+```
+
+Migration `Down` yalnızca bu iki audit/validation tablosunu kaldırır. Uygulanmış production ortamında validation veya manual-change geçmişini silmek için `Down` çalıştırılmamalı; backup/restore veya yeni forward-fix tercih edilmelidir.
+
+**Live PostgreSQL acceptance:** Migration history içinde migration mevcut; unique validation-key index’i, severity/resolution CHECK constraint’leri, resolution pair CHECK’i, manual-change type/entity CHECK’leri ve lookup indexleri canlı veritabanında doğrulanmıştır.
+
+**Permission seed:** `shipment.plan-lock` ID son eki `54`, `shipment.plan-override` ID son eki `55` olarak idempotent system-admin seed listesine eklenmiştir.

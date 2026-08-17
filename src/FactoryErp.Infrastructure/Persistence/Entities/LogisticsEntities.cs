@@ -281,3 +281,41 @@ public sealed class VehicleFitEvaluationRecord
     public VehicleRecord Vehicle { get; set; } = null!;
     public VehicleCapacityRecord? VehicleCapacity { get; set; }
 }
+
+
+public sealed class LoadPlanValidationResultRecord
+{
+    public Guid Id { get; set; }
+    public Guid LoadPlanId { get; set; }
+    public string ValidationKey { get; set; } = string.Empty;
+    public string Severity { get; set; } = "Info";
+    public string Code { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string? EntityType { get; set; }
+    public Guid? EntityId { get; set; }
+    public string ResolutionStatus { get; set; } = "Open";
+    public Guid? ResolvedBy { get; set; }
+    public DateTimeOffset? ResolvedAt { get; set; }
+    public string? ResolutionReason { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public LoadPlanRecord LoadPlan { get; set; } = null!;
+    public UserRecord? Resolver { get; set; }
+}
+
+public sealed class LoadPlanManualChangeRecord
+{
+    public Guid Id { get; set; }
+    public Guid LoadPlanId { get; set; }
+    public Guid ActorUserId { get; set; }
+    public string ChangeType { get; set; } = string.Empty;
+    public string EntityType { get; set; } = string.Empty;
+    public Guid EntityId { get; set; }
+    public string BeforeJson { get; set; } = "{}";
+    public string AfterJson { get; set; } = "{}";
+    public string Reason { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public LoadPlanRecord LoadPlan { get; set; } = null!;
+    public UserRecord ActorUser { get; set; } = null!;
+}

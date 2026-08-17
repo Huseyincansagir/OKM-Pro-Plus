@@ -118,6 +118,10 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.load-plan"));
     options.AddPolicy(PermissionPolicies.ShipmentVehicleFit, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.vehicle-fit"));
+    options.AddPolicy(PermissionPolicies.ShipmentPlanLock, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.plan-lock"));
+    options.AddPolicy(PermissionPolicies.ShipmentPlanOverride, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.plan-override"));
     options.AddPolicy(PermissionPolicies.PhysicalProfileRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "physical-profile.read"));
     options.AddPolicy(PermissionPolicies.PhysicalProfileManage, policy =>

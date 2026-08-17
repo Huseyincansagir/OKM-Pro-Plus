@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FactoryErp.Infrastructure.Shipping;
 
-public sealed class LoadPlanCommandService(
+public sealed partial class LoadPlanCommandService(
     FactoryErpDbContext dbContext,
     IAuditWriter auditWriter,
     IIdempotencyStore idempotencyStore) : ILoadPlanCommandService

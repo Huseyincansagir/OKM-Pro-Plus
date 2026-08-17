@@ -69,6 +69,8 @@ public sealed class LogisticsSecurityIntegrationTests
                 "shipment.package-manage",
                 "shipment.load-plan",
                 "shipment.vehicle-fit",
+                "shipment.plan-lock",
+                "shipment.plan-override",
             });
             using var fullClient = CreateAuthenticatedClient(factory, fullToken.AccessToken, suffix);
 
@@ -204,6 +206,14 @@ public sealed class LogisticsSecurityIntegrationTests
             using var fullCandidates = await fullClient.GetAsync($"/api/v1/shipments/{shipmentId}/vehicle-fit/candidates?loadPlanId={loadPlanId}");
             fullCandidates.StatusCode.Should().Be(HttpStatusCode.OK);
 
+            using var fullPlanLockRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/load-plans/{loadPlanId}/lock")
+            {
+                Content = JsonContent.Create(new { approval = true, warningResolutions = Array.Empty<object>() }),
+            };
+            fullPlanLockRequest.Headers.TryAddWithoutValidation("If-Match", $"\"{loadPlanJson.GetProperty("rowVersion").GetInt64()}\"");
+            using var fullPlanLock = await fullClient.SendAsync(fullPlanLockRequest);
+            fullPlanLock.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
+
             using var palletTypeResponse = await fullClient.PostAsJsonAsync(
                 "/api/v1/physical-logistics/pallet-types",
                 new
@@ -252,6 +262,8 @@ public sealed class LogisticsSecurityIntegrationTests
             readPackages.StatusCode.Should().Be(HttpStatusCode.OK);
             readToken.Permissions.Should().NotContain("shipment.load-plan");
             readToken.Permissions.Should().NotContain("shipment.vehicle-fit");
+            readToken.Permissions.Should().NotContain("shipment.plan-lock");
+            readToken.Permissions.Should().NotContain("shipment.plan-override");
             using var readLoadPlan = await readClient.GetAsync($"/api/v1/load-plans/{loadPlanId}");
             readLoadPlan.StatusCode.Should().Be(HttpStatusCode.OK);
             using var forbiddenLoadPlanCreate = await readClient.PostAsJsonAsync(
@@ -275,6 +287,17 @@ public sealed class LogisticsSecurityIntegrationTests
                     parameterSet = "ffd:v1:security",
                 });
             forbiddenVehicleFit.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            using var forbiddenPlanLockRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/load-plans/{loadPlanId}/lock")
+            {
+                Content = JsonContent.Create(new { approval = true, warningResolutions = Array.Empty<object>() }),
+            };
+            forbiddenPlanLockRequest.Headers.TryAddWithoutValidation("If-Match", $"\"{loadPlanJson.GetProperty("rowVersion").GetInt64()}\"");
+            using var forbiddenPlanLock = await readClient.SendAsync(forbiddenPlanLockRequest);
+            forbiddenPlanLock.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            using var forbiddenWarningResolution = await readClient.PostAsJsonAsync(
+                $"/api/v1/load-plans/{loadPlanId}/warning-resolutions",
+                new { validationResultId = Guid.NewGuid(), action = "Override", reason = "not allowed" });
+            forbiddenWarningResolution.StatusCode.Should().Be(HttpStatusCode.Forbidden);
             using var forbiddenVehicleCandidates = await readClient.GetAsync($"/api/v1/shipments/{shipmentId}/vehicle-fit/candidates?loadPlanId={loadPlanId}");
             forbiddenVehicleCandidates.StatusCode.Should().Be(HttpStatusCode.Forbidden);
             using var forbiddenPackageCreate = await readClient.PostAsJsonAsync(
