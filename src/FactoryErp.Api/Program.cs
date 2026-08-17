@@ -86,6 +86,38 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-transfer.complete"));
     options.AddPolicy(PermissionPolicies.StockTransferCancel, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-transfer.cancel"));
+    options.AddPolicy(PermissionPolicies.VehicleTypeRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "vehicle-type.read"));
+    options.AddPolicy(PermissionPolicies.VehicleTypeManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "vehicle-type.manage"));
+    options.AddPolicy(PermissionPolicies.VehicleRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "vehicle.read"));
+    options.AddPolicy(PermissionPolicies.VehicleManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "vehicle.manage"));
+    options.AddPolicy(PermissionPolicies.VehicleStatusUpdate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "vehicle.status-update"));
+    options.AddPolicy(PermissionPolicies.DriverRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "driver.read"));
+    options.AddPolicy(PermissionPolicies.DriverManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "driver.manage"));
+    options.AddPolicy(PermissionPolicies.ShipmentCreate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.create"));
+    options.AddPolicy(PermissionPolicies.ShipmentRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.read"));
+    options.AddPolicy(PermissionPolicies.ShipmentRouteManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.route-manage"));
+    options.AddPolicy(PermissionPolicies.ShipmentRouteLock, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.route-lock"));
+    options.AddPolicy(PermissionPolicies.ShipmentPlanReplan, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.plan-replan"));
+    options.AddPolicy(PermissionPolicies.PhysicalProfileRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "physical-profile.read"));
+    options.AddPolicy(PermissionPolicies.PhysicalProfileManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "physical-profile.manage"));
+    options.AddPolicy(PermissionPolicies.PalletTypeRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "pallet-type.read"));
+    options.AddPolicy(PermissionPolicies.PalletTypeManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "pallet-type.manage"));
 });
 
 var app = builder.Build();

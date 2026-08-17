@@ -54,6 +54,8 @@ public static class DependencyInjection
         services.AddScoped<IStockTransferCommandService, StockTransferCommandService>();
         services.AddScoped<SalesSeeder>();
         services.AddScoped<IShippingFinanceCommandService, DeliveryInvoiceFinanceService>();
+        services.AddScoped<ILogisticsCommandService, LogisticsCommandService>();
+        services.AddScoped<IPhysicalLogisticsCommandService, PhysicalLogisticsCommandService>();
         services.AddScoped<FinanceSeeder>();
 
         services.AddDbContext<FactoryErpDbContext>(options =>

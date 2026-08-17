@@ -82,6 +82,22 @@ public sealed class IdentitySeeder(
             ("10000000-0000-0000-0000-000000000031", "stock-transfer.read", "warehouse", "read"),
             ("10000000-0000-0000-0000-000000000032", "stock-transfer.complete", "warehouse", "complete"),
             ("10000000-0000-0000-0000-000000000033", "stock-transfer.cancel", "warehouse", "cancel"),
+            ("10000000-0000-0000-0000-000000000034", "vehicle-type.read", "shipping", "read"),
+            ("10000000-0000-0000-0000-000000000035", "vehicle-type.manage", "shipping", "manage"),
+            ("10000000-0000-0000-0000-000000000036", "vehicle.read", "shipping", "read"),
+            ("10000000-0000-0000-0000-000000000037", "vehicle.manage", "shipping", "manage"),
+            ("10000000-0000-0000-0000-000000000038", "vehicle.status-update", "shipping", "status-update"),
+            ("10000000-0000-0000-0000-000000000039", "driver.read", "shipping", "read"),
+            ("10000000-0000-0000-0000-000000000040", "driver.manage", "shipping", "manage"),
+            ("10000000-0000-0000-0000-000000000041", "shipment.create", "shipping", "create"),
+            ("10000000-0000-0000-0000-000000000042", "shipment.read", "shipping", "read"),
+            ("10000000-0000-0000-0000-000000000043", "shipment.route-manage", "shipping", "route-manage"),
+            ("10000000-0000-0000-0000-000000000044", "shipment.route-lock", "shipping", "route-lock"),
+            ("10000000-0000-0000-0000-000000000045", "shipment.plan-replan", "shipping", "plan-replan"),
+            ("10000000-0000-0000-0000-000000000046", "physical-profile.read", "shipping", "read"),
+            ("10000000-0000-0000-0000-000000000047", "physical-profile.manage", "shipping", "manage"),
+            ("10000000-0000-0000-0000-000000000048", "pallet-type.read", "shipping", "read"),
+            ("10000000-0000-0000-0000-000000000049", "pallet-type.manage", "shipping", "manage"),
         };
 
         foreach (var definition in definitions)

@@ -56,6 +56,19 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<PaymentMethodRecord> PaymentMethods => Set<PaymentMethodRecord>();
     public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
     public DbSet<PaymentAllocationRecord> PaymentAllocations => Set<PaymentAllocationRecord>();
+    public DbSet<ShipmentRecord> Shipments => Set<ShipmentRecord>();
+    public DbSet<ShipmentItemRecord> ShipmentItems => Set<ShipmentItemRecord>();
+    public DbSet<VehicleTypeRecord> VehicleTypes => Set<VehicleTypeRecord>();
+    public DbSet<VehicleCapacityRecord> VehicleCapacities => Set<VehicleCapacityRecord>();
+    public DbSet<VehicleRecord> Vehicles => Set<VehicleRecord>();
+    public DbSet<DriverRecord> Drivers => Set<DriverRecord>();
+    public DbSet<RoutePlanRecord> RoutePlans => Set<RoutePlanRecord>();
+    public DbSet<RouteStopRecord> RouteStops => Set<RouteStopRecord>();
+    public DbSet<ProductPhysicalProfileRecord> ProductPhysicalProfiles => Set<ProductPhysicalProfileRecord>();
+    public DbSet<PackagingPhysicalProfileRecord> PackagingPhysicalProfiles => Set<PackagingPhysicalProfileRecord>();
+    public DbSet<PalletTypeRecord> PalletTypes => Set<PalletTypeRecord>();
+    public DbSet<VehicleCapacityPalletTypeRecord> VehicleCapacityPalletTypes => Set<VehicleCapacityPalletTypeRecord>();
+    public DbSet<VehicleCapacityZoneRecord> VehicleCapacityZones => Set<VehicleCapacityZoneRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

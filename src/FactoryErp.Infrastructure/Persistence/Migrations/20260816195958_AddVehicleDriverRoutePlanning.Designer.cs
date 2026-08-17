@@ -3,6 +3,7 @@ using System;
 using FactoryErp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FactoryErp.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(FactoryErpDbContext))]
-    partial class FactoryErpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260816195958_AddVehicleDriverRoutePlanning")]
+    partial class AddVehicleDriverRoutePlanning
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1157,246 +1160,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", (string)null);
                 });
 
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.PackagingPhysicalProfileRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AllowedOrientations")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("allowed_orientations");
-
-                    b.Property<string>("CompatibilityGroup")
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)")
-                        .HasColumnName("compatibility_group");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTimeOffset>("EffectiveFrom")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("effective_from");
-
-                    b.Property<DateTimeOffset?>("EffectiveTo")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("effective_to");
-
-                    b.Property<decimal?>("GrossWeightKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("gross_weight_kg");
-
-                    b.Property<decimal>("HeightMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("height_mm");
-
-                    b.Property<string>("IncompatibleGroups")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("incompatible_groups");
-
-                    b.Property<bool>("IsFragile")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_fragile");
-
-                    b.Property<bool>("IsStackable")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_stackable");
-
-                    b.Property<bool>("KeepUpright")
-                        .HasColumnType("boolean")
-                        .HasColumnName("keep_upright");
-
-                    b.Property<decimal>("LengthMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("length_mm");
-
-                    b.Property<decimal?>("MaxLoadAboveKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("max_load_above_kg");
-
-                    b.Property<int?>("MaxStackCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("max_stack_count");
-
-                    b.Property<decimal?>("NetWeightKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("net_weight_kg");
-
-                    b.Property<Guid>("PackagingId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("packaging_id");
-
-                    b.Property<string>("PhysicalPolicySnapshot")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("physical_policy_snapshot");
-
-                    b.Property<long>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bigint")
-                        .HasDefaultValue(1L)
-                        .HasColumnName("row_version");
-
-                    b.Property<decimal>("TareWeightKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("tare_weight_kg");
-
-                    b.Property<decimal>("UnitsPerPackage")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("units_per_package");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("updated_at");
-
-                    b.Property<decimal?>("VolumeM3")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("volume_m3");
-
-                    b.Property<decimal>("WidthMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("width_mm");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PackagingId")
-                        .HasDatabaseName("ix_packaging_physical_packaging");
-
-                    b.HasIndex("PackagingId", "EffectiveFrom")
-                        .IsUnique();
-
-                    b.ToTable("packaging_physical_profiles", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_packaging_physical_dimensions_positive", "length_mm > 0 and width_mm > 0 and height_mm > 0");
-
-                            t.HasCheckConstraint("ck_packaging_physical_effective_range", "effective_to is null or effective_to > effective_from");
-
-                            t.HasCheckConstraint("ck_packaging_physical_gross_consistent", "gross_weight_kg is null or net_weight_kg is null or gross_weight_kg >= net_weight_kg + tare_weight_kg");
-
-                            t.HasCheckConstraint("ck_packaging_physical_stack_rules", "max_stack_count is null or max_stack_count >= 1");
-
-                            t.HasCheckConstraint("ck_packaging_physical_units_positive", "units_per_package > 0");
-
-                            t.HasCheckConstraint("ck_packaging_physical_weights_nonnegative", "(net_weight_kg is null or net_weight_kg >= 0) and tare_weight_kg >= 0 and (gross_weight_kg is null or gross_weight_kg >= 0)");
-                        });
-                });
-
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.PalletTypeRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)")
-                        .HasColumnName("code");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at");
-
-                    b.Property<decimal>("HeightMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("height_mm");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<bool>("IsStackable")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_stackable");
-
-                    b.Property<decimal>("LengthMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("length_mm");
-
-                    b.Property<decimal?>("MaxGrossWeightKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("max_gross_weight_kg");
-
-                    b.Property<decimal?>("MaxLoadHeightMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("max_load_height_mm");
-
-                    b.Property<decimal?>("MaxPayloadKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("max_payload_kg");
-
-                    b.Property<int?>("MaxStackCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("max_stack_count");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("PolicySnapshot")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("policy_snapshot");
-
-                    b.Property<long>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bigint")
-                        .HasDefaultValue(1L)
-                        .HasColumnName("row_version");
-
-                    b.Property<decimal>("TareWeightKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("tare_weight_kg");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("updated_at");
-
-                    b.Property<decimal>("WidthMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("width_mm");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("pallet_types", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_pallet_dimensions_positive", "length_mm > 0 and width_mm > 0 and height_mm > 0");
-
-                            t.HasCheckConstraint("ck_pallet_payload_not_over_gross", "max_payload_kg is null or max_gross_weight_kg is null or max_payload_kg <= max_gross_weight_kg");
-
-                            t.HasCheckConstraint("ck_pallet_stack_rules", "max_stack_count is null or max_stack_count >= 1");
-
-                            t.HasCheckConstraint("ck_pallet_weights_nonnegative", "tare_weight_kg >= 0 and (max_gross_weight_kg is null or max_gross_weight_kg >= 0) and (max_payload_kg is null or max_payload_kg >= 0)");
-                        });
-                });
-
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.PaymentAllocationRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1781,129 +1544,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_product_packagings_quantity_positive", "quantity_in_base_uom > 0");
 
                             t.HasCheckConstraint("ck_product_packagings_units_positive", "units_per_parent > 0");
-                        });
-                });
-
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.ProductPhysicalProfileRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AllowedOrientations")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("allowed_orientations");
-
-                    b.Property<string>("CompatibilityGroup")
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)")
-                        .HasColumnName("compatibility_group");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTimeOffset>("EffectiveFrom")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("effective_from");
-
-                    b.Property<DateTimeOffset?>("EffectiveTo")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("effective_to");
-
-                    b.Property<decimal>("HeightMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("height_mm");
-
-                    b.Property<string>("IncompatibleGroups")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("incompatible_groups");
-
-                    b.Property<bool>("IsFragile")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_fragile");
-
-                    b.Property<bool>("IsStackable")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_stackable");
-
-                    b.Property<bool>("KeepUpright")
-                        .HasColumnType("boolean")
-                        .HasColumnName("keep_upright");
-
-                    b.Property<decimal>("LengthMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("length_mm");
-
-                    b.Property<decimal?>("MaxLoadAboveKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("max_load_above_kg");
-
-                    b.Property<int?>("MaxStackCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("max_stack_count");
-
-                    b.Property<decimal>("NetWeightKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("net_weight_kg");
-
-                    b.Property<string>("PhysicalPolicySnapshot")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("physical_policy_snapshot");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_id");
-
-                    b.Property<long>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bigint")
-                        .HasDefaultValue(1L)
-                        .HasColumnName("row_version");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("updated_at");
-
-                    b.Property<decimal?>("VolumeM3")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("volume_m3");
-
-                    b.Property<decimal>("WidthMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("width_mm");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId")
-                        .HasDatabaseName("ix_product_physical_product");
-
-                    b.HasIndex("ProductId", "EffectiveFrom")
-                        .IsUnique();
-
-                    b.ToTable("product_physical_profiles", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_product_physical_dimensions_positive", "length_mm > 0 and width_mm > 0 and height_mm > 0");
-
-                            t.HasCheckConstraint("ck_product_physical_effective_range", "effective_to is null or effective_to > effective_from");
-
-                            t.HasCheckConstraint("ck_product_physical_load_above", "max_load_above_kg is null or max_load_above_kg >= 0");
-
-                            t.HasCheckConstraint("ck_product_physical_stack_rules", "max_stack_count is null or max_stack_count >= 1");
-
-                            t.HasCheckConstraint("ck_product_physical_volume_positive", "volume_m3 is null or volume_m3 > 0");
-
-                            t.HasCheckConstraint("ck_product_physical_weight_nonnegative", "net_weight_kg >= 0");
                         });
                 });
 
@@ -3317,23 +2957,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                     b.ToTable("user_roles", (string)null);
                 });
 
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityPalletTypeRecord", b =>
-                {
-                    b.Property<Guid>("VehicleCapacityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("vehicle_capacity_id");
-
-                    b.Property<Guid>("PalletTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("pallet_type_id");
-
-                    b.HasKey("VehicleCapacityId", "PalletTypeId");
-
-                    b.HasIndex("PalletTypeId");
-
-                    b.ToTable("vehicle_capacity_pallet_types", (string)null);
-                });
-
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3402,64 +3025,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_vehicle_capacities_limits", "max_usable_volume > 0 and max_pallet_count > 0 and max_load_height > 0");
 
                             t.HasCheckConstraint("ck_vehicle_capacities_weight", "max_gross_weight > 0 and tare_weight >= 0 and tare_weight < max_gross_weight");
-                        });
-                });
-
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityZoneRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AccessSide")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("access_side");
-
-                    b.Property<decimal>("LengthMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("length_mm");
-
-                    b.Property<decimal?>("MaxLoadKg")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("max_load_kg");
-
-                    b.Property<int>("SequenceNo")
-                        .HasColumnType("integer")
-                        .HasColumnName("sequence_no");
-
-                    b.Property<Guid>("VehicleCapacityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("vehicle_capacity_id");
-
-                    b.Property<decimal>("WidthMm")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)")
-                        .HasColumnName("width_mm");
-
-                    b.Property<string>("ZoneCode")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)")
-                        .HasColumnName("zone_code");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("VehicleCapacityId", "SequenceNo")
-                        .IsUnique();
-
-                    b.HasIndex("VehicleCapacityId", "ZoneCode")
-                        .IsUnique();
-
-                    b.ToTable("vehicle_capacity_zones", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_vehicle_capacity_zone_dimensions_positive", "length_mm > 0 and width_mm > 0");
-
-                            t.HasCheckConstraint("ck_vehicle_capacity_zone_load_nonnegative", "max_load_kg is null or max_load_kg >= 0");
-
-                            t.HasCheckConstraint("ck_vehicle_capacity_zone_sequence_positive", "sequence_no >= 1");
                         });
                 });
 
@@ -3826,17 +3391,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.PackagingPhysicalProfileRecord", b =>
-                {
-                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.ProductPackagingRecord", "Packaging")
-                        .WithMany()
-                        .HasForeignKey("PackagingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Packaging");
-                });
-
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.PaymentAllocationRecord", b =>
                 {
                     b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.InvoiceRecord", null)
@@ -3910,17 +3464,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("ParentPackaging");
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.ProductPhysicalProfileRecord", b =>
-                {
-                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.ProductRecord", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
 
                     b.Navigation("Product");
                 });
@@ -4262,25 +3805,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityPalletTypeRecord", b =>
-                {
-                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.PalletTypeRecord", "PalletType")
-                        .WithMany("VehicleCapacityPalletTypes")
-                        .HasForeignKey("PalletTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityRecord", "VehicleCapacity")
-                        .WithMany("PalletTypes")
-                        .HasForeignKey("VehicleCapacityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("PalletType");
-
-                    b.Navigation("VehicleCapacity");
-                });
-
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityRecord", b =>
                 {
                     b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.VehicleTypeRecord", "VehicleType")
@@ -4290,17 +3814,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("VehicleType");
-                });
-
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityZoneRecord", b =>
-                {
-                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityRecord", "VehicleCapacity")
-                        .WithMany("Zones")
-                        .HasForeignKey("VehicleCapacityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("VehicleCapacity");
                 });
 
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleRecord", b =>
@@ -4345,11 +3858,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.InvoiceRecord", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.PalletTypeRecord", b =>
-                {
-                    b.Navigation("VehicleCapacityPalletTypes");
                 });
 
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.PermissionRecord", b =>
@@ -4414,13 +3922,6 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.UserRecord", b =>
                 {
                     b.Navigation("UserRoles");
-                });
-
-            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleCapacityRecord", b =>
-                {
-                    b.Navigation("PalletTypes");
-
-                    b.Navigation("Zones");
                 });
 
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.VehicleRecord", b =>

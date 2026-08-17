@@ -28,4 +28,20 @@ public static class PermissionPolicies
     public const string StockTransferRead = "permission:stock-transfer.read";
     public const string StockTransferComplete = "permission:stock-transfer.complete";
     public const string StockTransferCancel = "permission:stock-transfer.cancel";
+    public const string VehicleTypeRead = "permission:vehicle-type.read";
+    public const string VehicleTypeManage = "permission:vehicle-type.manage";
+    public const string VehicleRead = "permission:vehicle.read";
+    public const string VehicleManage = "permission:vehicle.manage";
+    public const string VehicleStatusUpdate = "permission:vehicle.status-update";
+    public const string DriverRead = "permission:driver.read";
+    public const string DriverManage = "permission:driver.manage";
+    public const string ShipmentCreate = "permission:shipment.create";
+    public const string ShipmentRead = "permission:shipment.read";
+    public const string ShipmentRouteManage = "permission:shipment.route-manage";
+    public const string ShipmentRouteLock = "permission:shipment.route-lock";
+    public const string ShipmentPlanReplan = "permission:shipment.plan-replan";
+    public const string PhysicalProfileRead = "permission:physical-profile.read";
+    public const string PhysicalProfileManage = "permission:physical-profile.manage";
+    public const string PalletTypeRead = "permission:pallet-type.read";
+    public const string PalletTypeManage = "permission:pallet-type.manage";
 }
