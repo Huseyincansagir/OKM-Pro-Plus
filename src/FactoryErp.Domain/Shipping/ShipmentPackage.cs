@@ -169,7 +169,7 @@ public sealed class ShipmentPackage : AggregateRoot
 
     public void Load()
     {
-        if (Status != ShipmentPackageStatus.Allocated)
+        if (Status is not (ShipmentPackageStatus.Available or ShipmentPackageStatus.Allocated))
         {
             throw new DomainException(new(
                 "SHIPMENT_PACKAGE_INVALID_TRANSITION",

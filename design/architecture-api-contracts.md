@@ -395,3 +395,20 @@ The API contract now consumes ADR-001–ADR-011. Quantity input endpoints accept
 `DbUpdateConcurrencyException`, PostgreSQL deadlock/serialization failures and allocation constraint violations are mapped to the typed ProblemDetails codes in `architecture-decision-baseline.md`. A retryable conflict requires a fresh read; the API does not blindly replay a command with a stale version or changed payload.
 
 Successful mutation responses include the current resource version/ETag where applicable. Public endpoints never expose internal row versions, stock ledger details, current-account data, salary data or allocation internals.
+
+
+## 9.1 L4-B5 Actual Load Verification endpoint’leri
+
+L4-B5 yalnızca `Locked` LoadPlan üzerinden ShipmentPackage barkoduyla tam paket yükleme doğrulaması yapar. Parent packaging barcode çözümlemesi, partial quantity, offline queue ve departure/delivery proof bu bounded slice’ın dışındadır.
+
+| Method | Path | Permission | Concurrency / idempotency |
+|---|---|---|---|
+| POST | `/load-plans/{loadPlanId}/load-verification/sessions` | `shipment.load-verify` | `If-Match` LoadPlan row version; `Idempotency-Key` zorunlu |
+| GET | `/load-verification/sessions/{sessionId}` | `shipment.read` | Read-only session ve scan projection |
+| POST | `/load-verification/sessions/{sessionId}/scans` | `shipment.load-verify` | `If-Match` session row version; normalize edilmiş barcode + scan mode; replay/mismatch |
+| POST | `/load-verification/sessions/{sessionId}/complete` | `shipment.load-verify` | Eksiksiz accepted package set’i ve session ETag zorunlu |
+| POST | `/load-verification/sessions/{sessionId}/close-discrepancy` | `shipment.load-verify-override` | Gerekçeli discrepancy kapanışı; hard ownership/state hatası override edilemez |
+
+`ScanLoadVerificationRequest` `barcode`, opsiyonel `expectedLoadUnitId` ve `scanMode` alanlarını taşır. İlk implementation’da yalnızca `ShipmentPackage.PackageCode` çözülür ve tam paket miktarı kullanılır. Başarılı scan paketi `Loaded` yapar; tüm beklenen paketler kabul edildiğinde ilgili `LoadUnit` kayıtları `Loaded` olur. `complete` komutu session’ı ve Shipment’ı `Loaded` state’ine taşır; `InTransit` geçişi bu slice’ta yoktur.
+
+Scan transaction’ı deterministic olarak `LoadPlan → Shipment → LoadVerificationSession → ShipmentPackage → LoadUnit → LoadUnitItem` satırlarını kilitler. Aynı package için ikinci eşzamanlı command stale session ETag ile `409 RESOURCE_VERSION_CONFLICT` alır; aynı idempotency key replay’i önceki response’u döndürür, farklı payload mismatch’i `IDEMPOTENCY_PAYLOAD_MISMATCH` üretir.

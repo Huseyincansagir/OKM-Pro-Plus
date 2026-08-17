@@ -571,3 +571,94 @@ public sealed record WarningResolutionInput(
     Guid ValidationResultId,
     string Action,
     string Reason);
+
+
+public sealed record StartLoadVerificationRequest;
+
+public sealed record ScanLoadVerificationRequest(
+    string Barcode,
+    Guid? ExpectedLoadUnitId,
+    string ScanMode);
+
+public sealed record CompleteLoadVerificationRequest;
+
+public sealed record CloseLoadVerificationDiscrepancyRequest(
+    string Reason);
+
+public sealed record LoadVerificationScanDto(
+    Guid Id,
+    Guid SessionId,
+    Guid LoadPlanId,
+    Guid ShipmentId,
+    Guid? ShipmentPackageId,
+    Guid? ExpectedLoadUnitId,
+    Guid? ActualLoadUnitId,
+    string Barcode,
+    string Status,
+    string ScanMode,
+    decimal QuantityBase,
+    string? ReasonCode,
+    string? ReasonText,
+    Guid ScannedBy,
+    DateTimeOffset ScannedAt,
+    string IdempotencyKey,
+    string CorrelationId,
+    long RowVersion);
+
+public sealed record LoadVerificationSessionDto(
+    Guid Id,
+    Guid LoadPlanId,
+    Guid ShipmentId,
+    string Status,
+    Guid StartedBy,
+    DateTimeOffset StartedAt,
+    Guid? CompletedBy,
+    DateTimeOffset? CompletedAt,
+    string? CompletionReason,
+    IReadOnlyCollection<LoadVerificationScanDto> Scans,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    long RowVersion);
+
+public interface ILoadVerificationCommandService
+{
+    Task<LoadVerificationSessionDto> StartSessionAsync(
+        Guid loadPlanId,
+        StartLoadVerificationRequest request,
+        long expectedLoadPlanRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadVerificationSessionDto?> GetSessionAsync(
+        Guid sessionId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadVerificationScanDto> ScanAsync(
+        Guid sessionId,
+        ScanLoadVerificationRequest request,
+        long expectedSessionRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadVerificationSessionDto> CompleteAsync(
+        Guid sessionId,
+        CompleteLoadVerificationRequest request,
+        long expectedSessionRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadVerificationSessionDto> CloseDiscrepancyAsync(
+        Guid sessionId,
+        CloseLoadVerificationDiscrepancyRequest request,
+        long expectedSessionRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+}

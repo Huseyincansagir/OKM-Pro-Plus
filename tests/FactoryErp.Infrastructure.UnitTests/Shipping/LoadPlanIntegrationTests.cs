@@ -375,6 +375,300 @@ public sealed class LoadPlanIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Load_verification_accepts_package_replays_scan_and_completes_state_chain()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var vehicleTypeId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var capacityId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            await InsertLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b5-accepted");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b5-accepted");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            await using var planContext = CreateContext();
+            var planService = CreateLoadPlanService(planContext);
+            var created = await planService.CreateLoadPlanAsync(
+                shipmentId,
+                BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                actorId,
+                "l4b5-accepted-create-" + Guid.NewGuid(),
+                "l4b5-accepted",
+                CancellationToken.None);
+            loadPlanId = created.Id;
+            var plan = await planContext.LoadPlans.SingleAsync(x => x.Id == loadPlanId);
+            plan.VehicleId = vehicleId;
+            plan.VehicleCapacityId = capacityId;
+            plan.InputSnapshotHash = "sha256:l4b5-accepted";
+            plan.FeasibilityStatus = nameof(LoadPlanFeasibilityStatus.Feasible);
+            plan.Status = nameof(LoadPlanStatus.Valid);
+            plan.ValidationSummary = "{\"hardErrors\":0,\"warnings\":0}";
+            await planContext.SaveChangesAsync();
+            var locked = await planService.LockLoadPlanAsync(
+                loadPlanId,
+                new LockLoadPlanRequest(true, []),
+                plan.RowVersion,
+                actorId,
+                "l4b5-accepted-lock-" + Guid.NewGuid(),
+                "l4b5-accepted",
+                CancellationToken.None);
+
+            await using var context = CreateContext();
+            var verification = CreateLoadVerificationService(context);
+            var packageCode = await context.ShipmentPackages
+                .Where(x => x.Id == setup.PackageId)
+                .Select(x => x.PackageCode!)
+                .SingleAsync();
+            var session = await verification.StartSessionAsync(
+                loadPlanId,
+                new StartLoadVerificationRequest(),
+                locked.RowVersion,
+                actorId,
+                "l4b5-accepted-session-" + Guid.NewGuid(),
+                "l4b5-accepted",
+                CancellationToken.None);
+            var scanRequest = new ScanLoadVerificationRequest(packageCode, locked.LoadUnits.Single().Id, "Package");
+            var scanKey = "l4b5-accepted-scan-" + Guid.NewGuid();
+            var scan = await verification.ScanAsync(
+                session.Id,
+                scanRequest,
+                session.RowVersion,
+                actorId,
+                scanKey,
+                "l4b5-accepted",
+                CancellationToken.None);
+            var replay = await verification.ScanAsync(
+                session.Id,
+                scanRequest,
+                session.RowVersion,
+                actorId,
+                scanKey,
+                "l4b5-accepted",
+                CancellationToken.None);
+
+            scan.Status.Should().Be(nameof(LoadVerificationScanStatus.Accepted));
+            replay.Id.Should().Be(scan.Id);
+            (await context.ShipmentPackages.SingleAsync(x => x.Id == setup.PackageId)).Status.Should().Be(nameof(ShipmentPackageStatus.Loaded));
+
+            var refreshedSession = await verification.GetSessionAsync(session.Id, CancellationToken.None);
+            var completed = await verification.CompleteAsync(
+                session.Id,
+                new CompleteLoadVerificationRequest(),
+                refreshedSession!.RowVersion,
+                actorId,
+                "l4b5-accepted-complete-" + Guid.NewGuid(),
+                "l4b5-accepted",
+                CancellationToken.None);
+
+            completed.Status.Should().Be(nameof(LoadVerificationSessionStatus.Completed));
+            (await context.LoadUnits.SingleAsync(x => x.LoadPlanId == loadPlanId)).Status.Should().Be(nameof(LoadUnitStatus.Loaded));
+            (await context.Shipments.SingleAsync(x => x.Id == shipmentId)).Status.Should().Be("Loaded");
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
+            await CleanupLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+        }
+    }
+
+    [Fact]
+    public async Task Load_verification_records_unexpected_barcode_and_rejects_stale_session_version()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var vehicleTypeId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var capacityId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            await InsertLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b5-discrepancy");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b5-discrepancy");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            await using var planContext = CreateContext();
+            var planService = CreateLoadPlanService(planContext);
+            var created = await planService.CreateLoadPlanAsync(
+                shipmentId,
+                BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                actorId,
+                "l4b5-discrepancy-create-" + Guid.NewGuid(),
+                "l4b5-discrepancy",
+                CancellationToken.None);
+            loadPlanId = created.Id;
+            var plan = await planContext.LoadPlans.SingleAsync(x => x.Id == loadPlanId);
+            plan.VehicleId = vehicleId;
+            plan.VehicleCapacityId = capacityId;
+            plan.InputSnapshotHash = "sha256:l4b5-discrepancy";
+            plan.FeasibilityStatus = nameof(LoadPlanFeasibilityStatus.Feasible);
+            plan.Status = nameof(LoadPlanStatus.Valid);
+            plan.ValidationSummary = "{\"hardErrors\":0,\"warnings\":0}";
+            await planContext.SaveChangesAsync();
+            var locked = await planService.LockLoadPlanAsync(
+                loadPlanId,
+                new LockLoadPlanRequest(true, []),
+                plan.RowVersion,
+                actorId,
+                "l4b5-discrepancy-lock-" + Guid.NewGuid(),
+                "l4b5-discrepancy",
+                CancellationToken.None);
+
+            await using var context = CreateContext();
+            var verification = CreateLoadVerificationService(context);
+            var session = await verification.StartSessionAsync(
+                loadPlanId,
+                new StartLoadVerificationRequest(),
+                locked.RowVersion,
+                actorId,
+                "l4b5-discrepancy-session-" + Guid.NewGuid(),
+                "l4b5-discrepancy",
+                CancellationToken.None);
+            var unexpected = await verification.ScanAsync(
+                session.Id,
+                new ScanLoadVerificationRequest("UNKNOWN-BARCODE", null, "Package"),
+                session.RowVersion,
+                actorId,
+                "l4b5-discrepancy-scan-" + Guid.NewGuid(),
+                "l4b5-discrepancy",
+                CancellationToken.None);
+            unexpected.Status.Should().Be(nameof(LoadVerificationScanStatus.Unexpected));
+            unexpected.ReasonCode.Should().Be("PACKAGE_BARCODE_NOT_FOUND");
+
+            var stale = () => verification.ScanAsync(
+                session.Id,
+                new ScanLoadVerificationRequest("UNKNOWN-BARCODE-2", null, "Package"),
+                session.RowVersion,
+                actorId,
+                "l4b5-discrepancy-stale-" + Guid.NewGuid(),
+                "l4b5-discrepancy",
+                CancellationToken.None);
+            await stale.Should().ThrowAsync<DomainException>()
+                .Where(x => x.Error.Code == "RESOURCE_VERSION_CONFLICT");
+
+            var refreshedSession = await verification.GetSessionAsync(session.Id, CancellationToken.None);
+            var closed = await verification.CloseDiscrepancyAsync(
+                session.Id,
+                new CloseLoadVerificationDiscrepancyRequest("Barkod fiziksel kontrolde bulunamadı."),
+                refreshedSession!.RowVersion,
+                actorId,
+                "l4b5-discrepancy-close-" + Guid.NewGuid(),
+                "l4b5-discrepancy",
+                CancellationToken.None);
+            closed.Status.Should().Be(nameof(LoadVerificationSessionStatus.Discrepancy));
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
+            await CleanupLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+        }
+    }
+
+    [Fact]
+    public async Task Concurrent_load_verification_scan_accepts_package_only_once()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var vehicleTypeId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var capacityId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            await InsertLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b5-race");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b5-race");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            Guid sessionId;
+            long sessionRowVersion;
+            string packageCode;
+            Guid loadUnitId;
+            await using (var planContext = CreateContext())
+            {
+                var planService = CreateLoadPlanService(planContext);
+                var created = await planService.CreateLoadPlanAsync(
+                    shipmentId,
+                    BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                    actorId,
+                    "l4b5-race-create-" + Guid.NewGuid(),
+                    "l4b5-race",
+                    CancellationToken.None);
+                loadPlanId = created.Id;
+                var plan = await planContext.LoadPlans.SingleAsync(x => x.Id == loadPlanId);
+                plan.VehicleId = vehicleId;
+                plan.VehicleCapacityId = capacityId;
+                plan.InputSnapshotHash = "sha256:l4b5-race";
+                plan.FeasibilityStatus = nameof(LoadPlanFeasibilityStatus.Feasible);
+                plan.Status = nameof(LoadPlanStatus.Valid);
+                plan.ValidationSummary = "{\"hardErrors\":0,\"warnings\":0}";
+                await planContext.SaveChangesAsync();
+                var locked = await planService.LockLoadPlanAsync(
+                    loadPlanId,
+                    new LockLoadPlanRequest(true, []),
+                    plan.RowVersion,
+                    actorId,
+                    "l4b5-race-lock-" + Guid.NewGuid(),
+                    "l4b5-race",
+                    CancellationToken.None);
+                await using var sessionContext = CreateContext();
+                var sessionService = CreateLoadVerificationService(sessionContext);
+                var session = await sessionService.StartSessionAsync(
+                    loadPlanId,
+                    new StartLoadVerificationRequest(),
+                    locked.RowVersion,
+                    actorId,
+                    "l4b5-race-session-" + Guid.NewGuid(),
+                    "l4b5-race",
+                    CancellationToken.None);
+                sessionId = session.Id;
+                sessionRowVersion = session.RowVersion;
+                packageCode = await sessionContext.ShipmentPackages.Where(x => x.Id == setup.PackageId).Select(x => x.PackageCode!).SingleAsync();
+                loadUnitId = locked.LoadUnits.Single().Id;
+            }
+
+            await using var contextA = CreateContext();
+            await using var contextB = CreateContext();
+            var serviceA = CreateLoadVerificationService(contextA);
+            var serviceB = CreateLoadVerificationService(contextB);
+            var scanRequest = new ScanLoadVerificationRequest(packageCode, loadUnitId, "Package");
+            var results = await Task.WhenAll(
+                TryScanAsync(serviceA, sessionId, scanRequest, sessionRowVersion, actorId, "l4b5-race-scan-a-" + Guid.NewGuid()),
+                TryScanAsync(serviceB, sessionId, scanRequest, sessionRowVersion, actorId, "l4b5-race-scan-b-" + Guid.NewGuid()));
+
+            results.Count(x => x.Result?.Status == nameof(LoadVerificationScanStatus.Accepted)).Should().Be(1);
+            results.Count(x => x.ErrorCode == "RESOURCE_VERSION_CONFLICT").Should().Be(1);
+            await using var verifyContext = CreateContext();
+            (await verifyContext.LoadVerificationScans.CountAsync(x => x.SessionId == sessionId && x.Status == nameof(LoadVerificationScanStatus.Accepted))).Should().Be(1);
+            (await verifyContext.ShipmentPackages.SingleAsync(x => x.Id == setup.PackageId)).Status.Should().Be(nameof(ShipmentPackageStatus.Loaded));
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
+            await CleanupLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+        }
+    }
+
     private static CreateLoadPlanRequest BuildRequest(
         ShipmentDto shipment,
         RoutePlanDto routePlan,
@@ -537,6 +831,27 @@ public sealed class LoadPlanIntegrationTests
     private static LoadPlanCommandService CreateLoadPlanService(FactoryErpDbContext context)
         => new(context, new EfAuditWriter(context), new EfIdempotencyStore(context));
 
+    private static LoadVerificationCommandService CreateLoadVerificationService(FactoryErpDbContext context)
+        => new(context, new EfAuditWriter(context), new EfIdempotencyStore(context));
+
+    private static async Task<(LoadVerificationScanDto? Result, string? ErrorCode)> TryScanAsync(
+        LoadVerificationCommandService service,
+        Guid sessionId,
+        ScanLoadVerificationRequest request,
+        long expectedRowVersion,
+        Guid actorId,
+        string idempotencyKey)
+    {
+        try
+        {
+            return (await service.ScanAsync(sessionId, request, expectedRowVersion, actorId, idempotencyKey, "l4b5-race", CancellationToken.None), null);
+        }
+        catch (DomainException exception)
+        {
+            return (null, exception.Error.Code);
+        }
+    }
+
     private static FactoryErpDbContext CreateContext()
     {
         var connectionString = Environment.GetEnvironmentVariable("FactoryErpTestConnectionString")
@@ -633,6 +948,8 @@ public sealed class LoadPlanIntegrationTests
         var planIds = loadPlanId == Guid.Empty ? Array.Empty<Guid>() : new[] { loadPlanId };
         context.LoadPlanManualChanges.RemoveRange(context.LoadPlanManualChanges.Where(x => planIds.Contains(x.LoadPlanId)));
         context.LoadPlanValidationResults.RemoveRange(context.LoadPlanValidationResults.Where(x => planIds.Contains(x.LoadPlanId)));
+        context.LoadVerificationScans.RemoveRange(context.LoadVerificationScans.Where(x => planIds.Contains(x.LoadPlanId)));
+        context.LoadVerificationSessions.RemoveRange(context.LoadVerificationSessions.Where(x => planIds.Contains(x.LoadPlanId)));
         var unitIds = await context.LoadUnits.Where(x => planIds.Contains(x.LoadPlanId)).Select(x => x.Id).ToArrayAsync();
         var itemIds = await context.LoadUnitItems.Where(x => unitIds.Contains(x.LoadUnitId)).Select(x => x.Id).ToArrayAsync();
         context.LoadUnitStopAllocations.RemoveRange(context.LoadUnitStopAllocations.Where(x => itemIds.Contains(x.LoadUnitItemId)));

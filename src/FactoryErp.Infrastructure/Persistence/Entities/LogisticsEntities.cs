@@ -319,3 +319,56 @@ public sealed class LoadPlanManualChangeRecord
     public LoadPlanRecord LoadPlan { get; set; } = null!;
     public UserRecord ActorUser { get; set; } = null!;
 }
+
+
+public sealed class LoadVerificationSessionRecord
+{
+    public Guid Id { get; set; }
+    public Guid LoadPlanId { get; set; }
+    public Guid ShipmentId { get; set; }
+    public string Status { get; set; } = "Draft";
+    public Guid StartedBy { get; set; }
+    public DateTimeOffset StartedAt { get; set; }
+    public Guid? CompletedBy { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+    public string? CompletionReason { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public long RowVersion { get; set; }
+
+    public LoadPlanRecord LoadPlan { get; set; } = null!;
+    public ShipmentRecord Shipment { get; set; } = null!;
+    public UserRecord StartedByUser { get; set; } = null!;
+    public UserRecord? CompletedByUser { get; set; }
+    public ICollection<LoadVerificationScanRecord> Scans { get; } = new List<LoadVerificationScanRecord>();
+}
+
+public sealed class LoadVerificationScanRecord
+{
+    public Guid Id { get; set; }
+    public Guid SessionId { get; set; }
+    public Guid LoadPlanId { get; set; }
+    public Guid ShipmentId { get; set; }
+    public Guid? ShipmentPackageId { get; set; }
+    public Guid? ExpectedLoadUnitId { get; set; }
+    public Guid? ActualLoadUnitId { get; set; }
+    public string Barcode { get; set; } = string.Empty;
+    public string Status { get; set; } = "Accepted";
+    public string ScanMode { get; set; } = "Package";
+    public decimal QuantityBase { get; set; }
+    public string? ReasonCode { get; set; }
+    public string? ReasonText { get; set; }
+    public Guid ScannedBy { get; set; }
+    public DateTimeOffset ScannedAt { get; set; }
+    public string IdempotencyKey { get; set; } = string.Empty;
+    public string CorrelationId { get; set; } = string.Empty;
+    public long RowVersion { get; set; }
+
+    public LoadVerificationSessionRecord Session { get; set; } = null!;
+    public LoadPlanRecord LoadPlan { get; set; } = null!;
+    public ShipmentRecord Shipment { get; set; } = null!;
+    public ShipmentPackageRecord? ShipmentPackage { get; set; }
+    public LoadUnitRecord? ExpectedLoadUnit { get; set; }
+    public LoadUnitRecord? ActualLoadUnit { get; set; }
+    public UserRecord ScannedByUser { get; set; } = null!;
+}

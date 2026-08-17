@@ -1645,3 +1645,25 @@ Migration `Down` yalnızca bu iki audit/validation tablosunu kaldırır. Uygulan
 **Live PostgreSQL acceptance:** Migration history içinde migration mevcut; unique validation-key index’i, severity/resolution CHECK constraint’leri, resolution pair CHECK’i, manual-change type/entity CHECK’leri ve lookup indexleri canlı veritabanında doğrulanmıştır.
 
 **Permission seed:** `shipment.plan-lock` ID son eki `54`, `shipment.plan-override` ID son eki `55` olarak idempotent system-admin seed listesine eklenmiştir.
+
+
+## L4-B5 Actual Load Verification — implemented forward migration
+
+L4-B5 için `20260817120932_AddLoadVerification` migration’ı `load_verification_sessions` ve `load_verification_scans` tablolarını oluşturur. Session tablosu locked LoadPlan/Shipment ownership’i, lifecycle status, actor/time, completion veya discrepancy reason ve ETag `row_version` alanlarını taşır. Scan tablosu session/plan/shipment ownership’i, çözülen ShipmentPackage, expected/actual LoadUnit, normalize barcode, scan status/mode, tam paket `quantity_base`, reason ve idempotency/correlation alanlarını taşır.
+
+Canlı PostgreSQL üzerinde aşağıdaki kurallar doğrulanmıştır:
+
+| Kural | Database objesi |
+|---|---|
+| Aynı LoadPlan için tek aktif session | `ux_load_verification_active_session` filtered unique index (`Draft`, `InProgress`) |
+| Aynı session içinde accepted package tekilliği | `ux_load_verification_accepted_package` filtered unique index |
+| Scan idempotency tekilliği | `ux_load_verification_scan_idempotency` unique index (`session_id`, `idempotency_key`) |
+| Session/scan lifecycle | Status CHECK constraint’leri |
+| Completion actor/time çiftinin tutarlılığı | `ck_load_verification_session_completion_pair` |
+| Discrepancy reason zorunluluğu | `ck_load_verification_session_discrepancy_reason` |
+| Accepted scan package zorunluluğu | `ck_load_verification_scan_accepted_package` |
+| Barcode, audit key ve quantity sınırları | Barcode/key/quantity CHECK constraint’leri |
+
+İlk migration’da row version alanları PostgreSQL store-generated concurrency annotation ile oluşturuldu. B5 service mutation’ları row version’ı aynı transaction içinde manuel ilerlettiği için `20260817122347_FixLoadVerificationRowVersionConcurrency` forward-fix migration’ı ile session ve scan mapping’i `ValueGeneratedNever` standardına getirildi. Böylece session mutation sonrası stale `If-Match` deterministik olarak `RESOURCE_VERSION_CONFLICT` üretir.
+
+B5’te stock movement, vehicle reservation/status, departure, route arrival, delivery proof ve replan yoktur. Bu tablolar yalnızca actual-load verification audit/state projection’ını tutar; stok ledger etkisi ayrı bounded slice’a bırakılmıştır.

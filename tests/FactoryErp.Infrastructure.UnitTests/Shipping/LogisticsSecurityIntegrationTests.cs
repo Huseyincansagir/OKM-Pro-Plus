@@ -71,6 +71,8 @@ public sealed class LogisticsSecurityIntegrationTests
                 "shipment.vehicle-fit",
                 "shipment.plan-lock",
                 "shipment.plan-override",
+                "shipment.load-verify",
+                "shipment.load-verify-override",
             });
             using var fullClient = CreateAuthenticatedClient(factory, fullToken.AccessToken, suffix);
 
@@ -264,6 +266,8 @@ public sealed class LogisticsSecurityIntegrationTests
             readToken.Permissions.Should().NotContain("shipment.vehicle-fit");
             readToken.Permissions.Should().NotContain("shipment.plan-lock");
             readToken.Permissions.Should().NotContain("shipment.plan-override");
+            readToken.Permissions.Should().NotContain("shipment.load-verify");
+            readToken.Permissions.Should().NotContain("shipment.load-verify-override");
             using var readLoadPlan = await readClient.GetAsync($"/api/v1/load-plans/{loadPlanId}");
             readLoadPlan.StatusCode.Should().Be(HttpStatusCode.OK);
             using var forbiddenLoadPlanCreate = await readClient.PostAsJsonAsync(
@@ -294,6 +298,17 @@ public sealed class LogisticsSecurityIntegrationTests
             forbiddenPlanLockRequest.Headers.TryAddWithoutValidation("If-Match", $"\"{loadPlanJson.GetProperty("rowVersion").GetInt64()}\"");
             using var forbiddenPlanLock = await readClient.SendAsync(forbiddenPlanLockRequest);
             forbiddenPlanLock.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            using var forbiddenLoadVerificationStartRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/load-plans/{loadPlanId}/load-verification/sessions")
+            {
+                Content = JsonContent.Create(new { }),
+            };
+            forbiddenLoadVerificationStartRequest.Headers.TryAddWithoutValidation("If-Match", $"\"{loadPlanJson.GetProperty("rowVersion").GetInt64()}\"");
+            using var forbiddenLoadVerificationStart = await readClient.SendAsync(forbiddenLoadVerificationStartRequest);
+            forbiddenLoadVerificationStart.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            using var forbiddenLoadVerificationOverride = await readClient.PostAsJsonAsync(
+                $"/api/v1/load-verification/sessions/{Guid.NewGuid()}/close-discrepancy",
+                new { reason = "read-only" });
+            forbiddenLoadVerificationOverride.StatusCode.Should().Be(HttpStatusCode.Forbidden);
             using var forbiddenWarningResolution = await readClient.PostAsJsonAsync(
                 $"/api/v1/load-plans/{loadPlanId}/warning-resolutions",
                 new { validationResultId = Guid.NewGuid(), action = "Override", reason = "not allowed" });

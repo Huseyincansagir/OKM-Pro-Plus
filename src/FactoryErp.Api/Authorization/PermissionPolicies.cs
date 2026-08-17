@@ -46,6 +46,8 @@ public static class PermissionPolicies
     public const string ShipmentVehicleFit = "permission:shipment.vehicle-fit";
     public const string ShipmentPlanLock = "permission:shipment.plan-lock";
     public const string ShipmentPlanOverride = "permission:shipment.plan-override";
+    public const string ShipmentLoadVerify = "permission:shipment.load-verify";
+    public const string ShipmentLoadVerifyOverride = "permission:shipment.load-verify-override";
     public const string PhysicalProfileRead = "permission:physical-profile.read";
     public const string PhysicalProfileManage = "permission:physical-profile.manage";
     public const string PalletTypeRead = "permission:pallet-type.read";

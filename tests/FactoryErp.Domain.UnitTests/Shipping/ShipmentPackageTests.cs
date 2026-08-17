@@ -79,9 +79,20 @@ public sealed class ShipmentPackageTests
     }
 
     [Fact]
-    public void Load_without_allocation_is_rejected_as_invalid_state()
+    public void Available_package_can_be_loaded_by_actual_load_verification()
     {
         var package = CreatePackage();
+
+        package.Load();
+
+        package.Status.Should().Be(ShipmentPackageStatus.Loaded);
+    }
+
+    [Fact]
+    public void Cancelled_package_cannot_be_loaded()
+    {
+        var package = CreatePackage();
+        package.Cancel();
 
         var action = () => package.Load();
 

@@ -104,6 +104,8 @@ public sealed class IdentitySeeder(
             ("10000000-0000-0000-0000-000000000053", "shipment.vehicle-fit", "shipping", "evaluate"),
             ("10000000-0000-0000-0000-000000000054", "shipment.plan-lock", "shipping", "lock"),
             ("10000000-0000-0000-0000-000000000055", "shipment.plan-override", "shipping", "override"),
+            ("10000000-0000-0000-0000-000000000056", "shipment.load-verify", "shipping", "load-verify"),
+            ("10000000-0000-0000-0000-000000000057", "shipment.load-verify-override", "shipping", "load-verify-override"),
         };
 
         foreach (var definition in definitions)
