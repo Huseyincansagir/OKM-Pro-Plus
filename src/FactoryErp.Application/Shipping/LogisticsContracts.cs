@@ -257,3 +257,54 @@ public interface ILogisticsCommandService
         string correlationId,
         CancellationToken cancellationToken = default);
 }
+
+
+public sealed record CreateShipmentPackageRequest(
+    Guid ShipmentItemId,
+    Guid? PackagingId,
+    Guid? RouteStopId,
+    string PackageType,
+    decimal PackageCount,
+    decimal QuantityBasePerPackage,
+    decimal? EnteredQuantity,
+    string? PackageCode,
+    bool SplitAllowed);
+
+public sealed record ShipmentPackageDto(
+    Guid Id,
+    Guid ShipmentId,
+    Guid ShipmentItemId,
+    Guid? PackagingId,
+    Guid? RouteStopId,
+    string PackageType,
+    decimal PackageCount,
+    decimal QuantityBasePerPackage,
+    decimal QuantityBase,
+    decimal? EnteredQuantity,
+    string? PackageCode,
+    string PackagingSnapshot,
+    string PhysicalSnapshot,
+    bool SplitAllowed,
+    string Status,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    long RowVersion);
+
+public interface IShipmentPackageCommandService
+{
+    Task<ShipmentPackageDto> CreateShipmentPackageAsync(
+        Guid shipmentId,
+        CreateShipmentPackageRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<ShipmentPackageDto>> GetShipmentPackagesAsync(
+        Guid shipmentId,
+        CancellationToken cancellationToken = default);
+
+    Task<ShipmentPackageDto?> GetShipmentPackageAsync(
+        Guid packageId,
+        CancellationToken cancellationToken = default);
+}

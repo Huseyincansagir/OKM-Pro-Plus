@@ -128,3 +128,31 @@ public sealed class RouteStopRecord
     public CustomerRecord Customer { get; set; } = null!;
     public CustomerAddressRecord Address { get; set; } = null!;
 }
+
+
+public sealed class ShipmentPackageRecord
+{
+    public Guid Id { get; set; }
+    public Guid ShipmentId { get; set; }
+    public Guid ShipmentItemId { get; set; }
+    public Guid? PackagingId { get; set; }
+    public Guid? RouteStopId { get; set; }
+    public string PackageType { get; set; } = string.Empty;
+    public decimal PackageCount { get; set; }
+    public decimal QuantityBasePerPackage { get; set; }
+    public decimal QuantityBase { get; set; }
+    public decimal? EnteredQuantity { get; set; }
+    public string? PackageCode { get; set; }
+    public string PackagingSnapshot { get; set; } = "{}";
+    public string PhysicalSnapshot { get; set; } = "{}";
+    public bool SplitAllowed { get; set; }
+    public string Status { get; set; } = "Available";
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public long RowVersion { get; set; }
+
+    public ShipmentRecord Shipment { get; set; } = null!;
+    public ShipmentItemRecord ShipmentItem { get; set; } = null!;
+    public ProductPackagingRecord? Packaging { get; set; }
+    public RouteStopRecord? RouteStop { get; set; }
+}

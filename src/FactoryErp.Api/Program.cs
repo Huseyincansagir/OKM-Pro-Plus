@@ -110,6 +110,10 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.route-lock"));
     options.AddPolicy(PermissionPolicies.ShipmentPlanReplan, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.plan-replan"));
+    options.AddPolicy(PermissionPolicies.ShipmentPackageRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.package-read"));
+    options.AddPolicy(PermissionPolicies.ShipmentPackageManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.package-manage"));
     options.AddPolicy(PermissionPolicies.PhysicalProfileRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "physical-profile.read"));
     options.AddPolicy(PermissionPolicies.PhysicalProfileManage, policy =>

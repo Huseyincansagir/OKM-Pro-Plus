@@ -63,6 +63,8 @@ public sealed class LogisticsSecurityIntegrationTests
                 "shipment.plan-replan",
                 "physical-profile.manage",
                 "pallet-type.manage",
+                "shipment.package-read",
+                "shipment.package-manage",
             });
             using var fullClient = CreateAuthenticatedClient(factory, fullToken.AccessToken, suffix);
 
@@ -138,6 +140,22 @@ public sealed class LogisticsSecurityIntegrationTests
             physicalProfileResponse.StatusCode.Should().Be(HttpStatusCode.Created);
             physicalProfileId = (await ReadJsonAsync(physicalProfileResponse)).GetProperty("id").GetGuid();
 
+            using var packageResponse = await fullClient.PostAsJsonAsync(
+                $"/api/v1/shipments/{shipmentId}/packages",
+                new
+                {
+                    shipmentItemId = shipmentJson.GetProperty("items")[0].GetProperty("id").GetGuid(),
+                    packagingId = Guid.Parse("30000000-0000-0000-0000-000000000213"),
+                    routeStopId = (Guid?)null,
+                    packageType = "Case",
+                    packageCount = 2m,
+                    quantityBasePerPackage = 100m,
+                    enteredQuantity = 2m,
+                    packageCode = $"SEC-PKG-{suffix[..8]}",
+                    splitAllowed = false,
+                });
+            packageResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
             using var palletTypeResponse = await fullClient.PostAsJsonAsync(
                 "/api/v1/physical-logistics/pallet-types",
                 new
@@ -163,6 +181,8 @@ public sealed class LogisticsSecurityIntegrationTests
             readToken.Permissions.Should().Contain("shipment.read");
             readToken.Permissions.Should().Contain("physical-profile.read");
             readToken.Permissions.Should().Contain("pallet-type.read");
+            readToken.Permissions.Should().Contain("shipment.package-read");
+            readToken.Permissions.Should().NotContain("shipment.package-manage");
             readToken.Permissions.Should().NotContain("vehicle.manage");
             using var readClient = CreateAuthenticatedClient(factory, readToken.AccessToken, suffix);
 
@@ -179,6 +199,24 @@ public sealed class LogisticsSecurityIntegrationTests
                 $"/api/v1/shipments/{shipmentId}/route-plans",
                 new { plannedStartAt = start, plannedEndAt = start.AddHours(1), expectedShipmentRowVersion = shipmentRowVersion });
             forbiddenRouteCreate.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+            using var readPackages = await readClient.GetAsync($"/api/v1/shipments/{shipmentId}/packages");
+            readPackages.StatusCode.Should().Be(HttpStatusCode.OK);
+            using var forbiddenPackageCreate = await readClient.PostAsJsonAsync(
+                $"/api/v1/shipments/{shipmentId}/packages",
+                new
+                {
+                    shipmentItemId = shipmentJson.GetProperty("items")[0].GetProperty("id").GetGuid(),
+                    packagingId = Guid.Parse("30000000-0000-0000-0000-000000000213"),
+                    routeStopId = (Guid?)null,
+                    packageType = "Case",
+                    packageCount = 1m,
+                    quantityBasePerPackage = 100m,
+                    enteredQuantity = 1m,
+                    packageCode = $"READ-PKG-{suffix[..8]}",
+                    splitAllowed = false,
+                });
+            forbiddenPackageCreate.StatusCode.Should().Be(HttpStatusCode.Forbidden);
 
             using var readPhysicalProfile = await readClient.GetAsync($"/api/v1/physical-logistics/products/{ProductId}/profile");
             readPhysicalProfile.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -224,7 +262,7 @@ public sealed class LogisticsSecurityIntegrationTests
         await using var context = CreateContext();
         var systemAdmin = await context.Roles.SingleAsync(x => x.Code == "system_admin");
                     var readPermissions = await context.Permissions
-            .Where(x => x.Code == "vehicle.read" || x.Code == "shipment.read" || x.Code == "physical-profile.read" || x.Code == "pallet-type.read")
+            .Where(x => x.Code == "vehicle.read" || x.Code == "shipment.read" || x.Code == "physical-profile.read" || x.Code == "pallet-type.read" || x.Code == "shipment.package-read")
 
             .ToArrayAsync();
         var now = DateTimeOffset.UtcNow;
@@ -275,6 +313,7 @@ public sealed class LogisticsSecurityIntegrationTests
             var routeIds = await context.RoutePlans.Where(x => x.ShipmentId == shipmentId).Select(x => x.Id).ToArrayAsync();
             context.RouteStops.RemoveRange(context.RouteStops.Where(x => routeIds.Contains(x.RoutePlanId)));
             context.RoutePlans.RemoveRange(context.RoutePlans.Where(x => routeIds.Contains(x.Id)));
+            context.ShipmentPackages.RemoveRange(context.ShipmentPackages.Where(x => x.ShipmentId == shipmentId));
             context.ShipmentItems.RemoveRange(context.ShipmentItems.Where(x => x.ShipmentId == shipmentId));
             context.Shipments.RemoveRange(context.Shipments.Where(x => x.Id == shipmentId));
         }
@@ -310,6 +349,7 @@ public sealed class LogisticsSecurityIntegrationTests
         }
         if (shipmentId.HasValue)
         {
+            context.ShipmentPackages.RemoveRange(context.ShipmentPackages.Where(x => x.ShipmentId == shipmentId.Value));
             context.ShipmentItems.RemoveRange(context.ShipmentItems.Where(x => x.ShipmentId == shipmentId.Value));
             context.Shipments.RemoveRange(context.Shipments.Where(x => x.Id == shipmentId.Value));
         }

@@ -40,6 +40,8 @@ public static class PermissionPolicies
     public const string ShipmentRouteManage = "permission:shipment.route-manage";
     public const string ShipmentRouteLock = "permission:shipment.route-lock";
     public const string ShipmentPlanReplan = "permission:shipment.plan-replan";
+    public const string ShipmentPackageRead = "permission:shipment.package-read";
+    public const string ShipmentPackageManage = "permission:shipment.package-manage";
     public const string PhysicalProfileRead = "permission:physical-profile.read";
     public const string PhysicalProfileManage = "permission:physical-profile.manage";
     public const string PalletTypeRead = "permission:pallet-type.read";

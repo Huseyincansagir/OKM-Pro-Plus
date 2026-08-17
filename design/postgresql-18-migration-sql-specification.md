@@ -876,6 +876,22 @@ CREATE TABLE load_plan_manual_changes (
 
 Kabul: `VehicleFitEvaluation` seçilmeyen adayın rejection code ve kullanım oranlarını saklar; `LoadPlan.Locked` manuel depo onayı olmadan geçilemez. Down route/package/load plan verilerini silmez.
 
+### 10.1 — L4-B1 implementation migration split
+
+Bu bölümdeki 0009 şeması L4-B’nin tamamı için canonical bounded taslağı gösterir; implementation sırasında tek büyük migration yerine bounded slice sırası uygulanır. L4-A migration’ından sonra üretilen ilk L4-B migration yalnızca `shipment_packages` tablosunu oluşturur. Uygulanan migration adı `20260817081758_AddShipmentPackages` olup aşağıdaki L4-B1 kurallarını database seviyesinde enforce eder:
+
+| Kural | Uygulama |
+|---|---|
+| Shipment ownership | `shipment_id` ve `shipment_item_id` için `ON DELETE RESTRICT` FK; command service aynı shipment zincirini transaction içinde doğrular |
+| Route-stop ownership | `route_stop_id` için `ON DELETE RESTRICT` FK; command service route planın shipment ownership’ini doğrular |
+| Server quantity | `package_count * quantity_base_per_package = quantity_base` CHECK constraint; client `quantity_base` source of truth değildir |
+| Package state/type | `Case`, `Package`, `Pallet`, `Loose` ve `Available`, `Allocated`, `Loaded`, `Cancelled` CHECK constraint’leri |
+| Active code uniqueness | `package_code` boş olmayan ve Cancelled olmayan kayıtlar için unique partial index |
+| Physical data | `packaging_snapshot` ve `physical_snapshot` zorunlu `jsonb`; fiziksel snapshot L4-A effective profile as-of lookup ile server’da üretilir |
+| Concurrency | `row_version bigint` concurrency token ve default `1` |
+
+`load_plans`, `load_units`, `load_unit_items`, `load_unit_stop_allocations` ve `vehicle_fit_evaluations` bu migration’a eklenmez; sırasıyla L4-B2 ve L4-B3 gate’lerinde oluşturulacaktır. Down planı `shipment_packages` tablosunu yalnızca bağımlı kayıt yokken kaldırır; production’da belge/lojistik kayıtlarını silen destructive rollback yerine forward-fix veya backup restore tercih edilir.
+
 ## 11. 0010 — Invoices, Tax Codes and Invoice Allocations
 
 ```sql
