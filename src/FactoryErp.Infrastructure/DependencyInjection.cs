@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<ILoadPlanValidationCommandService, LoadPlanCommandService>();
         services.AddScoped<IVehicleFitCommandService, VehicleFitCommandService>();
         services.AddScoped<ILoadVerificationCommandService, LoadVerificationCommandService>();
+        services.AddScoped<IDispatchRunCommandHandler, DispatchRunCommandHandler>();
         services.AddScoped<FinanceSeeder>();
 
         services.AddDbContext<FactoryErpDbContext>(options =>

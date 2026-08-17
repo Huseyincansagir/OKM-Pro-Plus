@@ -11,6 +11,10 @@ public sealed class SalesSeeder(FactoryErpDbContext dbContext)
     private static readonly Guid DemoContactId = Guid.Parse("40000000-0000-0000-0000-000000000103");
     private static readonly Guid DefaultPriceListId = Guid.Parse("40000000-0000-0000-0000-000000000201");
     private static readonly Guid StandardPriceGroupId = Guid.Parse("40000000-0000-0000-0000-000000000202");
+    private static readonly Guid IntegrationSalesOrderId = Guid.Parse("eade528b-1cc3-42c9-8009-93066dac6750");
+    private static readonly Guid IntegrationSalesOrderItemId = Guid.Parse("eade528b-1cc3-42c9-8009-93066dac6751");
+    private static readonly Guid IntegrationDeliveryNoteId = Guid.Parse("eade528b-1cc3-42c9-8009-93066dac675f");
+    private static readonly Guid IntegrationDeliveryNoteItemId = Guid.Parse("eade528b-1cc3-42c9-8009-93066dac6760");
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
@@ -125,6 +129,81 @@ public sealed class SalesSeeder(FactoryErpDbContext dbContext)
                 });
         }
 
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await EnsureIntegrationDeliveryNoteAsync(cancellationToken);
+    }
+
+    private async Task EnsureIntegrationDeliveryNoteAsync(CancellationToken cancellationToken)
+    {
+        if (await dbContext.DeliveryNotes.AnyAsync(x => x.Id == IntegrationDeliveryNoteId, cancellationToken))
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var packagingId = Guid.Parse("30000000-0000-0000-0000-000000000213");
+        var productId = Guid.Parse("30000000-0000-0000-0000-000000000201");
+        var order = new SalesOrderRecord
+        {
+            Id = IntegrationSalesOrderId,
+            OrderNumber = "SO-INTEGRATION-001",
+            CustomerId = DemoCustomerId,
+            Status = "Fulfilled",
+            CurrencyCode = "TRY",
+            TotalNet = 0m,
+            TotalTax = 0m,
+            TotalGross = 0m,
+            RowVersion = 1,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        order.Items.Add(new SalesOrderItemRecord
+        {
+            Id = IntegrationSalesOrderItemId,
+            SalesOrderId = order.Id,
+            ProductId = productId,
+            OrderedQty = 4000m,
+            ReservedQty = 0m,
+            ShippedQty = 4000m,
+            CancelledQty = 0m,
+            RemainingQty = 0m,
+            EnteredQuantity = 40m,
+            EnteredPackagingId = packagingId,
+            PackagingSnapshot = "{\"seed\":\"integration\"}",
+            PartialDeliveryAllowed = true,
+            UnitPrice = 0m,
+            PriceSnapshot = "{}",
+            RowVersion = 1,
+        });
+        var note = new DeliveryNoteRecord
+        {
+            Id = IntegrationDeliveryNoteId,
+            DocumentNumber = "DN-INTEGRATION-001",
+            SalesOrderId = order.Id,
+            CustomerId = DemoCustomerId,
+            Status = "Issued",
+            IssuedAt = now,
+            CreatedAt = now,
+            RowVersion = 1,
+        };
+        note.Items.Add(new DeliveryNoteItemRecord
+        {
+            Id = IntegrationDeliveryNoteItemId,
+            DeliveryNoteId = note.Id,
+            SalesOrderItemId = IntegrationSalesOrderItemId,
+            ProductId = productId,
+            QuantityBase = 4000m,
+            EnteredQuantity = 40m,
+            EnteredPackagingId = packagingId,
+            PackagingSnapshot = "{\"seed\":\"integration\"}",
+            ShippedQty = 4000m,
+            InvoicedQty = 0m,
+            WaivedQty = 0m,
+            RemainingToInvoice = 4000m,
+            RowVersion = 1,
+        });
+        dbContext.SalesOrders.Add(order);
+        dbContext.DeliveryNotes.Add(note);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

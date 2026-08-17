@@ -48,6 +48,10 @@ public static class PermissionPolicies
     public const string ShipmentPlanOverride = "permission:shipment.plan-override";
     public const string ShipmentLoadVerify = "permission:shipment.load-verify";
     public const string ShipmentLoadVerifyOverride = "permission:shipment.load-verify-override";
+    public const string ShipmentDispatch = "permission:shipment.dispatch";
+    public const string ShipmentDepart = "permission:shipment.depart";
+    public const string ShipmentRouteExecute = "permission:shipment.route-execute";
+    public const string ShipmentRouteException = "permission:shipment.route-exception";
     public const string PhysicalProfileRead = "permission:physical-profile.read";
     public const string PhysicalProfileManage = "permission:physical-profile.manage";
     public const string PalletTypeRead = "permission:pallet-type.read";

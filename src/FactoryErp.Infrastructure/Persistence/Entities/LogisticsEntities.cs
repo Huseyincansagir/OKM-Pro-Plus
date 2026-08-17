@@ -121,6 +121,8 @@ public sealed class RouteStopRecord
     public string Status { get; set; } = "Pending";
     public DateTimeOffset? PlannedArrivalAt { get; set; }
     public DateTimeOffset? ActualArrivalAt { get; set; }
+    public DateTimeOffset? ActualDepartureAt { get; set; }
+    public DateTimeOffset? SkippedAt { get; set; }
     public string? ExceptionReason { get; set; }
     public long RowVersion { get; set; }
 
@@ -371,4 +373,59 @@ public sealed class LoadVerificationScanRecord
     public LoadUnitRecord? ExpectedLoadUnit { get; set; }
     public LoadUnitRecord? ActualLoadUnit { get; set; }
     public UserRecord ScannedByUser { get; set; } = null!;
+}
+
+
+public sealed class DispatchRunRecord
+{
+    public Guid Id { get; set; }
+    public Guid ShipmentId { get; set; }
+    public Guid LoadPlanId { get; set; }
+    public Guid RoutePlanId { get; set; }
+    public Guid VehicleId { get; set; }
+    public Guid DriverId { get; set; }
+    public string Status { get; set; } = "Prepared";
+    public DateTimeOffset? PlannedDepartureAt { get; set; }
+    public DateTimeOffset? ActualDepartedAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+    public DateTimeOffset? CancelledAt { get; set; }
+    public Guid CreatedBy { get; set; }
+    public Guid? DispatchedBy { get; set; }
+    public Guid? CompletedBy { get; set; }
+    public Guid? CancelledBy { get; set; }
+    public string? ExceptionReason { get; set; }
+    public long RowVersion { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public ShipmentRecord Shipment { get; set; } = null!;
+    public LoadPlanRecord LoadPlan { get; set; } = null!;
+    public RoutePlanRecord RoutePlan { get; set; } = null!;
+    public VehicleRecord Vehicle { get; set; } = null!;
+    public DriverRecord Driver { get; set; } = null!;
+    public ICollection<RouteExecutionEventRecord> Events { get; } = new List<RouteExecutionEventRecord>();
+}
+
+public sealed class RouteExecutionEventRecord
+{
+    public Guid Id { get; set; }
+    public Guid DispatchRunId { get; set; }
+    public Guid RoutePlanId { get; set; }
+    public Guid? RouteStopId { get; set; }
+    public string EventType { get; set; } = string.Empty;
+    public long SequenceNo { get; set; }
+    public DateTimeOffset OccurredAt { get; set; }
+    public string? LocationText { get; set; }
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
+    public string? Reason { get; set; }
+    public Guid ActorId { get; set; }
+    public string IdempotencyKey { get; set; } = string.Empty;
+    public string CorrelationId { get; set; } = string.Empty;
+    public string PayloadSnapshot { get; set; } = "{}";
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DispatchRunRecord DispatchRun { get; set; } = null!;
+    public RoutePlanRecord RoutePlan { get; set; } = null!;
+    public RouteStopRecord? RouteStop { get; set; }
 }

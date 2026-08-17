@@ -1667,3 +1667,118 @@ Canlı PostgreSQL üzerinde aşağıdaki kurallar doğrulanmıştır:
 İlk migration’da row version alanları PostgreSQL store-generated concurrency annotation ile oluşturuldu. B5 service mutation’ları row version’ı aynı transaction içinde manuel ilerlettiği için `20260817122347_FixLoadVerificationRowVersionConcurrency` forward-fix migration’ı ile session ve scan mapping’i `ValueGeneratedNever` standardına getirildi. Böylece session mutation sonrası stale `If-Match` deterministik olarak `RESOURCE_VERSION_CONFLICT` üretir.
 
 B5’te stock movement, vehicle reservation/status, departure, route arrival, delivery proof ve replan yoktur. Bu tablolar yalnızca actual-load verification audit/state projection’ını tutar; stok ledger etkisi ayrı bounded slice’a bırakılmıştır.
+
+
+## 23. L4-B6 forward migration design — DispatchRun and route execution
+
+L4-B6, L4-B5 `Completed` actual-load verification sonrasında operasyonel dispatch ve route execution geçmişini tutmak için `dispatch_runs` ve `route_execution_events` tablolarını ekler. Bu bölüm executable EF migration’ın canonical SQL taslağıdır; gerçek migration timestamp’i implementation sırasında EF CLI tarafından üretilecektir.
+
+### 23.1 `dispatch_runs`
+
+```sql
+CREATE TABLE dispatch_runs (
+    id uuid PRIMARY KEY,
+    shipment_id uuid NOT NULL REFERENCES shipments(id) ON DELETE RESTRICT,
+    load_plan_id uuid NOT NULL REFERENCES load_plans(id) ON DELETE RESTRICT,
+    route_plan_id uuid NOT NULL REFERENCES route_plans(id) ON DELETE RESTRICT,
+    vehicle_id uuid NOT NULL REFERENCES vehicles(id) ON DELETE RESTRICT,
+    driver_id uuid NOT NULL REFERENCES drivers(id) ON DELETE RESTRICT,
+    status varchar(30) NOT NULL DEFAULT 'Prepared',
+    planned_departure_at timestamptz,
+    actual_departed_at timestamptz,
+    completed_at timestamptz,
+    cancelled_at timestamptz,
+    created_by uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    dispatched_by uuid REFERENCES users(id) ON DELETE RESTRICT,
+    completed_by uuid REFERENCES users(id) ON DELETE RESTRICT,
+    cancelled_by uuid REFERENCES users(id) ON DELETE RESTRICT,
+    exception_reason text,
+    row_version bigint NOT NULL DEFAULT 1,
+    created_at timestamptz NOT NULL,
+    updated_at timestamptz NOT NULL,
+    CONSTRAINT ck_dispatch_runs_status
+        CHECK (status IN ('Prepared', 'Dispatched', 'InTransit', 'Completed', 'Cancelled')),
+    CONSTRAINT ck_dispatch_runs_completed_pair
+        CHECK ((status <> 'Completed' AND completed_at IS NULL AND completed_by IS NULL)
+            OR (status = 'Completed' AND completed_at IS NOT NULL AND completed_by IS NOT NULL)),
+    CONSTRAINT ck_dispatch_runs_cancelled_pair
+        CHECK ((status <> 'Cancelled' AND cancelled_at IS NULL AND cancelled_by IS NULL)
+            OR (status = 'Cancelled' AND cancelled_at IS NOT NULL AND cancelled_by IS NOT NULL
+                AND nullif(btrim(exception_reason), '') IS NOT NULL)),
+    CONSTRAINT ck_dispatch_runs_departed_pair
+        CHECK (status IN ('Prepared', 'Cancelled') OR actual_departed_at IS NOT NULL),
+    CONSTRAINT ck_dispatch_runs_time_order
+        CHECK (completed_at IS NULL OR actual_departed_at IS NULL OR completed_at >= actual_departed_at)
+);
+
+CREATE UNIQUE INDEX ux_dispatch_runs_active_route_plan
+    ON dispatch_runs(route_plan_id)
+    WHERE status IN ('Prepared', 'Dispatched', 'InTransit');
+CREATE UNIQUE INDEX ux_dispatch_runs_active_shipment
+    ON dispatch_runs(shipment_id)
+    WHERE status IN ('Prepared', 'Dispatched', 'InTransit');
+CREATE UNIQUE INDEX ux_dispatch_runs_active_vehicle
+    ON dispatch_runs(vehicle_id)
+    WHERE status IN ('Prepared', 'Dispatched', 'InTransit');
+CREATE UNIQUE INDEX ux_dispatch_runs_active_driver
+    ON dispatch_runs(driver_id)
+    WHERE status IN ('Prepared', 'Dispatched', 'InTransit');
+CREATE INDEX ix_dispatch_runs_board
+    ON dispatch_runs(status, planned_departure_at, id);
+CREATE INDEX ix_dispatch_runs_shipment_history
+    ON dispatch_runs(shipment_id, created_at DESC, id DESC);
+```
+
+### 23.2 `route_execution_events`
+
+```sql
+CREATE TABLE route_execution_events (
+    id uuid PRIMARY KEY,
+    dispatch_run_id uuid NOT NULL REFERENCES dispatch_runs(id) ON DELETE RESTRICT,
+    route_plan_id uuid NOT NULL REFERENCES route_plans(id) ON DELETE RESTRICT,
+    route_stop_id uuid REFERENCES route_stops(id) ON DELETE RESTRICT,
+    event_type varchar(40) NOT NULL,
+    sequence_no bigint NOT NULL,
+    occurred_at timestamptz NOT NULL,
+    location_text varchar(240),
+    latitude numeric(10,7),
+    longitude numeric(10,7),
+    reason text,
+    actor_id uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    idempotency_key varchar(160) NOT NULL,
+    correlation_id varchar(120) NOT NULL,
+    payload_snapshot jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL,
+    CONSTRAINT ck_route_execution_events_type
+        CHECK (event_type IN ('Departed', 'ArrivedAtStop', 'DepartedStop', 'SkippedStop', 'RouteCompleted', 'Cancelled')),
+    CONSTRAINT ck_route_execution_events_sequence CHECK (sequence_no > 0),
+    CONSTRAINT ck_route_execution_events_location
+        CHECK ((latitude IS NULL AND longitude IS NULL)
+            OR (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180)),
+    CONSTRAINT ck_route_execution_events_reason
+        CHECK (event_type NOT IN ('SkippedStop', 'Cancelled')
+            OR nullif(btrim(reason), '') IS NOT NULL),
+    CONSTRAINT ck_route_execution_events_stop_pair
+        CHECK (event_type IN ('Departed', 'RouteCompleted', 'Cancelled') OR route_stop_id IS NOT NULL)
+);
+
+CREATE UNIQUE INDEX ux_route_execution_events_idempotency
+    ON route_execution_events(dispatch_run_id, idempotency_key);
+CREATE UNIQUE INDEX ux_route_execution_events_sequence
+    ON route_execution_events(dispatch_run_id, sequence_no);
+CREATE INDEX ix_route_execution_events_timeline
+    ON route_execution_events(dispatch_run_id, sequence_no, occurred_at, id);
+CREATE INDEX ix_route_execution_events_stop
+    ON route_execution_events(route_stop_id, occurred_at, id)
+    WHERE route_stop_id IS NOT NULL;
+```
+
+### 23.3 RouteStop projection
+
+B6 route execution ekranları için `route_stops` tablosuna nullable `actual_departure_at` ve `skipped_at` alanları eklenir. `actual_departure_at`, varsa `actual_arrival_at` değerinden önce olamaz. Status CHECK mevcut `Pending` değerini koruyarak `Arrived`, `Departed` ve `Skipped` operasyon değerlerini destekleyecek şekilde forward migration ile genişletilir. `Delivered` bu slice’ta üretilmez; delivery-proof bounded slice’ına bırakılır.
+
+### 23.4 Migration ve rollback acceptance
+
+EF migration Up sırası: `dispatch_runs` tablo/FK/CHECK’leri, active resource unique index’leri, `route_execution_events` tablo/FK/CHECK’leri, event idempotency/sequence/timeline index’leri, ardından RouteStop projection alanları ve CHECK’lerdir. Down sırası bunun tersidir. Production ortamında dispatch/event history silen Down migration çalıştırılmaz; violation varsa backfill ve forward-fix uygulanır.
+
+Live acceptance; iki tablonun, dört active dispatch filtered unique index’inin, event idempotency/sequence index’lerinin, tüm FK/CHECK constraint’lerinin ve RouteStop projection alanlarının PostgreSQL catalog’unda doğrulanmasıdır. B6 migration hiçbir stock movement, invoice, current-account veya delivery proof tablosunu değiştirmez.

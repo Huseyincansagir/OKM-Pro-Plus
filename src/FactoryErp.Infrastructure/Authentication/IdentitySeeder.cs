@@ -106,6 +106,10 @@ public sealed class IdentitySeeder(
             ("10000000-0000-0000-0000-000000000055", "shipment.plan-override", "shipping", "override"),
             ("10000000-0000-0000-0000-000000000056", "shipment.load-verify", "shipping", "load-verify"),
             ("10000000-0000-0000-0000-000000000057", "shipment.load-verify-override", "shipping", "load-verify-override"),
+            ("10000000-0000-0000-0000-000000000058", "shipment.dispatch", "shipping", "dispatch"),
+            ("10000000-0000-0000-0000-000000000059", "shipment.depart", "shipping", "depart"),
+            ("10000000-0000-0000-0000-000000000060", "shipment.route-execute", "shipping", "route-execute"),
+            ("10000000-0000-0000-0000-000000000061", "shipment.route-exception", "shipping", "route-exception"),
         };
 
         foreach (var definition in definitions)

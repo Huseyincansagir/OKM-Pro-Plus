@@ -73,8 +73,28 @@ public sealed class LogisticsSecurityIntegrationTests
                 "shipment.plan-override",
                 "shipment.load-verify",
                 "shipment.load-verify-override",
+                "shipment.dispatch",
+                "shipment.depart",
+                "shipment.route-execute",
+                "shipment.route-exception",
             });
             using var fullClient = CreateAuthenticatedClient(factory, fullToken.AccessToken, suffix);
+
+            using var authorizedDispatchProbe = await fullClient.PostAsJsonAsync(
+                $"/api/v1/route-plans/{Guid.NewGuid()}/dispatch",
+                new
+                {
+                    shipmentId = Guid.NewGuid(),
+                    loadPlanId = Guid.NewGuid(),
+                    vehicleId = Guid.NewGuid(),
+                    driverId = Guid.NewGuid(),
+                    plannedDepartureAt = DateTimeOffset.UtcNow.AddHours(1),
+                    stops = Array.Empty<object>(),
+                    expectedLoadPlanRowVersion = 1L,
+                    expectedShipmentRowVersion = 1L,
+                    expectedRoutePlanRowVersion = 1L,
+                });
+            authorizedDispatchProbe.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
 
             using var typeResponse = await fullClient.PostAsJsonAsync(
                 "/api/v1/vehicle-types",
@@ -245,6 +265,34 @@ public sealed class LogisticsSecurityIntegrationTests
             readToken.Permissions.Should().NotContain("shipment.package-manage");
             readToken.Permissions.Should().NotContain("vehicle.manage");
             using var readClient = CreateAuthenticatedClient(factory, readToken.AccessToken, suffix);
+            readToken.Permissions.Should().NotContain(new[]
+            {
+                "shipment.dispatch",
+                "shipment.depart",
+                "shipment.route-execute",
+                "shipment.route-exception",
+            });
+
+            using var forbiddenDispatchProbe = await readClient.PostAsJsonAsync(
+                $"/api/v1/route-plans/{Guid.NewGuid()}/dispatch",
+                new
+                {
+                    shipmentId = Guid.NewGuid(),
+                    loadPlanId = Guid.NewGuid(),
+                    vehicleId = Guid.NewGuid(),
+                    driverId = Guid.NewGuid(),
+                    plannedDepartureAt = DateTimeOffset.UtcNow.AddHours(1),
+                    stops = Array.Empty<object>(),
+                    expectedLoadPlanRowVersion = 1L,
+                    expectedShipmentRowVersion = 1L,
+                    expectedRoutePlanRowVersion = 1L,
+                });
+            forbiddenDispatchProbe.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+            using var forbiddenSkipProbe = await readClient.PostAsJsonAsync(
+                $"/api/v1/dispatch-runs/{Guid.NewGuid()}/stops/{Guid.NewGuid()}/skip",
+                new { occurredAt = DateTimeOffset.UtcNow, reason = "read-only" });
+            forbiddenSkipProbe.StatusCode.Should().Be(HttpStatusCode.Forbidden);
 
             using var readVehicle = await readClient.GetAsync($"/api/v1/vehicles/{vehicleId}");
             readVehicle.StatusCode.Should().Be(HttpStatusCode.OK);

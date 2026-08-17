@@ -68,6 +68,8 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<LoadPlanManualChangeRecord> LoadPlanManualChanges => Set<LoadPlanManualChangeRecord>();
     public DbSet<LoadVerificationSessionRecord> LoadVerificationSessions => Set<LoadVerificationSessionRecord>();
     public DbSet<LoadVerificationScanRecord> LoadVerificationScans => Set<LoadVerificationScanRecord>();
+    public DbSet<DispatchRunRecord> DispatchRuns => Set<DispatchRunRecord>();
+    public DbSet<RouteExecutionEventRecord> RouteExecutionEvents => Set<RouteExecutionEventRecord>();
     public DbSet<VehicleTypeRecord> VehicleTypes => Set<VehicleTypeRecord>();
     public DbSet<VehicleCapacityRecord> VehicleCapacities => Set<VehicleCapacityRecord>();
     public DbSet<VehicleRecord> Vehicles => Set<VehicleRecord>();

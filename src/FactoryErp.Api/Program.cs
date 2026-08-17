@@ -126,6 +126,14 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.load-verify"));
     options.AddPolicy(PermissionPolicies.ShipmentLoadVerifyOverride, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.load-verify-override"));
+    options.AddPolicy(PermissionPolicies.ShipmentDispatch, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.dispatch"));
+    options.AddPolicy(PermissionPolicies.ShipmentDepart, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.depart"));
+    options.AddPolicy(PermissionPolicies.ShipmentRouteExecute, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.route-execute"));
+    options.AddPolicy(PermissionPolicies.ShipmentRouteException, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.route-exception"));
     options.AddPolicy(PermissionPolicies.PhysicalProfileRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "physical-profile.read"));
     options.AddPolicy(PermissionPolicies.PhysicalProfileManage, policy =>

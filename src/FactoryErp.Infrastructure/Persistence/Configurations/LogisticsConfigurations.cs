@@ -188,7 +188,13 @@ public sealed class RouteStopRecordConfiguration : IEntityTypeConfiguration<Rout
             table.HasCheckConstraint("ck_route_stops_sequence_positive", "sequence_no > 0");
             table.HasCheckConstraint(
                 "ck_route_stops_status",
-                "status in ('Pending', 'InProgress', 'Delivered', 'Partial', 'Failed', 'Skipped')");
+                "status in ('Pending', 'Arrived', 'Departed', 'InProgress', 'Delivered', 'Partial', 'Failed', 'Skipped')");
+            table.HasCheckConstraint(
+                "ck_route_stops_execution_time_order",
+                "actual_departure_at is null or actual_arrival_at is null or actual_departure_at >= actual_arrival_at");
+            table.HasCheckConstraint(
+                "ck_route_stops_skipped_reason",
+                "status <> 'Skipped' or nullif(btrim(exception_reason), '') is not null");
         });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
@@ -199,6 +205,8 @@ public sealed class RouteStopRecordConfiguration : IEntityTypeConfiguration<Rout
         builder.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).IsRequired();
         builder.Property(x => x.PlannedArrivalAt).HasColumnName("planned_arrival_at").HasColumnType("timestamptz");
         builder.Property(x => x.ActualArrivalAt).HasColumnName("actual_arrival_at").HasColumnType("timestamptz");
+        builder.Property(x => x.ActualDepartureAt).HasColumnName("actual_departure_at").HasColumnType("timestamptz");
+        builder.Property(x => x.SkippedAt).HasColumnName("skipped_at").HasColumnType("timestamptz");
         builder.Property(x => x.ExceptionReason).HasColumnName("exception_reason").HasColumnType("text");
         builder.Property(x => x.RowVersion).HasColumnName("row_version").HasColumnType("bigint").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate().HasDefaultValue(1L);
         builder.HasIndex(x => new { x.RoutePlanId, x.SequenceNo }).IsUnique();
