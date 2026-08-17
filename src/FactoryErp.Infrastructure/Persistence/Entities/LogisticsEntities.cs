@@ -250,3 +250,34 @@ public sealed class LoadUnitStopAllocationRecord
     public LoadUnitItemRecord LoadUnitItem { get; set; } = null!;
     public RouteStopRecord RouteStop { get; set; } = null!;
 }
+
+
+public sealed class VehicleFitEvaluationRecord
+{
+    public Guid Id { get; set; }
+    public Guid LoadPlanId { get; set; }
+    public Guid VehicleId { get; set; }
+    public Guid? VehicleCapacityId { get; set; }
+    public string CandidateStatus { get; set; } = "Rejected";
+    public string? RejectionCode { get; set; }
+    public string? ReasonText { get; set; }
+    public decimal? WeightRatio { get; set; }
+    public decimal? VolumeRatio { get; set; }
+    public decimal? PalletRatio { get; set; }
+    public decimal? FloorAreaRatio { get; set; }
+    public decimal? HeightRatio { get; set; }
+    public string DoorCheckStatus { get; set; } = "NotChecked";
+    public string DimensionCheckStatus { get; set; } = "NotChecked";
+    public string StackingCheckStatus { get; set; } = "NotChecked";
+    public string AxleCheckStatus { get; set; } = "NotChecked";
+    public string StopAccessStatus { get; set; } = "NotChecked";
+    public decimal? FitScore { get; set; }
+    public string AlgorithmVersion { get; set; } = string.Empty;
+    public string InputSnapshotHash { get; set; } = string.Empty;
+    public string? CapacitySnapshot { get; set; }
+    public DateTimeOffset EvaluatedAt { get; set; }
+
+    public LoadPlanRecord LoadPlan { get; set; } = null!;
+    public VehicleRecord Vehicle { get; set; } = null!;
+    public VehicleCapacityRecord? VehicleCapacity { get; set; }
+}

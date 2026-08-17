@@ -101,6 +101,7 @@ public sealed class IdentitySeeder(
             ("10000000-0000-0000-0000-000000000050", "shipment.package-read", "shipping", "read"),
             ("10000000-0000-0000-0000-000000000051", "shipment.package-manage", "shipping", "manage"),
             ("10000000-0000-0000-0000-000000000052", "shipment.load-plan", "shipping", "manage"),
+            ("10000000-0000-0000-0000-000000000053", "shipment.vehicle-fit", "shipping", "evaluate"),
         };
 
         foreach (var definition in definitions)

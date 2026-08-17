@@ -426,3 +426,61 @@ public interface ILoadPlanCommandService
         Guid loadPlanId,
         CancellationToken cancellationToken = default);
 }
+
+
+public sealed record EvaluateVehicleFitRequest(
+    Guid LoadPlanId,
+    long ExpectedLoadPlanRowVersion,
+    IReadOnlyCollection<Guid>? VehicleIds,
+    string? AlgorithmVersion,
+    string? ParameterSet);
+
+public sealed record VehicleFitEvaluationDto(
+    Guid Id,
+    Guid LoadPlanId,
+    Guid VehicleId,
+    Guid? VehicleCapacityId,
+    string CandidateStatus,
+    string? RejectionCode,
+    string? ReasonText,
+    decimal? WeightRatio,
+    decimal? VolumeRatio,
+    decimal? PalletRatio,
+    decimal? FloorAreaRatio,
+    decimal? HeightRatio,
+    string DoorCheckStatus,
+    string DimensionCheckStatus,
+    string StackingCheckStatus,
+    string AxleCheckStatus,
+    string StopAccessStatus,
+    decimal? FitScore,
+    string AlgorithmVersion,
+    string InputSnapshotHash,
+    string? CapacitySnapshot,
+    DateTimeOffset EvaluatedAt);
+
+public sealed record VehicleFitEvaluationBatchDto(
+    Guid LoadPlanId,
+    Guid ShipmentId,
+    string AlgorithmName,
+    string AlgorithmVersion,
+    string ParameterSet,
+    string InputSnapshotHash,
+    IReadOnlyCollection<VehicleFitEvaluationDto> Evaluations,
+    IReadOnlyCollection<Guid> MissingPhysicalProfilePackageIds);
+
+public interface IVehicleFitCommandService
+{
+    Task<VehicleFitEvaluationBatchDto> EvaluateVehicleFitAsync(
+        Guid shipmentId,
+        EvaluateVehicleFitRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<VehicleFitEvaluationDto>> GetVehicleFitCandidatesAsync(
+        Guid shipmentId,
+        Guid loadPlanId,
+        CancellationToken cancellationToken = default);
+}

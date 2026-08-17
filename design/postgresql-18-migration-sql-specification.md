@@ -912,6 +912,22 @@ L4-B2 migration adı `20260817091855_AddLoadPlanAndUnits` olarak üretilmiş ve 
 
 L4-B2 `POST /api/v1/shipments/{shipmentId}/load-plans` yalnızca Draft üretir; araç rezervasyonu, stok hareketi, vehicle status veya FFD suggestion side-effect’i yoktur. Nested LoadUnit ve stop allocation kayıtları yalnızca aynı shipment’ın package/item/route-stop ownership zinciri doğrulandıktan sonra kaydedilir. Production Down işlemi belge ve lojistik kayıtlarını destructive biçimde silmemeli; yalnızca boş/izole database’de değerlendirilmeli veya forward-fix/backup restore kullanılmalıdır.
 
+### 10.3 — L4-B3 implementation migration split
+
+L4-B3 migration adı `20260817094755_AddVehicleFitEvaluations` olarak üretilmiş ve L4-B2’den sonra uygulanmıştır. Bu bounded migration yalnızca `vehicle_fit_evaluations` tablosunu oluşturur. `load_plan_validation_results`, `load_plan_manual_changes`, suggest, manual approval, lock ve replan davranışları sonraki L4-B4 gate’inde kalır.
+
+| Kural | Database uygulaması |
+|---|---|
+| Candidate state | `Candidate`, `Recommended`, `Rejected`, `NeedsReview` CHECK constraint’i |
+| Hard-check state | Door, dimension, stacking, axle ve stop-access alanlarında `NotChecked`, `Pass`, `Fail`, `Warning` CHECK constraint’i |
+| Ratio safety | Weight, volume, pallet, floor-area, height ve fit-score oranları nullable veya `>= 0` |
+| Snapshot identity | `(load_plan_id, vehicle_id, COALESCE(vehicle_capacity_id, zero_uuid), input_snapshot_hash)` unique expression index’i |
+| Referential safety | LoadPlan, Vehicle ve optional VehicleCapacity FK’leri `ON DELETE RESTRICT` |
+| Determinism | `algorithm_version`, `input_snapshot_hash`, `capacity_snapshot` ve evaluation timestamp saklanır; UUID/insertion order sort key değildir |
+| Persistence boundary | Evaluate/candidates evaluation kaydı üretir; araç rezervasyonu, stok hareketi veya vehicle status değişikliği üretmez |
+
+`vehicle_fit_evaluations` migration’ı local PostgreSQL baseline’ında uygulanmış ve expression unique index’i doğrudan doğrulanmıştır. FFD’nin `PlanningItem` normalization sonucu ve rejection code’ları uygulama katmanında server-side hesaplanır; client tarafından gönderilen utilization veya feasibility sonucu doğruluk kaynağı değildir. Production Down işlemi evaluation/audit geçmişini destructive biçimde silmemeli; forward-fix veya backup restore tercih edilmelidir.
+
 ## 11. 0010 — Invoices, Tax Codes and Invoice Allocations
 
 ```sql

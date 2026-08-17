@@ -37,6 +37,7 @@ public sealed class LogisticsSecurityIntegrationTests
         Guid? physicalProfileId = null;
         Guid? palletTypeId = null;
         Guid? loadPlanId = null;
+        Guid? vehicleCapacityId = null;
         var connectionString = GetConnectionString();
         var previousConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__FactoryErp");
         Environment.SetEnvironmentVariable("ConnectionStrings__FactoryErp", connectionString);
@@ -67,6 +68,7 @@ public sealed class LogisticsSecurityIntegrationTests
                 "shipment.package-read",
                 "shipment.package-manage",
                 "shipment.load-plan",
+                "shipment.vehicle-fit",
             });
             using var fullClient = CreateAuthenticatedClient(factory, fullToken.AccessToken, suffix);
 
@@ -82,6 +84,23 @@ public sealed class LogisticsSecurityIntegrationTests
             vehicleResponse.StatusCode.Should().Be(HttpStatusCode.Created);
             var vehicleJson = await ReadJsonAsync(vehicleResponse);
             vehicleId = vehicleJson.GetProperty("id").GetGuid();
+
+            using var capacityResponse = await fullClient.PostAsJsonAsync(
+                $"/api/v1/vehicle-types/{vehicleTypeId}/capacities",
+                new
+                {
+                    vehicleTypeId,
+                    effectiveFrom = DateTimeOffset.UtcNow.AddMinutes(-5),
+                    effectiveTo = (DateTimeOffset?)null,
+                    maxGrossWeight = 1000m,
+                    tareWeight = 100m,
+                    maxUsableVolume = 30m,
+                    maxPalletCount = 10,
+                    maxLoadHeight = 1800m,
+                    capacityPolicySnapshot = "{\"source\":\"security\"}",
+                });
+            capacityResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+            vehicleCapacityId = (await ReadJsonAsync(capacityResponse)).GetProperty("id").GetGuid();
 
             using var driverResponse = await fullClient.PostAsJsonAsync(
                 "/api/v1/drivers",
@@ -168,7 +187,22 @@ public sealed class LogisticsSecurityIntegrationTests
                     loadUnits = Array.Empty<object>(),
                 });
             loadPlanResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-            loadPlanId = (await ReadJsonAsync(loadPlanResponse)).GetProperty("id").GetGuid();
+            var loadPlanJson = await ReadJsonAsync(loadPlanResponse);
+            loadPlanId = loadPlanJson.GetProperty("id").GetGuid();
+
+            using var fitResponse = await fullClient.PostAsJsonAsync(
+                $"/api/v1/shipments/{shipmentId}/vehicle-fit/evaluate",
+                new
+                {
+                    loadPlanId,
+                    expectedLoadPlanRowVersion = loadPlanJson.GetProperty("rowVersion").GetInt64(),
+                    vehicleIds = new[] { vehicleId },
+                    algorithmVersion = "L4-B3.1",
+                    parameterSet = "ffd:v1:security",
+                });
+            fitResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            using var fullCandidates = await fullClient.GetAsync($"/api/v1/shipments/{shipmentId}/vehicle-fit/candidates?loadPlanId={loadPlanId}");
+            fullCandidates.StatusCode.Should().Be(HttpStatusCode.OK);
 
             using var palletTypeResponse = await fullClient.PostAsJsonAsync(
                 "/api/v1/physical-logistics/pallet-types",
@@ -217,6 +251,7 @@ public sealed class LogisticsSecurityIntegrationTests
             using var readPackages = await readClient.GetAsync($"/api/v1/shipments/{shipmentId}/packages");
             readPackages.StatusCode.Should().Be(HttpStatusCode.OK);
             readToken.Permissions.Should().NotContain("shipment.load-plan");
+            readToken.Permissions.Should().NotContain("shipment.vehicle-fit");
             using var readLoadPlan = await readClient.GetAsync($"/api/v1/load-plans/{loadPlanId}");
             readLoadPlan.StatusCode.Should().Be(HttpStatusCode.OK);
             using var forbiddenLoadPlanCreate = await readClient.PostAsJsonAsync(
@@ -229,6 +264,19 @@ public sealed class LogisticsSecurityIntegrationTests
                     loadUnits = Array.Empty<object>(),
                 });
             forbiddenLoadPlanCreate.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            using var forbiddenVehicleFit = await readClient.PostAsJsonAsync(
+                $"/api/v1/shipments/{shipmentId}/vehicle-fit/evaluate",
+                new
+                {
+                    loadPlanId,
+                    expectedLoadPlanRowVersion = loadPlanJson.GetProperty("rowVersion").GetInt64(),
+                    vehicleIds = new[] { vehicleId },
+                    algorithmVersion = "L4-B3.1",
+                    parameterSet = "ffd:v1:security",
+                });
+            forbiddenVehicleFit.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            using var forbiddenVehicleCandidates = await readClient.GetAsync($"/api/v1/shipments/{shipmentId}/vehicle-fit/candidates?loadPlanId={loadPlanId}");
+            forbiddenVehicleCandidates.StatusCode.Should().Be(HttpStatusCode.Forbidden);
             using var forbiddenPackageCreate = await readClient.PostAsJsonAsync(
                 $"/api/v1/shipments/{shipmentId}/packages",
                 new
@@ -254,7 +302,7 @@ public sealed class LogisticsSecurityIntegrationTests
         }
         finally
         {
-            await CleanupAsync(fullUserId, readUserId, readRoleId, readRoleCode, vehicleTypeId, vehicleId, driverId, shipmentId, routePlanId, physicalProfileId, palletTypeId, loadPlanId);
+            await CleanupAsync(fullUserId, readUserId, readRoleId, readRoleCode, vehicleTypeId, vehicleCapacityId, vehicleId, driverId, shipmentId, routePlanId, physicalProfileId, palletTypeId, loadPlanId);
             Environment.SetEnvironmentVariable("ConnectionStrings__FactoryErp", previousConnectionString);
         }
     }
@@ -353,6 +401,7 @@ public sealed class LogisticsSecurityIntegrationTests
         Guid readRoleId,
         string readRoleCode,
         Guid? vehicleTypeId,
+        Guid? vehicleCapacityId,
         Guid? vehicleId,
         Guid? driverId,
         Guid? shipmentId,
@@ -364,6 +413,16 @@ public sealed class LogisticsSecurityIntegrationTests
         await using var context = CreateContext();
         if (loadPlanId.HasValue)
         {
+            var unitIds = await context.LoadUnits.Where(x => x.LoadPlanId == loadPlanId.Value).Select(x => x.Id).ToArrayAsync();
+            var itemIds = await context.LoadUnitItems.Where(x => unitIds.Contains(x.LoadUnitId)).Select(x => x.Id).ToArrayAsync();
+            context.LoadUnitStopAllocations.RemoveRange(context.LoadUnitStopAllocations.Where(x => itemIds.Contains(x.LoadUnitItemId)));
+            context.LoadUnitItems.RemoveRange(context.LoadUnitItems.Where(x => unitIds.Contains(x.LoadUnitId)));
+            context.LoadUnits.RemoveRange(context.LoadUnits.Where(x => unitIds.Contains(x.Id)));
+            context.LoadPlans.RemoveRange(context.LoadPlans.Where(x => x.Id == loadPlanId.Value));
+        }
+        if (loadPlanId.HasValue)
+        {
+            context.VehicleFitEvaluations.RemoveRange(context.VehicleFitEvaluations.Where(x => x.LoadPlanId == loadPlanId.Value));
             var unitIds = await context.LoadUnits.Where(x => x.LoadPlanId == loadPlanId.Value).Select(x => x.Id).ToArrayAsync();
             var itemIds = await context.LoadUnitItems.Where(x => unitIds.Contains(x.LoadUnitId)).Select(x => x.Id).ToArrayAsync();
             context.LoadUnitStopAllocations.RemoveRange(context.LoadUnitStopAllocations.Where(x => itemIds.Contains(x.LoadUnitItemId)));
@@ -389,6 +448,11 @@ public sealed class LogisticsSecurityIntegrationTests
             context.ShipmentPackages.RemoveRange(context.ShipmentPackages.Where(x => x.ShipmentId == shipmentId.Value));
             context.ShipmentItems.RemoveRange(context.ShipmentItems.Where(x => x.ShipmentId == shipmentId.Value));
             context.Shipments.RemoveRange(context.Shipments.Where(x => x.Id == shipmentId.Value));
+        }
+        if (vehicleCapacityId.HasValue)
+        {
+            context.VehicleCapacityZones.RemoveRange(context.VehicleCapacityZones.Where(x => x.VehicleCapacityId == vehicleCapacityId.Value));
+            context.VehicleCapacities.RemoveRange(context.VehicleCapacities.Where(x => x.Id == vehicleCapacityId.Value));
         }
         if (vehicleId.HasValue)
         {

@@ -43,6 +43,7 @@ public static class PermissionPolicies
     public const string ShipmentPackageRead = "permission:shipment.package-read";
     public const string ShipmentPackageManage = "permission:shipment.package-manage";
     public const string ShipmentLoadPlan = "permission:shipment.load-plan";
+    public const string ShipmentVehicleFit = "permission:shipment.vehicle-fit";
     public const string PhysicalProfileRead = "permission:physical-profile.read";
     public const string PhysicalProfileManage = "permission:physical-profile.manage";
     public const string PalletTypeRead = "permission:pallet-type.read";
