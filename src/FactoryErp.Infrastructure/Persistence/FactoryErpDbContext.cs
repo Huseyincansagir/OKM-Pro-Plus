@@ -59,6 +59,10 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<ShipmentRecord> Shipments => Set<ShipmentRecord>();
     public DbSet<ShipmentItemRecord> ShipmentItems => Set<ShipmentItemRecord>();
     public DbSet<ShipmentPackageRecord> ShipmentPackages => Set<ShipmentPackageRecord>();
+    public DbSet<LoadPlanRecord> LoadPlans => Set<LoadPlanRecord>();
+    public DbSet<LoadUnitRecord> LoadUnits => Set<LoadUnitRecord>();
+    public DbSet<LoadUnitItemRecord> LoadUnitItems => Set<LoadUnitItemRecord>();
+    public DbSet<LoadUnitStopAllocationRecord> LoadUnitStopAllocations => Set<LoadUnitStopAllocationRecord>();
     public DbSet<VehicleTypeRecord> VehicleTypes => Set<VehicleTypeRecord>();
     public DbSet<VehicleCapacityRecord> VehicleCapacities => Set<VehicleCapacityRecord>();
     public DbSet<VehicleRecord> Vehicles => Set<VehicleRecord>();

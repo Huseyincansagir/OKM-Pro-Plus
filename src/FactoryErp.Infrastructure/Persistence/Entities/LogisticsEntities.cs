@@ -156,3 +156,97 @@ public sealed class ShipmentPackageRecord
     public ProductPackagingRecord? Packaging { get; set; }
     public RouteStopRecord? RouteStop { get; set; }
 }
+
+
+public sealed class LoadPlanRecord
+{
+    public Guid Id { get; set; }
+    public Guid ShipmentId { get; set; }
+    public Guid RoutePlanId { get; set; }
+    public int RoutePlanVersion { get; set; }
+    public int Version { get; set; }
+    public Guid? ReplannedFromId { get; set; }
+    public Guid? VehicleId { get; set; }
+    public Guid? VehicleCapacityId { get; set; }
+    public string Status { get; set; } = "Draft";
+    public string FeasibilityStatus { get; set; } = "Infeasible";
+    public string? AlgorithmName { get; set; }
+    public string? AlgorithmVersion { get; set; }
+    public string? ParameterSet { get; set; }
+    public string? InputSnapshotHash { get; set; }
+    public string? CapacitySnapshot { get; set; }
+    public string? UtilizationSnapshot { get; set; }
+    public string ValidationSummary { get; set; } = "{}";
+    public Guid? ApprovedBy { get; set; }
+    public DateTimeOffset? ApprovedAt { get; set; }
+    public Guid? LockedBy { get; set; }
+    public DateTimeOffset? LockedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public long RowVersion { get; set; }
+
+    public ShipmentRecord Shipment { get; set; } = null!;
+    public RoutePlanRecord RoutePlan { get; set; } = null!;
+    public LoadPlanRecord? ReplannedFrom { get; set; }
+    public ICollection<LoadPlanRecord> Replans { get; } = new List<LoadPlanRecord>();
+    public ICollection<LoadUnitRecord> LoadUnits { get; } = new List<LoadUnitRecord>();
+}
+
+public sealed class LoadUnitRecord
+{
+    public Guid Id { get; set; }
+    public Guid LoadPlanId { get; set; }
+    public string UnitCode { get; set; } = string.Empty;
+    public string UnitType { get; set; } = string.Empty;
+    public Guid? PalletTypeId { get; set; }
+    public bool IsMixed { get; set; }
+    public decimal LengthMm { get; set; }
+    public decimal WidthMm { get; set; }
+    public decimal HeightMm { get; set; }
+    public decimal TareWeightKg { get; set; }
+    public decimal GrossWeightKg { get; set; }
+    public decimal VolumeM3 { get; set; }
+    public int? MaxStackCount { get; set; }
+    public string? PlacementZone { get; set; }
+    public int UnloadingPriority { get; set; }
+    public string Status { get; set; } = "Draft";
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public long RowVersion { get; set; }
+
+    public LoadPlanRecord LoadPlan { get; set; } = null!;
+    public PalletTypeRecord? PalletType { get; set; }
+    public ICollection<LoadUnitItemRecord> Items { get; } = new List<LoadUnitItemRecord>();
+}
+
+public sealed class LoadUnitItemRecord
+{
+    public Guid Id { get; set; }
+    public Guid LoadUnitId { get; set; }
+    public Guid ShipmentPackageId { get; set; }
+    public Guid ShipmentItemId { get; set; }
+    public decimal QuantityBase { get; set; }
+    public decimal GrossWeightKg { get; set; }
+    public decimal VolumeM3 { get; set; }
+    public string AllocationSnapshot { get; set; } = "{}";
+    public DateTimeOffset CreatedAt { get; set; }
+    public long RowVersion { get; set; }
+
+    public LoadUnitRecord LoadUnit { get; set; } = null!;
+    public ShipmentPackageRecord ShipmentPackage { get; set; } = null!;
+    public ShipmentItemRecord ShipmentItem { get; set; } = null!;
+    public ICollection<LoadUnitStopAllocationRecord> StopAllocations { get; } = new List<LoadUnitStopAllocationRecord>();
+}
+
+public sealed class LoadUnitStopAllocationRecord
+{
+    public Guid Id { get; set; }
+    public Guid LoadUnitItemId { get; set; }
+    public Guid RouteStopId { get; set; }
+    public decimal QuantityBase { get; set; }
+    public int SequenceNo { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public LoadUnitItemRecord LoadUnitItem { get; set; } = null!;
+    public RouteStopRecord RouteStop { get; set; } = null!;
+}

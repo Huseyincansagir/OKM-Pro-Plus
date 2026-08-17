@@ -892,6 +892,26 @@ Bu bölümdeki 0009 şeması L4-B’nin tamamı için canonical bounded taslağ�
 
 `load_plans`, `load_units`, `load_unit_items`, `load_unit_stop_allocations` ve `vehicle_fit_evaluations` bu migration’a eklenmez; sırasıyla L4-B2 ve L4-B3 gate’lerinde oluşturulacaktır. Down planı `shipment_packages` tablosunu yalnızca bağımlı kayıt yokken kaldırır; production’da belge/lojistik kayıtlarını silen destructive rollback yerine forward-fix veya backup restore tercih edilir.
 
+### 10.2 — L4-B2 implementation migration split
+
+L4-B2 migration adı `20260817091855_AddLoadPlanAndUnits` olarak üretilmiş ve L4-B1’den sonra uygulanmıştır. Bu migration `load_plans`, `load_units`, `load_unit_items` ve `load_unit_stop_allocations` tablolarını açar. Vehicle-fit evaluation, validation result, manual change, suggest, lock ve replan tabloları bu bounded slice’a eklenmez.
+
+| Kural | Database uygulaması |
+|---|---|
+| Plan version uniqueness | `ux_load_plans_shipment_version` ile `(shipment_id, version)` unique |
+| Plan state | Draft/Proposed/Validating/Valid/NeedsReview/Locked/Superseded CHECK |
+| Feasibility | Infeasible/FeasibleWithWarnings/Feasible CHECK |
+| Approval/lock pairs | `approved_by`/`approved_at` ve `locked_by`/`locked_at` çiftleri birlikte dolu veya birlikte null |
+| Locked prerequisites | Locked plan için vehicle, effective capacity, input snapshot hash ve locked actor zorunlu |
+| LoadUnit physical boundary | Ölçüler, hacim, dara/brüt ağırlık ve unloading priority CHECK |
+| Deterministic unit order | `(load_plan_id, unloading_priority, unit_code)` index’i ve `(load_plan_id, unit_code)` unique |
+| Allocation ceiling | Pozitif `quantity_base`; server command shipment item ceiling ve package ownership’i transaction içinde doğrular |
+| Atomic package MVP | `ux_active_package_load_unit` aktif package’ın ikinci LoadUnit’e atanmasını engeller |
+| Stop allocation | Pozitif quantity/sequence ve `(load_unit_item_id, route_stop_id)` unique |
+| Concurrency | Plan, unit ve item kayıtlarında `row_version bigint` concurrency mapping’i |
+
+L4-B2 `POST /api/v1/shipments/{shipmentId}/load-plans` yalnızca Draft üretir; araç rezervasyonu, stok hareketi, vehicle status veya FFD suggestion side-effect’i yoktur. Nested LoadUnit ve stop allocation kayıtları yalnızca aynı shipment’ın package/item/route-stop ownership zinciri doğrulandıktan sonra kaydedilir. Production Down işlemi belge ve lojistik kayıtlarını destructive biçimde silmemeli; yalnızca boş/izole database’de değerlendirilmeli veya forward-fix/backup restore kullanılmalıdır.
+
 ## 11. 0010 — Invoices, Tax Codes and Invoice Allocations
 
 ```sql

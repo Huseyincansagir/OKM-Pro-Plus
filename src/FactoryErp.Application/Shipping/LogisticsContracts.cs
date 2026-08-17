@@ -308,3 +308,121 @@ public interface IShipmentPackageCommandService
         Guid packageId,
         CancellationToken cancellationToken = default);
 }
+
+
+public sealed record CreateLoadPlanRequest(
+    Guid RoutePlanId,
+    int ExpectedRoutePlanVersion,
+    long ExpectedShipmentRowVersion,
+    IReadOnlyCollection<CreateLoadUnitRequest> LoadUnits);
+
+public sealed record CreateLoadUnitRequest(
+    string UnitCode,
+    string UnitType,
+    Guid? PalletTypeId,
+    bool IsMixed,
+    decimal LengthMm,
+    decimal WidthMm,
+    decimal HeightMm,
+    decimal TareWeightKg,
+    decimal GrossWeightKg,
+    decimal VolumeM3,
+    int? MaxStackCount,
+    string? PlacementZone,
+    int UnloadingPriority,
+    IReadOnlyCollection<CreateLoadUnitItemRequest> Items);
+
+public sealed record CreateLoadUnitItemRequest(
+    Guid ShipmentPackageId,
+    Guid ShipmentItemId,
+    decimal QuantityBase,
+    IReadOnlyCollection<CreateLoadUnitStopAllocationRequest> StopAllocations);
+
+public sealed record CreateLoadUnitStopAllocationRequest(
+    Guid RouteStopId,
+    decimal QuantityBase,
+    int SequenceNo);
+
+public sealed record LoadPlanDto(
+    Guid Id,
+    Guid ShipmentId,
+    Guid RoutePlanId,
+    int RoutePlanVersion,
+    int Version,
+    Guid? ReplannedFromId,
+    Guid? VehicleId,
+    Guid? VehicleCapacityId,
+    string Status,
+    string FeasibilityStatus,
+    string? AlgorithmName,
+    string? AlgorithmVersion,
+    string? ParameterSet,
+    string? InputSnapshotHash,
+    string? CapacitySnapshot,
+    string? UtilizationSnapshot,
+    string ValidationSummary,
+    Guid? ApprovedBy,
+    DateTimeOffset? ApprovedAt,
+    Guid? LockedBy,
+    DateTimeOffset? LockedAt,
+    IReadOnlyCollection<LoadUnitDto> LoadUnits,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    long RowVersion);
+
+public sealed record LoadUnitDto(
+    Guid Id,
+    Guid LoadPlanId,
+    string UnitCode,
+    string UnitType,
+    Guid? PalletTypeId,
+    bool IsMixed,
+    decimal LengthMm,
+    decimal WidthMm,
+    decimal HeightMm,
+    decimal TareWeightKg,
+    decimal GrossWeightKg,
+    decimal VolumeM3,
+    int? MaxStackCount,
+    string? PlacementZone,
+    int UnloadingPriority,
+    string Status,
+    IReadOnlyCollection<LoadUnitItemDto> Items,
+    DateTimeOffset CreatedAt,
+    long RowVersion);
+
+public sealed record LoadUnitItemDto(
+    Guid Id,
+    Guid LoadUnitId,
+    Guid ShipmentPackageId,
+    Guid ShipmentItemId,
+    decimal QuantityBase,
+    decimal GrossWeightKg,
+    decimal VolumeM3,
+    string AllocationSnapshot,
+    IReadOnlyCollection<LoadUnitStopAllocationDto> StopAllocations,
+    DateTimeOffset CreatedAt,
+    long RowVersion);
+
+public sealed record LoadUnitStopAllocationDto(
+    Guid Id,
+    Guid LoadUnitItemId,
+    Guid RouteStopId,
+    decimal QuantityBase,
+    int SequenceNo,
+    DateTimeOffset CreatedAt);
+
+public interface ILoadPlanCommandService
+{
+    Task<LoadPlanDto> CreateLoadPlanAsync(
+        Guid shipmentId,
+        CreateLoadPlanRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadPlanDto?> GetLoadPlanAsync(
+        Guid loadPlanId,
+        CancellationToken cancellationToken = default);
+}

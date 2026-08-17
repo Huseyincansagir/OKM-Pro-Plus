@@ -26,6 +26,8 @@ public abstract class Entity
 
     protected void Touch(DateTimeOffset now) => UpdatedAt = now;
 
+    protected void RestoreUpdatedAt(DateTimeOffset updatedAt) => UpdatedAt = updatedAt;
+
     protected void AddDomainEvent(DomainEvent domainEvent) => _domainEvents.Add(domainEvent);
 
     public IReadOnlyCollection<DomainEvent> DequeueDomainEvents()

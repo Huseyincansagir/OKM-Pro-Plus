@@ -36,6 +36,7 @@ public sealed class LogisticsSecurityIntegrationTests
         Guid? routePlanId = null;
         Guid? physicalProfileId = null;
         Guid? palletTypeId = null;
+        Guid? loadPlanId = null;
         var connectionString = GetConnectionString();
         var previousConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__FactoryErp");
         Environment.SetEnvironmentVariable("ConnectionStrings__FactoryErp", connectionString);
@@ -65,6 +66,7 @@ public sealed class LogisticsSecurityIntegrationTests
                 "pallet-type.manage",
                 "shipment.package-read",
                 "shipment.package-manage",
+                "shipment.load-plan",
             });
             using var fullClient = CreateAuthenticatedClient(factory, fullToken.AccessToken, suffix);
 
@@ -156,6 +158,18 @@ public sealed class LogisticsSecurityIntegrationTests
                 });
             packageResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
+            using var loadPlanResponse = await fullClient.PostAsJsonAsync(
+                $"/api/v1/shipments/{shipmentId}/load-plans",
+                new
+                {
+                    routePlanId,
+                    expectedRoutePlanVersion = routeJson.GetProperty("version").GetInt32(),
+                    expectedShipmentRowVersion = shipmentRowVersion,
+                    loadUnits = Array.Empty<object>(),
+                });
+            loadPlanResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+            loadPlanId = (await ReadJsonAsync(loadPlanResponse)).GetProperty("id").GetGuid();
+
             using var palletTypeResponse = await fullClient.PostAsJsonAsync(
                 "/api/v1/physical-logistics/pallet-types",
                 new
@@ -202,6 +216,19 @@ public sealed class LogisticsSecurityIntegrationTests
 
             using var readPackages = await readClient.GetAsync($"/api/v1/shipments/{shipmentId}/packages");
             readPackages.StatusCode.Should().Be(HttpStatusCode.OK);
+            readToken.Permissions.Should().NotContain("shipment.load-plan");
+            using var readLoadPlan = await readClient.GetAsync($"/api/v1/load-plans/{loadPlanId}");
+            readLoadPlan.StatusCode.Should().Be(HttpStatusCode.OK);
+            using var forbiddenLoadPlanCreate = await readClient.PostAsJsonAsync(
+                $"/api/v1/shipments/{shipmentId}/load-plans",
+                new
+                {
+                    routePlanId,
+                    expectedRoutePlanVersion = routeJson.GetProperty("version").GetInt32(),
+                    expectedShipmentRowVersion = shipmentRowVersion,
+                    loadUnits = Array.Empty<object>(),
+                });
+            forbiddenLoadPlanCreate.StatusCode.Should().Be(HttpStatusCode.Forbidden);
             using var forbiddenPackageCreate = await readClient.PostAsJsonAsync(
                 $"/api/v1/shipments/{shipmentId}/packages",
                 new
@@ -227,7 +254,7 @@ public sealed class LogisticsSecurityIntegrationTests
         }
         finally
         {
-            await CleanupAsync(fullUserId, readUserId, readRoleId, readRoleCode, vehicleTypeId, vehicleId, driverId, shipmentId, routePlanId, physicalProfileId, palletTypeId);
+            await CleanupAsync(fullUserId, readUserId, readRoleId, readRoleCode, vehicleTypeId, vehicleId, driverId, shipmentId, routePlanId, physicalProfileId, palletTypeId, loadPlanId);
             Environment.SetEnvironmentVariable("ConnectionStrings__FactoryErp", previousConnectionString);
         }
     }
@@ -331,9 +358,19 @@ public sealed class LogisticsSecurityIntegrationTests
         Guid? shipmentId,
         Guid? routePlanId,
         Guid? physicalProfileId,
-        Guid? palletTypeId)
+        Guid? palletTypeId,
+        Guid? loadPlanId)
     {
         await using var context = CreateContext();
+        if (loadPlanId.HasValue)
+        {
+            var unitIds = await context.LoadUnits.Where(x => x.LoadPlanId == loadPlanId.Value).Select(x => x.Id).ToArrayAsync();
+            var itemIds = await context.LoadUnitItems.Where(x => unitIds.Contains(x.LoadUnitId)).Select(x => x.Id).ToArrayAsync();
+            context.LoadUnitStopAllocations.RemoveRange(context.LoadUnitStopAllocations.Where(x => itemIds.Contains(x.LoadUnitItemId)));
+            context.LoadUnitItems.RemoveRange(context.LoadUnitItems.Where(x => unitIds.Contains(x.LoadUnitId)));
+            context.LoadUnits.RemoveRange(context.LoadUnits.Where(x => unitIds.Contains(x.Id)));
+            context.LoadPlans.RemoveRange(context.LoadPlans.Where(x => x.Id == loadPlanId.Value));
+        }
         if (physicalProfileId.HasValue)
         {
             context.ProductPhysicalProfiles.RemoveRange(context.ProductPhysicalProfiles.Where(x => x.Id == physicalProfileId.Value));

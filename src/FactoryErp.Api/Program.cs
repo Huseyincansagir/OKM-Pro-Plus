@@ -114,6 +114,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.package-read"));
     options.AddPolicy(PermissionPolicies.ShipmentPackageManage, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.package-manage"));
+    options.AddPolicy(PermissionPolicies.ShipmentLoadPlan, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "shipment.load-plan"));
     options.AddPolicy(PermissionPolicies.PhysicalProfileRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "physical-profile.read"));
     options.AddPolicy(PermissionPolicies.PhysicalProfileManage, policy =>
