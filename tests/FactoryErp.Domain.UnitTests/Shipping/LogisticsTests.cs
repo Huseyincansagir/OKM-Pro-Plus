@@ -65,15 +65,16 @@ public sealed class LogisticsTests
     [Fact]
     public void Driver_rejects_expired_license_for_route_end()
     {
+        var licenseExpiry = DateOnly.FromDateTime(DateTime.UtcNow.Date);
         var driver = Driver.Create(
             DriverId,
             null,
             "Örnek Şoför",
             null,
             "B-123456",
-            new DateOnly(2026, 8, 17));
+            licenseExpiry);
 
-        var action = () => driver.EnsureAssignable(new DateOnly(2026, 8, 18));
+        var action = () => driver.EnsureAssignable(licenseExpiry.AddDays(1));
 
         action.Should().Throw<DomainException>().Which.Error.Code.Should().Be("DRIVER_LICENSE_EXPIRED");
     }

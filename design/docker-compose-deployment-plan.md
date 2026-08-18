@@ -2,7 +2,7 @@
 
 **Aşama:** ARCHITECTURE
 
-**Durum:** O-010/O-011 kararlarına göre kabul edilmiş deployment baseline; API/PostgreSQL/migrator/reverse-proxy implementation baseline’ı eklendi, web/mobile/worker/backup halen sonraki slice kapsamındadır.
+**Durum:** API/PostgreSQL/migrator/reverse-proxy ve backup/restore implementation baseline’ı eklendi; web/mobile/worker halen sonraki slice kapsamındadır.
 
 **Kapsam:** Şirket içi local-first server, web, mobil LAN erişimi, public katalog route’u, PostgreSQL, backup/restore, HTTPS, health check ve operasyon sınırları.
 
@@ -255,7 +255,7 @@ Architecture/Operations acceptance için aşağıdaki kanıtlar gerekir:
 | Security | Secret repository’de değil; non-root container ve restricted volume uygulanmış |
 | Observability | API/database/backup hata bildirimi çalışıyor |
 
-Bu belge deployment architecture planıdır. Uygulanmış ilk deployment baseline’ı `deploy/compose.prod.yaml`, `deploy/Dockerfile`, `deploy/nginx.prod.conf` ve `design/implementation-deployment-slice.md` dosyalarında bulunur. Web, mobile, worker ve backup servisleri için ayrı implementation slice gereklidir.
+Bu belge deployment architecture planıdır. Uygulanmış deployment baseline’ı `deploy/compose.prod.yaml`, `deploy/Dockerfile`, `deploy/nginx.prod.conf`, `deploy/backup/` ve `design/implementation-deployment-slice.md` / `design/implementation-backup-restore-slice.md` dosyalarında bulunur. Web, mobile ve worker servisleri ile host-specific HTTPS/scheduler/NAS acceptance ayrı kapsamdır.
 
 
 ## 12. Accepted Architecture ADR overlay

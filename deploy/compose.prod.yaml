@@ -38,6 +38,119 @@ services:
     networks:
       - data
 
+  backup-role-bootstrap:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    image: ${APP_IMAGE_REPOSITORY:-factory-erp}/backup:${APP_IMAGE_TAG:-local}
+    profiles: ["backup-setup"]
+    restart: "no"
+    entrypoint: ["/usr/local/bin/factory-erp-bootstrap-backup-role"]
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGUSER: ${POSTGRES_USER:-factory_erp_app}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_ROLE: ${BACKUP_ROLE:-factory_erp_backup}
+      BACKUP_ROLE_PASSWORD: ${BACKUP_ROLE_PASSWORD:?Set BACKUP_ROLE_PASSWORD for backup jobs}
+      TARGET_DATABASE: ${POSTGRES_DB:-factory_erp}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data
+
+  backup-volume-init:
+    image: alpine:3.20
+    profiles: ["backup"]
+    restart: "no"
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /var/backups/factory-erp && chown 999:999 /var/backups/factory-erp && chmod 0700 /var/backups/factory-erp"]
+    volumes:
+      - backup_data:/var/backups/factory-erp
+    networks:
+      - backup
+
+  backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    image: ${APP_IMAGE_REPOSITORY:-factory-erp}/backup:${APP_IMAGE_TAG:-local}
+    profiles: ["backup"]
+    restart: "no"
+    entrypoint: ["/usr/local/bin/factory-erp-backup"]
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-factory_erp}
+      PGUSER: ${BACKUP_ROLE:-factory_erp_backup}
+      PGPASSWORD: ${BACKUP_ROLE_PASSWORD}
+      BACKUP_ROOT: /var/backups/factory-erp
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_PREFIX: ${BACKUP_PREFIX:-factory_erp}
+    volumes:
+      - backup_data:/var/backups/factory-erp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backup-volume-init:
+        condition: service_completed_successfully
+    networks:
+      - data
+      - backup
+
+  restore-role-bootstrap:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    image: ${APP_IMAGE_REPOSITORY:-factory-erp}/backup:${APP_IMAGE_TAG:-local}
+    profiles: ["restore"]
+    restart: "no"
+    entrypoint: ["/usr/local/bin/factory-erp-bootstrap-restore-role"]
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGUSER: ${POSTGRES_USER:-factory_erp_app}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      RESTORE_ROLE: ${RESTORE_ROLE:-factory_erp_restore}
+      RESTORE_ROLE_PASSWORD: ${RESTORE_ROLE_PASSWORD:?Set RESTORE_ROLE_PASSWORD for restore smoke jobs}
+      TARGET_DATABASE: ${POSTGRES_DB:-factory_erp}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data
+
+  restore-smoke:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    image: ${APP_IMAGE_REPOSITORY:-factory-erp}/backup:${APP_IMAGE_TAG:-local}
+    profiles: ["restore"]
+    restart: "no"
+    entrypoint: ["/usr/local/bin/factory-erp-restore-smoke"]
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-factory_erp}
+      PGUSER: ${RESTORE_ROLE:-factory_erp_restore}
+      PGPASSWORD: ${RESTORE_ROLE_PASSWORD}
+      SOURCE_DATABASE: ${POSTGRES_DB:-factory_erp}
+      BACKUP_FILE: ${BACKUP_FILE:-/var/backups/factory-erp/latest.dump}
+      RESTORE_DATABASE: ${RESTORE_DATABASE:-factory_erp_restore_smoke}
+    volumes:
+      - backup_data:/var/backups/factory-erp:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      restore-role-bootstrap:
+        condition: service_completed_successfully
+    networks:
+      - data
+      - backup
+
   api:
     build:
       context: ..
@@ -85,6 +198,7 @@ services:
 
 volumes:
   postgres_data:
+  backup_data:
 
 networks:
   edge:
@@ -92,4 +206,6 @@ networks:
   internal:
     internal: true
   data:
+    internal: true
+  backup:
     internal: true
