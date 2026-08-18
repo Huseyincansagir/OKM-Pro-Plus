@@ -1,0 +1,394 @@
+FACTORY ERP — AGENT A
+WEB SLICE 002 IMPLEMENTATION
+
+Sen bu görevde ana frontend implementation agentısın.
+
+Mevcut repository state:
+
+Latest completed commit:
+3da3bfc feat: add nextjs web scaffold baseline
+
+WEB SLICE 001:
+PASS
+
+Şimdi yalnızca WEB SLICE 002 — AppShell & Design System üzerinde çalış.
+WEB SLICE 003’e geçme.
+
+==================================================
+ÖNCE OKU
+==================================================
+
+- AGENTS.md
+- .claude/skills/factory-erp-implementation/SKILL.md
+- design/visual-design-system.md
+- design/web-ux-architecture.md
+- design/master-screen-inventory.md
+- design/implementation-web-mobile-slice.md
+- mevcut apps/web/
+
+Önce yukarıdaki dosyaları ve mevcut repository durumunu kontrol et.
+Dosyalardan biri yoksa veya mevcut repository state beklenen commit ile uyuşmuyorsa uygulamaya başlama; BLOCKED raporla.
+
+Mevcut design kararlarını değiştirme.
+Yeni UI kütüphanesi, yeni ikon kütüphanesi veya yeni renk paleti ekleme.
+Mevcut repository’nin styling, icon ve test yaklaşımına uy.
+Kullanıcının mevcut uncommitted değişikliklerini silme, geri alma veya üzerine yazma.
+Sadece WEB SLICE 002 kapsamındaki dosyalarda çalış.
+
+==================================================
+SCOPE
+==================================================
+
+AppShell:
+
+- AppShell
+- Sidebar
+- Topbar
+- Breadcrumb
+- PageHeader
+- UserMenu
+- NotificationArea
+- ConnectionStatus
+
+Responsive web davranışı:
+
+- desktop expanded sidebar
+- tablet collapsible sidebar
+- mobile web drawer sidebar
+- compact topbar
+- single-column content
+
+Native mobile uygulama, Expo/React Native ekranları ve mobil uygulama navigasyonu bu slice’ın dışındadır.
+Responsive web davranışı bu slice’ın kapsamındadır.
+
+Design system:
+
+- background
+- surface
+- border
+- text
+- muted text
+- primary
+- success
+- warning
+- danger
+- info
+
+Mevcut visual-design-system.md içindeki renk tokenlarını aynı ad ve değerlerle kullan.
+Yeni hard-coded renk veya yeni token ekleme.
+Dark mode mevcut design kararlarında tanımlı değilse bu slice’ta dark mode geliştirme.
+
+Common components:
+
+- Button
+- IconButton
+- Input
+- Select
+- Checkbox
+- Badge
+- StatusBadge
+- Card
+- Divider
+- Tooltip
+- DropdownMenu
+- Dialog
+- Drawer
+- Tabs
+- Skeleton
+- Spinner
+- Toast
+- Alert
+- DataTable foundation
+- EmptyState
+- ErrorState
+- PermissionDenied
+
+Bileşenleri mevcut proje conventions’ına uygun, tekrar kullanılabilir ve TypeScript tipleri tanımlı şekilde oluştur.
+Ortak bileşenlerde uygun olduğu ölçüde aşağıdaki ortak props standardını kullan:
+
+- className
+- disabled
+- loading
+- size
+- variant
+
+Controlled ve uncontrolled davranışları karıştırma; her bileşen için seçilen davranışı dokümante et.
+
+DataTable foundation:
+
+- columns
+- rows
+- loading
+- empty
+- error
+- sorting
+- selection
+- pagination
+
+DataTable yalnızca generic, props tabanlı foundation olarak uygulanacaktır.
+
+- API çağrısı yapma.
+- API client kullanma.
+- TanStack Query kullanma.
+- Dashboard business data kullanma.
+- Mock veya props ile verilen veriyi göster.
+- Sorting, selection ve pagination davranışını controlled callback veya açıkça dokümante edilmiş local davranış olarak uygula.
+- Gelişmiş business table davranışları bu slice’ın dışındadır.
+
+Henüz API bağlama.
+
+==================================================
+QUANTITY COMPONENTS
+==================================================
+
+QuantityViewToggle oluştur.
+
+Kritik iş kuralı:
+
+viewMode
+ve
+operationPackagingId
+
+birbirinden tamamen bağımsız olacak.
+
+QuantityViewToggle yalnızca görüntüyü değiştirir.
+
+Şunları değiştiremez:
+
+- operationPackagingId
+- transaction quantity
+- quantityBase
+- stock quantity
+- herhangi bir conversion sonucu
+
+Toggle değişimi yalnızca viewMode değerini günceller.
+Toggle, quantity alanlarında veya operationPackagingId üzerinde mutation yapamaz.
+
+Önerilen tip sözleşmesi:
+
+```ts
+type QuantityViewMode = "base" | "transaction" | "packaging";
+
+type QuantityViewToggleProps = {
+  viewMode: QuantityViewMode;
+  onViewModeChange: (mode: QuantityViewMode) => void;
+  operationPackagingId?: string | null;
+  disabled?: boolean;
+};
+```
+
+Repository’de mevcut domain tipleri varsa onları kullan; yeni tipler mevcut domain modeliyle çelişmemelidir.
+`onViewModeChange` callback’i yalnızca yeni viewMode değerini almalı ve operationPackagingId veya quantity alanlarını değiştirmemelidir.
+
+QuantityEntryPreview oluştur.
+
+Frontend conversion logic yazma.
+Backend’den gelecek canonical conversion sonucunu gösterecek şekilde tasarla.
+Conversion hesabı, yuvarlama veya quantity dönüştürme yapma.
+
+Bileşen, kendisine verilen canonical sonucu ve loading/error durumunu gösterir.
+Backend sonucu için repository’de mevcut tip varsa onu kullan; yoksa aşağıdaki kavramsal alanları destekleyecek şekilde tasarla:
+
+- displayQuantity
+- displayUnit
+- baseQuantity
+- baseUnit
+- conversionLabel
+- isLoading
+- error
+
+==================================================
+ACCESSIBILITY
+==================================================
+
+Temel:
+
+- keyboard navigation
+- focus-visible
+- aria-label
+- semantic HTML
+- dialog focus
+- focus return after dialog/drawer closes
+- Escape
+- contrast
+- appropriate aria-live for toast/notification content
+
+Uygula.
+
+Dialog ve Drawer için:
+
+- Açıldığında uygun ilk elemana focus taşı.
+- Escape ile kapanmayı destekle.
+- Kapanınca focus’u açan elemana geri döndür.
+- Uygun role, aria-modal, aria-labelledby veya aria-label kullan.
+- Gerekli durumda arka plan scroll’unu kilitle.
+
+==================================================
+TEST
+==================================================
+
+Repository’de mevcut test framework’ünün gerçek test komutunu kullan.
+Yeni test framework’ü kurma; mevcut test altyapısı yoksa bunu BLOCKED olarak raporla.
+
+Test ekle:
+
+- AppShell render
+- Sidebar
+- Topbar
+- StatusBadge
+- EmptyState
+- ErrorState
+- PermissionDenied
+- QuantityViewToggle
+- QuantityEntryPreview
+
+Interaction:
+
+- sidebar collapse
+- mobile web drawer
+- dialog
+- Escape
+- keyboard focus
+
+KRİTİK TEST:
+
+QuantityViewToggle değiştiğinde aşağıdaki değerler değişmemeli:
+
+- operation quantity
+- quantityBase
+- operationPackagingId
+- stock quantity
+
+Test, bu değerlerin önceki ve sonraki durumunu açıkça doğrulamalıdır.
+
+==================================================
+KABUL KRİTERLERİ
+==================================================
+
+- AppShell, Sidebar, Topbar ve content alanı birlikte render olmalı.
+- Breadcrumb ve PageHeader içeriklerini props veya tanımlı slot yaklaşımıyla almalı.
+- Desktop’ta sidebar expanded, tablette collapsible, mobile web’de drawer olarak çalışmalı.
+- Native mobile uygulama kodu eklenmemeli.
+- Yeni design token veya yeni renk paleti eklenmemeli.
+- DataTable API çağrısı yapmadan loading, empty, error, sorting, selection ve pagination durumlarını gösterebilmeli.
+- Dialog ve Drawer focus, Escape, ARIA ve focus return davranışlarını sağlamalı.
+- QuantityViewToggle yalnızca viewMode’i değiştirmeli.
+- QuantityEntryPreview conversion hesaplamamalı; canonical sonucu göstermeli.
+- İstenen bileşenler ve kritik etkileşimler gerçek test komutuyla doğrulanmalı.
+- Dokümantasyon WEB SLICE 002 sonuçlarıyla güncellenmeli.
+
+==================================================
+YASAK
+==================================================
+
+Bu slice’ta:
+
+- login
+- auth
+- API client
+- TanStack Query API calls
+- dashboard business data
+- public catalog
+- product CRUD
+- orders
+- shipments
+- native mobile application
+- Expo/React Native
+- WEB SLICE 003 kapsamındaki işler
+
+yapma.
+
+Responsive web mobile drawer ve küçük ekran layout’u yasak değildir; bu slice’ın kapsamındadır.
+
+==================================================
+VALIDATION
+==================================================
+
+Çalıştır:
+
+- pnpm typecheck
+- pnpm lint
+- pnpm build
+- mevcut repository test komutu
+- dotnet build FactoryErp.sln --configuration Release
+- dotnet test FactoryErp.sln
+- git diff --check
+
+Hepsi PASS olmadan tamamlandı deme.
+
+Bir komut repository veya çalışma ortamı nedeniyle çalıştırılamıyorsa sonucu PASS yazma.
+BLOCKED olarak raporla ve hata çıktısını final raporuna ekle.
+Test komutu mevcut değilse veya test framework’ü kurulu değilse BLOCKED raporla.
+
+==================================================
+DOCUMENTATION
+==================================================
+
+design/implementation-web-mobile-slice.md
+
+dosyasını WEB SLICE 002 sonuçlarıyla güncelle.
+
+Dokümantasyonda en az şu bilgileri yaz:
+
+- yapılan bileşenler
+- responsive davranış
+- design token kullanımı
+- quantity invariantı
+- test kapsamı
+- çalıştırılan validation komutları
+- BLOCKED olan komutlar ve nedenleri
+- sonraki slice bilgisi
+
+==================================================
+COMMIT
+==================================================
+
+PASS sonrası:
+
+- Yalnızca WEB SLICE 002 kapsamındaki dosyaları commit’e al.
+- Commit mesajı tam olarak şu olsun:
+
+feat: add web app shell and design system
+
+- Push yapma.
+- Commit öncesi git status ve git diff --check kontrolü yap.
+
+Sonra DUR.
+
+Bir sonraki slice’a geçme.
+
+==================================================
+FINAL RAPOR
+==================================================
+
+Final raporu şu formatta ver:
+
+WEB SLICE 002
+STATUS: PASS / BLOCKED
+
+Build:
+Lint:
+Typecheck:
+Tests:
+Backend Build:
+Backend Tests:
+git diff --check:
+
+Files Changed:
+...
+
+Blocked Items:
+...
+
+Commit:
+...
+
+Next Slice:
+WEB SLICE 003 — Auth & API Client
+
+STATUS yalnızca bütün zorunlu kontroller PASS ise PASS olabilir.
+Çalıştırılamayan veya başarısız olan herhangi bir zorunlu kontrol varsa STATUS BLOCKED olmalıdır.
+
+==================================================
+END OF WEB SLICE 002 PROMPT
+==================================================
