@@ -19,3 +19,7 @@ Desktop.ini
 # .NET build outputs
 **/bin/
 **/obj/
+
+# Node / pnpm build outputs
+node_modules/
+.pnpm-store/
