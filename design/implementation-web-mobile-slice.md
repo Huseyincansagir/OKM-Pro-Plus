@@ -115,6 +115,101 @@ Next Slice:
 WEB SLICE 002 — AppShell & Design System
 ```
 
+## WEB SLICE 002 — AppShell & Design System
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web gates). Infrastructure integration testleri bu makinede PostgreSQL olmadığı için koşmadı.
+**Kapsam:** `apps/web` AppShell, responsive layout, ortak bileşenler, quantity UI ve Vitest foundation. Auth, API client, public catalog, dashboard business data ve native mobile yok.
+**Baseline:** WEB SLICE 001 PASS (`3da3bfc`). Sonraki commit’ler yalnızca docs idi.
+
+## 1. Uygulanan yüzey
+
+| Alan | Karar |
+|---|---|
+| AppShell | Sidebar + Topbar + Breadcrumb + PageHeader + content |
+| Responsive | ≥1024 expanded; 768–1023 collapsible; <768 drawer + Escape |
+| Design tokens | WEB 001 Tailwind ad/değerleri korundu; yeni palet yok |
+| Quantity | Canonical `BaseUnit \| Packaging \| Breakdown` |
+| DataTable | Controlled foundation; API yok |
+| Preview route | `/` tasarım sistemi önizlemesi; iş verisi bağlı değil |
+| Test | Vitest + Testing Library (`pnpm --dir apps/web test`) |
+
+Vitest, Agent A promptundaki “yeni framework kurma” yasağına karşı master prompt ve quantity invariant test zorunluluğu için slice altyapısı olarak eklendi.
+
+## 2. Bileşenler
+
+AppShell: `AppShell`, `Sidebar`, `Topbar`, `Breadcrumb`, `PageHeader`, `UserMenu`, `NotificationArea`, `ConnectionStatus`.
+
+Ortak: `Button`, `IconButton`, `Input`, `Select`, `Checkbox`, `Badge`, `StatusBadge`, `Card`, `Divider`, `Tooltip`, `DropdownMenu`, `Dialog`, `Drawer`, `Tabs`, `Skeleton`, `Spinner`, `Toast`, `Alert`, `DataTable`.
+
+Durum: `EmptyState`, `ErrorState`, `PermissionDenied`.
+
+Miktar: `QuantityViewToggle`, `QuantityEntryPreview`.
+
+Dialog/Drawer: focus trap, Escape, `aria-modal`, focus return, body scroll lock.
+
+## 3. Quantity invariantı
+
+`QuantityViewToggle` yalnızca `viewMode` değiştirir. `onViewModeChange` yeni mode alır. `operationPackagingId` prop olarak kabul edilir, okunmaz, mutate edilmez. Girilen miktar, `quantityBase` ve stok değişmez.
+
+`QuantityEntryPreview` çarpma/bölme/yuvarlama yapmaz; verilen canonical sonucu gösterir.
+
+Agent A promptundaki `base | transaction | packaging` kullanılmadı. Kaynak: `design/mobile-toggle-api-and-schema.md`.
+
+## 4. DESIGN CONFLICT — token paleti
+
+`design/ui-reference/tokens.json` hex değerleri WEB 001 `tailwind.config.ts` ile farklıdır. Bu slice yeni palet eklemedi; runtime token kaynağı WEB 001’dir. Palette birleştirme ayrı tasarım kararı ister.
+
+## 5. Test kapsamı
+
+| Dosya | Doğrulama |
+|---|---|
+| `quantity-view-toggle.test.tsx` | Yalnızca viewMode değişir; ok tuşu dahil |
+| `quantity-entry-preview.test.tsx` | Client conversion yok |
+| `app-shell.test.tsx` | Render, collapse, mobile drawer + Escape |
+| `dialog.test.tsx` / `drawer.test.tsx` | Focus, Escape, focus return |
+| `data-table.test.tsx` | loading / error / sort / selection |
+| `status-badge.test.tsx` | Metin + ikon |
+| `states.test.tsx` | Empty / error / permission |
+
+## 6. Gate sonuçları
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web test` | PASS; 17 test |
+| `pnpm --dir apps/web build` | PASS; Next.js 15.5.23 |
+| `dotnet build FactoryErp.sln --configuration Release` | PASS; 0 warning / 0 error |
+| `dotnet test FactoryErp.sln` | Domain 122 PASS, Architecture 5 PASS. Infrastructure 48 PASS / 30 FAIL: `127.0.0.1:5432` yok. WEB 002 backend’e dokunmadı. Bu makinede .NET 8 runtime yok; testler `DOTNET_ROLL_FORWARD=LatestMajor` ile koştu. |
+| `git diff --check` | PASS |
+
+## 7. Sınır
+
+- `/giris`, auth/session, API client: WEB SLICE 003
+- Public catalog: WEB SLICE 004
+- Dashboard business data: WEB SLICE 005
+- Native Flutter: ayrı mobile slice
+- `tokens.json` hex migration: açık DESIGN CONFLICT
+
+## Final report
+
+```text
+WEB SLICE 002
+
+STATUS: PASS
+
+Typecheck: PASS
+Lint: PASS
+Tests: PASS (17)
+Build: PASS
+Backend Build: PASS
+Backend Tests: Domain+Architecture PASS; Infrastructure integration BLOCKED (no local Postgres)
+
+Next Slice:
+WEB SLICE 003 — Auth & API Client
+```
+
 ## References
 
 [1]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/design/visual-design-system.md "Factory ERP visual design system"
@@ -124,3 +219,5 @@ WEB SLICE 002 — AppShell & Design System
 [3]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/design/architecture-api-contracts.md "Factory ERP API contract architecture"
 
 [4]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/AGENTS.md "Factory ERP repository agent instructions"
+
+[5]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/design/mobile-toggle-api-and-schema.md "Canonical QuantityViewMode contract"
