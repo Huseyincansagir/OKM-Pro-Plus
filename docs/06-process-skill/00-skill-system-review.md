@@ -13,6 +13,7 @@ Bootstrap promptunun istediği root `.claude/skills/` paketi artık repository'y
 | `factory-erp-implementation` | Onaylanmış tasarımı gerçek backend/web/mobile koduna çevirmek | `implementation-ready.md` mevcut ve READY olduğunda | Design + architecture artefact'ları, repository | Database migration, domain/application, API, auth, UI/mobile, tests, docs | IMPLEMENTATION |
 | `factory-erp-qa-security` | İşlev, bütünlük, yetki, güvenlik, performans ve release hazırlığını doğrulamak | Feature veya release implementation sonrası | Kod, migration, API, test planı, role matrix | Unit/integration/E2E, security review, `release-readiness.md` | TEST → SECURITY REVIEW → RELEASE GATE |
 | `factory-erp-operations` | Şirket içi server deployment, backup, restore, monitoring ve işletim | Deployment, server, LAN, backup, restore veya operasyon talebi | Docker Compose, environment, server ve backup politikası | `/docs/operations` deployment, backup, restore, monitoring ve incident docs | OPERATIONS / DEPLOYMENT |
+| `factory-erp-ui` | Web ve mobile-web tasarım sistemi, AppShell, quantity UX, state, a11y ve UI review | UI, UX, AppShell, DataTable, QuantityViewToggle, WEB SLICE | Canonical design + `apps/web` | Tutarlı UI, review bulgusu | IMPLEMENTATION → TEST |
 
 ## 3. Skill ilişkisi
 

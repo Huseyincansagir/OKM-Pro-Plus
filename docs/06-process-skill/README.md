@@ -9,6 +9,7 @@ Bu paket fabrika ERP projesi için uzmanlıkları ayrı skill dosyalarına böle
 - `.claude/skills/factory-erp-implementation/SKILL.md`
 - `.claude/skills/factory-erp-qa-security/SKILL.md`
 - `.claude/skills/factory-erp-operations/SKILL.md`
+- `.claude/skills/factory-erp-ui/SKILL.md`
 - `AGENT-WORKFLOW.md`
 - `RECOMMENDED-REPOSITORY-STRUCTURE.md`
 

@@ -81,6 +81,8 @@ PDF ve Excel çıktılarında aynı domain verisini kullan. Rapor ekranı ile ex
 
 ## Frontend
 
+Web/mobile-web UI kuralları için `factory-erp-ui` skill'ini uygula. Renk, quantity ve AppShell kararlarını orada ve canonical design belgelerinde ara; burada yeniden tanımlama.
+
 - Loading, empty, error, permission denied ve offline state'leri tamamla.
 - Türkçe UI.
 - Responsive web.
