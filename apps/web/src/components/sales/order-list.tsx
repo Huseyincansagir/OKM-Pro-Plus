@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText, Inbox, Stamp, Wallet } from "lucide-react";
+import { ClipboardCheck, FileText, Inbox, Package } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiMetric } from "@/components/dashboard/kpi-metric";
 import { EmptyState } from "@/components/states/empty-state";
@@ -18,11 +18,11 @@ import { ApiError } from "@/lib/api/types";
 import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
 import {
-  listQuotes,
-  quoteStatusKind,
-  quoteStatusLabel,
-  type QuoteSummary,
-} from "@/lib/sales/quotes";
+  listSalesOrders,
+  salesOrderStatusKind,
+  salesOrderStatusLabel,
+  type SalesOrderSummary,
+} from "@/lib/sales/orders";
 
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
@@ -46,12 +46,12 @@ function formatMoney(value: number | null, currency: string): string {
   }).format(value);
 }
 
-export function QuoteList() {
+export function OrderList() {
   const router = useRouter();
   const user = useSessionStore((state) => state.user);
   const permissions = user?.permissions ?? [];
-  const canRead = permissions.includes("quote.read");
-  const [rows, setRows] = useState<QuoteSummary[] | null>(null);
+  const canRead = permissions.includes("order.read");
+  const [rows, setRows] = useState<SalesOrderSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(canRead);
@@ -66,7 +66,7 @@ export function QuoteList() {
     setLoading(true);
     setError(null);
     setDenied(false);
-    listQuotes()
+    listSalesOrders()
       .then((result) => {
         if (!cancelled) setRows(result);
       })
@@ -88,34 +88,24 @@ export function QuoteList() {
 
   const ready = Boolean(rows) && !loading && !error && !denied;
   const draft = rows?.filter((row) => row.status === "Draft").length ?? 0;
-  const issued = rows?.filter((row) => row.status === "Issued").length ?? 0;
+  const pending = rows?.filter((row) => row.status === "PendingApproval").length ?? 0;
+  const approved = rows?.filter((row) => row.status === "Approved").length ?? 0;
   const total = rows?.length ?? 0;
-  const issuedGross = (rows ?? [])
-    .filter((row) => row.status === "Issued")
-    .reduce<number | null>((sum, row) => {
-      if (row.totalGross === null) {
-        return sum;
-      }
-      return (sum ?? 0) + row.totalGross;
-    }, null);
 
   return (
     <AppShell
-      currentHref="/satis/teklifler"
+      currentHref="/satis/siparisler"
       breadcrumbs={[
         { label: "Çalışma alanı", href: "/dashboard" },
         { label: "Satış", href: "/satis/teklif-talepleri" },
-        { label: "Teklifler" },
+        { label: "Siparişler" },
       ]}
-      pageTitle="Teklifler"
-      pageDescription="Talepten oluşan belgeler. Fiyat personel girer; tutarlar sunucudan gelir. Liste en fazla 100 kayıttır."
+      pageTitle="Siparişler"
+      pageDescription="GET /orders penceresi. Ürün listesinden serbest sipariş yok. Liste en fazla 100 kayıttır."
       pageActions={
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => router.push("/satis/teklif-talepleri")}>
-            Teklif talepleri
-          </Button>
-          <Button variant="secondary" onClick={() => router.push("/satis/siparisler")}>
-            Siparişler
+          <Button variant="secondary" onClick={() => router.push("/satis/teklifler")}>
+            Teklifler
           </Button>
           <Button variant="secondary" onClick={() => router.push("/satis/musteriler")}>
             Müşteriler
@@ -136,24 +126,25 @@ export function QuoteList() {
           icon={Inbox}
           tone="amber"
           unavailable={!ready}
-          caption="GET /quotes · Draft"
+          caption="GET /orders · Draft"
         />
         <KpiMetric
-          label="Kesinleşti"
-          value={ready ? String(issued) : "—"}
+          label="Onay bekliyor"
+          value={ready ? String(pending) : "—"}
           unit="belge"
-          icon={Stamp}
+          icon={ClipboardCheck}
           tone="teal"
           unavailable={!ready}
-          caption="GET /quotes · Issued"
+          caption="GET /orders · PendingApproval"
         />
         <KpiMetric
-          label="Kesinleşen tutar"
-          value={ready ? formatMoney(issuedGross, "TRY") : "—"}
-          icon={Wallet}
+          label="Onaylandı"
+          value={ready ? String(approved) : "—"}
+          unit="belge"
+          icon={Package}
           tone="teal"
           unavailable={!ready}
-          caption="Liste penceresi · Issued TotalGross"
+          caption="GET /orders · Approved"
         />
         <KpiMetric
           label="Toplam"
@@ -170,14 +161,14 @@ export function QuoteList() {
         <CardBody>
           {!canRead ? (
             <PermissionDenied
-              title="Teklifler bu oturumda görünmez"
-              description="quote.read yok. Bu kontrol yalnızca görünürlük içindir; gerçek yetki backend’dedir."
+              title="Siparişler bu oturumda görünmez"
+              description="order.read yok. Bu kontrol yalnızca görünürlük içindir; gerçek yetki backend’dedir."
             />
           ) : denied ? (
             <PermissionDenied />
           ) : error ? (
             <ErrorState
-              title="Teklifler yüklenemedi"
+              title="Siparişler yüklenemedi"
               description={error}
               onRetry={() => setReload((value) => value + 1)}
             />
@@ -194,8 +185,8 @@ export function QuoteList() {
             />
           ) : !rows || rows.length === 0 ? (
             <EmptyState
-              title="Teklif yok"
-              description="Henüz teklif belgesi yok. İncelemedeki talepten oluşturulur; ürün listesinden serbest teklif yok."
+              title="Sipariş yok"
+              description="Bu pencerede sipariş belgesi yok. Serbest ürün seçicisi bu dilimde yoktur."
             />
           ) : (
             <DataTable
@@ -205,11 +196,11 @@ export function QuoteList() {
                   header: "Belge",
                   accessor: (row) => (
                     <Link
-                      href={`/satis/teklifler/${row.id}`}
+                      href={`/satis/siparisler/${row.id}`}
                       className="inline-flex items-center gap-2 font-semibold text-teal-600"
                     >
                       <Glyph icon={FileText} />
-                      {row.quoteNumber}
+                      {row.orderNumber}
                     </Link>
                   ),
                 },
@@ -225,7 +216,10 @@ export function QuoteList() {
                   id: "status",
                   header: "Durum",
                   accessor: (row) => (
-                    <StatusBadge status={quoteStatusKind(row.status)} label={quoteStatusLabel(row.status)} />
+                    <StatusBadge
+                      status={salesOrderStatusKind(row.status)}
+                      label={salesOrderStatusLabel(row.status)}
+                    />
                   ),
                 },
                 {

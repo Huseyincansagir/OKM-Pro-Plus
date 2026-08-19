@@ -379,13 +379,30 @@ public sealed class SalesCommandService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<SalesOrderDto>> ListSalesOrdersAsync(CancellationToken cancellationToken = default)
+    {
+        var orders = await dbContext.SalesOrders
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return await MapSalesOrdersAsync(orders, cancellationToken);
+    }
+
     public async Task<SalesOrderDto?> GetSalesOrderAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
         var order = await dbContext.SalesOrders
             .AsNoTracking()
             .Include(x => x.Items)
             .SingleOrDefaultAsync(x => x.Id == orderId, cancellationToken);
-        return order is null ? null : MapSalesOrder(order);
+        if (order is null)
+        {
+            return null;
+        }
+
+        var mapped = await MapSalesOrdersAsync(new[] { order }, cancellationToken);
+        return mapped[0];
     }
 
     public async Task<SalesOrderDto?> SubmitSalesOrderAsync(
@@ -987,7 +1004,32 @@ public sealed class SalesCommandService(
             priceGroupCode,
             priceGroupName);
 
-    private static SalesOrderDto MapSalesOrder(SalesOrderRecord order)
+    private async Task<IReadOnlyList<SalesOrderDto>> MapSalesOrdersAsync(
+        IReadOnlyCollection<SalesOrderRecord> orders,
+        CancellationToken cancellationToken)
+    {
+        if (orders.Count == 0)
+        {
+            return Array.Empty<SalesOrderDto>();
+        }
+
+        var customerIds = orders.Select(x => x.CustomerId).Distinct().ToArray();
+        var customers = await dbContext.Customers
+            .AsNoTracking()
+            .Where(x => customerIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+
+        return orders.Select(order =>
+        {
+            customers.TryGetValue(order.CustomerId, out var customer);
+            return MapSalesOrder(order, customer?.CustomerCode, customer?.LegalName);
+        }).ToArray();
+    }
+
+    private static SalesOrderDto MapSalesOrder(
+        SalesOrderRecord order,
+        string? customerCode = null,
+        string? customerLegalName = null)
         => new(
             order.Id,
             order.OrderNumber,
@@ -1013,7 +1055,9 @@ public sealed class SalesCommandService(
                 x.UnitPrice,
                 x.TaxCode,
                 x.RowVersion)).ToArray(),
-            order.CreatedAt);
+            order.CreatedAt,
+            customerCode,
+            customerLegalName);
 
     private async Task<IReadOnlyList<QuoteDto>> MapQuotesAsync(
         IReadOnlyCollection<QuoteRecord> quotes,

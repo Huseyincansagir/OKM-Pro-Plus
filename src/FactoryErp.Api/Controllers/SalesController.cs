@@ -27,6 +27,11 @@ public sealed class SalesController(ISalesCommandService salesCommandService) : 
     }
 
     [Authorize(Policy = PermissionPolicies.OrderRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<SalesOrderDto>>> List(CancellationToken cancellationToken)
+        => Ok(await salesCommandService.ListSalesOrdersAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.OrderRead)]
     [HttpGet("{orderId:guid}")]
     public async Task<IActionResult> Get(Guid orderId, CancellationToken cancellationToken)
     {

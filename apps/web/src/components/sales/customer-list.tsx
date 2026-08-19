@@ -100,6 +100,9 @@ export function CustomerList() {
           <Button variant="secondary" onClick={() => router.push("/satis/teklif-talepleri")}>
             Teklif talepleri
           </Button>
+          <Button variant="secondary" onClick={() => router.push("/satis/siparisler")}>
+            Siparişler
+          </Button>
           <Button variant="secondary" onClick={() => router.push("/satis/teklifler")}>
             Teklifler
           </Button>

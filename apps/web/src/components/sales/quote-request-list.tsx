@@ -103,6 +103,9 @@ export function QuoteRequestList() {
       pageDescription="Public katalogdan gelen talepler. Son 100 kayıt; sipariş listesi değildir."
       pageActions={
         <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => router.push("/satis/siparisler")}>
+            Siparişler
+          </Button>
           <Button variant="secondary" onClick={() => router.push("/satis/teklifler")}>
             Teklifler
           </Button>

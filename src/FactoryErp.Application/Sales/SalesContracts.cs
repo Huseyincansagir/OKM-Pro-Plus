@@ -95,7 +95,9 @@ public sealed record SalesOrderDto(
     decimal TotalGross,
     long RowVersion,
     IReadOnlyCollection<SalesOrderItemDto> Items,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string? CustomerCode = null,
+    string? CustomerLegalName = null);
 
 public sealed record RejectOrderRequest(string Comment);
 public sealed record ApproveOrderRequest(string? Comment);
@@ -182,6 +184,8 @@ public interface ISalesCommandService
         string idempotencyKey,
         string correlationId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<SalesOrderDto>> ListSalesOrdersAsync(CancellationToken cancellationToken = default);
 
     Task<SalesOrderDto?> GetSalesOrderAsync(Guid orderId, CancellationToken cancellationToken = default);
 
