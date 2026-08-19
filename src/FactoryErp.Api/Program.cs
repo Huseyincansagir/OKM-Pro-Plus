@@ -70,6 +70,18 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "product.read"));
     options.AddPolicy(PermissionPolicies.StockRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "stock.read"));
+    options.AddPolicy(PermissionPolicies.StockCountRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-count.read"));
+    options.AddPolicy(PermissionPolicies.StockCountManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-count.manage"));
+    options.AddPolicy(PermissionPolicies.StockCountComplete, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "stock-count.complete"));
+    options.AddPolicy(PermissionPolicies.EmployeeRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "employee.read"));
+    options.AddPolicy(PermissionPolicies.EmployeeCreate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "employee.create"));
+    options.AddPolicy(PermissionPolicies.BarcodeResolve, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "barcode.resolve"));
     options.AddPolicy(PermissionPolicies.QuoteRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "quote.read"));
     options.AddPolicy(PermissionPolicies.QuoteCreate, policy =>

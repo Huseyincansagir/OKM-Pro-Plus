@@ -84,6 +84,9 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<PalletTypeRecord> PalletTypes => Set<PalletTypeRecord>();
     public DbSet<VehicleCapacityPalletTypeRecord> VehicleCapacityPalletTypes => Set<VehicleCapacityPalletTypeRecord>();
     public DbSet<VehicleCapacityZoneRecord> VehicleCapacityZones => Set<VehicleCapacityZoneRecord>();
+    public DbSet<EmployeeRecord> Employees => Set<EmployeeRecord>();
+    public DbSet<StockCountRecord> StockCounts => Set<StockCountRecord>();
+    public DbSet<StockCountItemRecord> StockCountItems => Set<StockCountItemRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

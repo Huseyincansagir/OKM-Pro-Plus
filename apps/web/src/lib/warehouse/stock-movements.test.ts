@@ -43,6 +43,8 @@ describe("movement labels", () => {
     expect(movementTypeLabel("WarehouseTransferIn")).toBe("Transfer girişi");
     expect(movementTypeLabel("ProductionIn")).toBe("Üretim girişi");
     expect(movementTypeLabel("DeliveryIssue")).toBe("İrsaliye çıkışı");
+    expect(movementTypeLabel("CountIn")).toBe("Sayım girişi");
+    expect(movementTypeLabel("CountOut")).toBe("Sayım çıkışı");
     expect(movementTypeLabel("FutureAdjust")).toBe("FutureAdjust");
     expect(movementEffectLabel("In")).toBe("Giriş");
     expect(movementEffectLabel("Out")).toBe("Çıkış");

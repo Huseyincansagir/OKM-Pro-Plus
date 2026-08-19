@@ -20,6 +20,8 @@ export const IDEMPOTENT_PREFIXES = [
   "/customers",
   "/products",
   "/warehouse-transfers",
+  "/stock-counts",
+  "/employees",
   "/vehicle-types",
   "/vehicles",
   "/drivers",

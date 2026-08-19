@@ -10,6 +10,11 @@ namespace FactoryErp.Api.Controllers;
 [Route("api/v1/vehicles")]
 public sealed class VehiclesController(ILogisticsCommandService service) : LogisticsControllerBase
 {
+    [Authorize(Policy = PermissionPolicies.VehicleRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<VehicleDto>>> List(CancellationToken cancellationToken)
+        => Ok(await service.ListVehiclesAsync(cancellationToken));
+
     [Authorize(Policy = PermissionPolicies.VehicleManage)]
     [HttpPost]
     public async Task<ActionResult<VehicleDto>> Create(

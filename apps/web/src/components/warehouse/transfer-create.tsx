@@ -17,6 +17,7 @@ import { useSessionStore } from "@/lib/auth/session-store";
 import { getStaffProduct, listStaffProducts, type StaffProductDetail, type StaffProductSummary } from "@/lib/catalog/staff-products";
 import { previewQuantity, type QuantityPreview } from "@/lib/catalog/quantity-preview";
 import { listWarehouseLocations, listWarehouses, type WarehouseLocation, type WarehouseSummary } from "@/lib/warehouse/stocks";
+import { resolveBarcode } from "@/lib/catalog/barcode";
 import { createTransfer } from "@/lib/warehouse/transfers";
 import type { QuantityViewMode } from "@/types/quantity";
 
@@ -27,6 +28,7 @@ export function TransferCreate() {
   const canCreate = permissions.includes("stock-transfer.create");
   const canReadStock = permissions.includes("stock.read");
   const canReadProducts = permissions.includes("product.read");
+  const canResolve = permissions.includes("barcode.resolve");
   const [products, setProducts] = useState<StaffProductSummary[]>([]);
   const [product, setProduct] = useState<StaffProductDetail | null>(null);
   const [warehouses, setWarehouses] = useState<WarehouseSummary[]>([]);
@@ -45,6 +47,8 @@ export function TransferCreate() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [barcode, setBarcode] = useState("");
+  const [resolving, setResolving] = useState(false);
 
   useEffect(() => {
     if (!canCreate || !canReadStock || !canReadProducts) {
@@ -127,6 +131,24 @@ export function TransferCreate() {
       cancelled = true;
     };
   }, [targetWarehouseId]);
+
+  async function runResolve() {
+    if (!barcode.trim()) {
+      setError("Barkod boş olamaz.");
+      return;
+    }
+    setResolving(true);
+    setError(null);
+    try {
+      const resolved = await resolveBarcode(barcode.trim());
+      setProductId(resolved.productId);
+      setPackagingId(resolved.packagingId ?? "");
+    } catch (caught) {
+      setError(userFacingMessage(caught));
+    } finally {
+      setResolving(false);
+    }
+  }
 
   async function runPreview() {
     const quantity = Number(enteredQuantity);
@@ -244,6 +266,20 @@ export function TransferCreate() {
               <CardTitle>Kaynak ve hedef</CardTitle>
             </CardHeader>
             <CardBody className="space-y-3">
+              {canResolve ? (
+                <div className="flex flex-wrap items-end gap-2">
+                  <div className="min-w-[12rem] flex-1">
+                    <Input
+                      label="Barkod"
+                      value={barcode}
+                      onChange={(event) => setBarcode(event.target.value)}
+                    />
+                  </div>
+                  <Button variant="secondary" loading={resolving} onClick={() => void runResolve()}>
+                    Çöz
+                  </Button>
+                </div>
+              ) : null}
               <Select
                 label="Ürün"
                 required

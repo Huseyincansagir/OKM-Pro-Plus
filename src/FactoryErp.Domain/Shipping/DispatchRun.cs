@@ -15,6 +15,7 @@ public enum RouteExecutionEventType
 {
     Departed,
     ArrivedAtStop,
+    DeliveredStop,
     DepartedStop,
     SkippedStop,
     RouteCompleted,
@@ -25,6 +26,7 @@ public enum RouteStopExecutionStatus
 {
     Pending,
     Arrived,
+    Delivered,
     Departed,
     Skipped,
 }
@@ -32,9 +34,14 @@ public enum RouteStopExecutionStatus
 public sealed record DispatchRunStop(
     Guid RouteStopId,
     int SequenceNo,
-    RouteStopExecutionStatus Status = RouteStopExecutionStatus.Pending)
+    RouteStopExecutionStatus Status = RouteStopExecutionStatus.Pending,
+    string? ProofRecipient = null,
+    string? ProofNote = null)
 {
     public DispatchRunStop WithStatus(RouteStopExecutionStatus status) => this with { Status = status };
+
+    public DispatchRunStop WithDelivery(string recipient, string? note)
+        => this with { Status = RouteStopExecutionStatus.Delivered, ProofRecipient = recipient, ProofNote = note };
 }
 
 public sealed record RouteExecutionEvent(
@@ -258,9 +265,9 @@ public sealed class DispatchRun : AggregateRoot
     {
         EnsureStatus(DispatchRunStatus.InTransit, "DISPATCH_INVALID_STATE", "Yalnızca InTransit DispatchRun stop departure yapabilir.");
         var stop = GetStop(routeStopId);
-        if (stop.Status != RouteStopExecutionStatus.Arrived)
+        if (stop.Status is not (RouteStopExecutionStatus.Arrived or RouteStopExecutionStatus.Delivered))
         {
-            throw new DomainException(new("ROUTE_STOP_INVALID_STATE", "Stop yalnızca Arrived durumundan Departed durumuna geçebilir."));
+            throw new DomainException(new("ROUTE_STOP_INVALID_STATE", "Stop yalnızca Arrived veya Delivered durumundan Departed durumuna geçebilir."));
         }
 
         ValidateLocation(latitude, longitude);
@@ -277,6 +284,46 @@ public sealed class DispatchRun : AggregateRoot
             null);
 
         ReplaceStop(stop.WithStatus(RouteStopExecutionStatus.Departed));
+        _events.Add(routeEvent);
+        Touch(occurredAt);
+        return routeEvent;
+    }
+
+    public RouteExecutionEvent DeliverStop(
+        Guid routeStopId,
+        Guid actorId,
+        DateTimeOffset occurredAt,
+        string recipientName,
+        string? note,
+        string idempotencyKey,
+        string correlationId)
+    {
+        EnsureStatus(DispatchRunStatus.InTransit, "DISPATCH_INVALID_STATE", "Yalnızca InTransit DispatchRun teslim yapabilir.");
+        DomainGuard.AgainstBlank(recipientName, "DELIVERY_PROOF_RECIPIENT_REQUIRED", "Teslim alan kişi zorunludur.");
+        var stop = GetStop(routeStopId);
+        if (stop.Status != RouteStopExecutionStatus.Arrived)
+        {
+            throw new DomainException(new("ROUTE_STOP_INVALID_STATE", "Teslim yalnızca Arrived durağında yapılabilir."));
+        }
+
+        if (stop.ProofRecipient is not null)
+        {
+            throw new DomainException(new("ROUTE_STOP_ALREADY_DELIVERED", "Bu durak daha önce teslim edildi."));
+        }
+
+        var routeEvent = CreateEvent(
+            RouteExecutionEventType.DeliveredStop,
+            routeStopId,
+            actorId,
+            occurredAt,
+            idempotencyKey,
+            correlationId,
+            null,
+            null,
+            null,
+            recipientName.Trim());
+
+        ReplaceStop(stop.WithDelivery(recipientName.Trim(), string.IsNullOrWhiteSpace(note) ? null : note.Trim()));
         _events.Add(routeEvent);
         Touch(occurredAt);
         return routeEvent;
@@ -319,7 +366,7 @@ public sealed class DispatchRun : AggregateRoot
         string correlationId)
     {
         EnsureStatus(DispatchRunStatus.InTransit, "DISPATCH_INVALID_STATE", "Yalnızca InTransit DispatchRun route complete yapabilir.");
-        if (_stops.Any(x => x.Status is not (RouteStopExecutionStatus.Departed or RouteStopExecutionStatus.Skipped)))
+        if (_stops.Any(x => x.Status is not (RouteStopExecutionStatus.Departed or RouteStopExecutionStatus.Skipped or RouteStopExecutionStatus.Delivered)))
         {
             throw new DomainException(new("ROUTE_NOT_COMPLETE", "Açık route stop varken DispatchRun tamamlanamaz."));
         }

@@ -73,6 +73,8 @@ export function movementTypeLabel(movementType: string): string {
   if (movementType === "WarehouseTransferIn") return "Transfer girişi";
   if (movementType === "ProductionIn") return "Üretim girişi";
   if (movementType === "DeliveryIssue") return "İrsaliye çıkışı";
+  if (movementType === "CountIn") return "Sayım girişi";
+  if (movementType === "CountOut") return "Sayım çıkışı";
   return movementType || "—";
 }
 

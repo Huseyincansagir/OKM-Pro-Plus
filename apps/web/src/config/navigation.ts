@@ -44,7 +44,7 @@ export const NAVIGATION: NavSection[] = [
       { href: "/uretim", label: "Üretim", icon: Factory, implemented: true, activePrefix: "/uretim" },
       { href: "/sevkiyat", label: "Sevkiyat", icon: Truck, implemented: true, activePrefix: "/sevkiyat" },
       { href: "/cari", label: "Cari ve Muhasebe", icon: Wallet, implemented: true, activePrefix: "/cari" },
-      { href: "/#personel", label: "Personel", icon: Users },
+      { href: "/personel", label: "Personel", icon: Users, implemented: true, activePrefix: "/personel" },
     ],
   },
   {

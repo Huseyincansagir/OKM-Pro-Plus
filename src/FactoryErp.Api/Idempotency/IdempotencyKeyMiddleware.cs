@@ -18,6 +18,8 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next)
         "/api/v1/customer-price-groups",
         "/api/v1/products",
         "/api/v1/warehouse-transfers",
+        "/api/v1/stock-counts",
+        "/api/v1/employees",
         "/api/v1/vehicle-types",
         "/api/v1/vehicles",
         "/api/v1/drivers",

@@ -185,6 +185,16 @@ public sealed class LogisticsCommandService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<VehicleDto>> ListVehiclesAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.Vehicles
+            .AsNoTracking()
+            .OrderBy(x => x.PlateNumber)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(Map).ToArray();
+    }
+
     public async Task<VehicleDto?> GetVehicleAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var record = await dbContext.Vehicles.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -296,6 +306,16 @@ public sealed class LogisticsCommandService(
         await SaveIdempotencyAsync(scope, idempotencyKey, payloadHash, 201, result, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return result;
+    }
+
+    public async Task<IReadOnlyCollection<DriverDto>> ListDriversAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.Drivers
+            .AsNoTracking()
+            .OrderBy(x => x.FullName)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(Map).ToArray();
     }
 
     public async Task<DriverDto?> GetDriverAsync(Guid id, CancellationToken cancellationToken = default)

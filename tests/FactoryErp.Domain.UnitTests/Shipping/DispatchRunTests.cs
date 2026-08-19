@@ -74,6 +74,26 @@ public sealed class DispatchRunTests
     }
 
     [Fact]
+    public void Deliver_requires_recipient_and_allows_complete_from_delivered()
+    {
+        var run = Departed();
+        run.ArriveAtStop(StopOne, ActorId, Now.AddMinutes(3), "arrive-1", "corr-3");
+        var missing = () => run.DeliverStop(StopOne, ActorId, Now.AddMinutes(4), " ", null, "pod-1", "corr-4");
+        missing.Should().Throw<DomainException>().Which.Error.Code.Should().Be("DELIVERY_PROOF_RECIPIENT_REQUIRED");
+
+        var delivered = run.DeliverStop(StopOne, ActorId, Now.AddMinutes(4), "Ali Kaya", "Kapıya teslim", "pod-1", "corr-4");
+        delivered.EventType.Should().Be(RouteExecutionEventType.DeliveredStop);
+        run.Stops.Single(x => x.RouteStopId == StopOne).Status.Should().Be(RouteStopExecutionStatus.Delivered);
+        run.Stops.Single(x => x.RouteStopId == StopOne).ProofRecipient.Should().Be("Ali Kaya");
+
+        run.DepartStop(StopOne, ActorId, Now.AddMinutes(5), "depart-1", "corr-5");
+        run.ArriveAtStop(StopTwo, ActorId, Now.AddMinutes(6), "arrive-2", "corr-6");
+        run.DeliverStop(StopTwo, ActorId, Now.AddMinutes(7), "Ayşe Demir", null, "pod-2", "corr-7");
+        run.CompleteRoute(ActorId, Now.AddMinutes(8), "complete-pod", "corr-8");
+        run.Status.Should().Be(DispatchRunStatus.Completed);
+    }
+
+    [Fact]
     public void Skip_requires_reason_and_allows_completion_when_reasoned()
     {
         var run = Departed();

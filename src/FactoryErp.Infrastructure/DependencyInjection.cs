@@ -4,7 +4,9 @@ using FactoryErp.Application.Products;
 using FactoryErp.Application.Production;
 using FactoryErp.Application.Sales;
 using FactoryErp.Application.Shipping;
+using FactoryErp.Application.Hr;
 using FactoryErp.Application.Warehouse;
+using FactoryErp.Infrastructure.Hr;
 using FactoryErp.Infrastructure.Authentication;
 using FactoryErp.Infrastructure.Health;
 using FactoryErp.Infrastructure.Persistence;
@@ -72,6 +74,8 @@ public static class DependencyInjection
         services.AddScoped<ICustomerEmailSender, SmtpCustomerEmailSender>();
         services.AddScoped<IProductionCommandService, ProductionCommandService>();
         services.AddScoped<IStockTransferCommandService, StockTransferCommandService>();
+        services.AddScoped<IStockCountCommandService, StockCountCommandService>();
+        services.AddScoped<IEmployeeDirectoryService, EmployeeDirectoryService>();
         services.AddScoped<SalesSeeder>();
         services.AddScoped<IShippingFinanceCommandService, DeliveryInvoiceFinanceService>();
         services.AddScoped<ILogisticsCommandService, LogisticsCommandService>();

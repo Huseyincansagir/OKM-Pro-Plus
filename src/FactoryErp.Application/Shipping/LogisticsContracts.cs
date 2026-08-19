@@ -165,6 +165,8 @@ public interface ILogisticsCommandService
         string correlationId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<VehicleDto>> ListVehiclesAsync(CancellationToken cancellationToken = default);
+
     Task<VehicleDto?> GetVehicleAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<VehicleDto?> ChangeVehicleStatusAsync(
@@ -182,6 +184,8 @@ public interface ILogisticsCommandService
         string idempotencyKey,
         string correlationId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<DriverDto>> ListDriversAsync(CancellationToken cancellationToken = default);
 
     Task<DriverDto?> GetDriverAsync(Guid id, CancellationToken cancellationToken = default);
 
@@ -470,6 +474,10 @@ public interface ILoadPlanCommandService : ILoadPlanValidationCommandService
 
     Task<LoadPlanDto?> GetLoadPlanAsync(
         Guid loadPlanId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<LoadPlanDto>> ListLoadPlansByShipmentAsync(
+        Guid shipmentId,
         CancellationToken cancellationToken = default);
 }
 

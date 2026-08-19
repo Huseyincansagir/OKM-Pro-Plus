@@ -28,6 +28,13 @@ public sealed class LoadPlansController(ILoadPlanCommandService service) : Logis
     }
 
     [Authorize(Policy = PermissionPolicies.ShipmentRead)]
+    [HttpGet("shipments/{shipmentId:guid}/load-plans")]
+    public async Task<ActionResult<IReadOnlyCollection<LoadPlanDto>>> ListByShipment(
+        Guid shipmentId,
+        CancellationToken cancellationToken)
+        => Ok(await service.ListLoadPlansByShipmentAsync(shipmentId, cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.ShipmentRead)]
     [HttpGet("load-plans/{loadPlanId:guid}")]
     public async Task<IActionResult> Get(Guid loadPlanId, CancellationToken cancellationToken)
     {

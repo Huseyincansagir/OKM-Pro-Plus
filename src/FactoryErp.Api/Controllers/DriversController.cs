@@ -10,6 +10,11 @@ namespace FactoryErp.Api.Controllers;
 [Route("api/v1/drivers")]
 public sealed class DriversController(ILogisticsCommandService service) : LogisticsControllerBase
 {
+    [Authorize(Policy = PermissionPolicies.DriverRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<DriverDto>>> List(CancellationToken cancellationToken)
+        => Ok(await service.ListDriversAsync(cancellationToken));
+
     [Authorize(Policy = PermissionPolicies.DriverManage)]
     [HttpPost]
     public async Task<ActionResult<DriverDto>> Create(

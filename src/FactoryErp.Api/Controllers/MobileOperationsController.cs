@@ -1,3 +1,4 @@
+using FactoryErp.Api.Authorization;
 using FactoryErp.Application.Products;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,7 @@ namespace FactoryErp.Api.Controllers;
 [Route("api/v1/mobile")]
 public sealed class MobileOperationsController(IProductCatalogService productCatalogService) : ControllerBase
 {
+    [Authorize(Policy = PermissionPolicies.BarcodeResolve)]
     [HttpPost("barcodes/resolve")]
     public async Task<IActionResult> ResolveBarcode([FromBody] BarcodeRequest request, CancellationToken cancellationToken)
     {

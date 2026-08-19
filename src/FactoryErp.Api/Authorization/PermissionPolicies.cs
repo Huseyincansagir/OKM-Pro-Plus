@@ -20,6 +20,12 @@ public static class PermissionPolicies
     public const string PriceResolve = "permission:price.resolve";
     public const string ProductRead = "permission:product.read";
     public const string StockRead = "permission:stock.read";
+    public const string StockCountRead = "permission:stock-count.read";
+    public const string StockCountManage = "permission:stock-count.manage";
+    public const string StockCountComplete = "permission:stock-count.complete";
+    public const string EmployeeRead = "permission:employee.read";
+    public const string EmployeeCreate = "permission:employee.create";
+    public const string BarcodeResolve = "permission:barcode.resolve";
     public const string QuoteRead = "permission:quote.read";
     public const string QuoteCreate = "permission:quote.create";
     public const string QuoteIssue = "permission:quote.issue";

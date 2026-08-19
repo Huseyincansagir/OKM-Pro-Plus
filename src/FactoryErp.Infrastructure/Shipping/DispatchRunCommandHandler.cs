@@ -173,6 +173,31 @@ public sealed class DispatchRunCommandHandler(
     }
 
     public Task<DispatchRunDto> HandleAsync(
+        DeliverStopCommand command,
+        CancellationToken cancellationToken = default)
+        => ExecuteStopEventAsync(
+            command.DispatchRunId,
+            command.ExpectedDispatchRunRowVersion,
+            command.ActorId,
+            command.IdempotencyKey,
+            command.CorrelationId,
+            command,
+            RouteExecutionEventType.DeliveredStop,
+            (domain, stops, now) =>
+            {
+                var routeEvent = domain.DeliverStop(
+                    command.RouteStopId,
+                    command.ActorId,
+                    command.OccurredAt,
+                    command.RecipientName,
+                    command.Note,
+                    command.IdempotencyKey,
+                    command.CorrelationId);
+                return (routeEvent, command.RouteStopId, "Delivered", command.OccurredAt, command.RecipientName.Trim());
+            },
+            cancellationToken);
+
+    public Task<DispatchRunDto> HandleAsync(
         ArriveAtStopCommand command,
         CancellationToken cancellationToken = default)
         => ExecuteStopEventAsync(
@@ -252,6 +277,7 @@ public sealed class DispatchRunCommandHandler(
         graph.Vehicle.CurrentRoutePlanId = null;
         graph.Vehicle.LastStatusAt = now;
         graph.Vehicle.RowVersion++;
+        ApplyShipmentDeliveryProjection(graph);
         AddEvent(graph, routeEvent, now);
         await AppendAuditAsync("DispatchRunCompleted", graph.Run, command.ActorId, command.CorrelationId, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -335,6 +361,13 @@ public sealed class DispatchRunCommandHandler(
         else if (eventType == RouteExecutionEventType.DepartedStop)
         {
             stop.ActualDepartureAt = applied.OccurredAt;
+        }
+        else if (eventType == RouteExecutionEventType.DeliveredStop)
+        {
+            stop.DeliveredAt = applied.OccurredAt;
+            stop.ProofRecipient = applied.Reason;
+            var delivered = domain.Stops.Single(x => x.RouteStopId == applied.RouteStopId);
+            stop.ProofNote = delivered.ProofNote;
         }
         else if (eventType == RouteExecutionEventType.SkippedStop)
         {
@@ -479,7 +512,7 @@ public sealed class DispatchRunCommandHandler(
             graph.Run.CancelledBy,
             graph.Run.ExceptionReason,
             graph.Run.UpdatedAt,
-            graph.Stops.Select(x => new DispatchRunStop(x.Id, x.SequenceNo, ToDomainStopStatus(x.Status))).ToArray(),
+            graph.Stops.Select(x => new DispatchRunStop(x.Id, x.SequenceNo, ToDomainStopStatus(x.Status), x.ProofRecipient, x.ProofNote)).ToArray(),
             graph.Events.Select(ToDomainEvent).ToArray());
     }
 
@@ -487,6 +520,7 @@ public sealed class DispatchRunCommandHandler(
     {
         "Pending" => RouteStopExecutionStatus.Pending,
         "Arrived" => RouteStopExecutionStatus.Arrived,
+        "Delivered" => RouteStopExecutionStatus.Delivered,
         "Departed" => RouteStopExecutionStatus.Departed,
         "Skipped" => RouteStopExecutionStatus.Skipped,
         _ => throw new DomainException(new("ROUTE_STOP_INVALID_STATE", $"RouteStop status B6 için desteklenmiyor: {status}")),
@@ -538,6 +572,67 @@ public sealed class DispatchRunCommandHandler(
         record.ExceptionReason = run.ExceptionReason;
         record.UpdatedAt = now;
         record.RowVersion++;
+    }
+
+    private static void ApplyShipmentDeliveryProjection(LockedGraph graph)
+    {
+        var actionable = graph.Stops.Where(x => x.Status != "Skipped").ToArray();
+        var delivered = actionable.Count(x => x.Status == "Delivered" || !string.IsNullOrWhiteSpace(x.ProofRecipient));
+        if (actionable.Length > 0 && delivered == actionable.Length)
+        {
+            graph.Shipment.Status = "Delivered";
+            graph.Shipment.RowVersion++;
+        }
+        else if (delivered > 0)
+        {
+            graph.Shipment.Status = "PartiallyDelivered";
+            graph.Shipment.RowVersion++;
+        }
+    }
+
+    public async Task<DispatchRunDto?> GetAsync(Guid dispatchRunId, CancellationToken cancellationToken = default)
+    {
+        var record = await dbContext.DispatchRuns.AsNoTracking().SingleOrDefaultAsync(x => x.Id == dispatchRunId, cancellationToken);
+        if (record is null)
+        {
+            return null;
+        }
+
+        return await MapPersistedAsync(record, cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<DispatchRunDto>> ListByShipmentAsync(
+        Guid shipmentId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.DispatchRuns
+            .AsNoTracking()
+            .Where(x => x.ShipmentId == shipmentId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        var result = new List<DispatchRunDto>(rows.Length);
+        foreach (var row in rows)
+        {
+            result.Add(await MapPersistedAsync(row, cancellationToken));
+        }
+
+        return result;
+    }
+
+    private async Task<DispatchRunDto> MapPersistedAsync(DispatchRunRecord record, CancellationToken cancellationToken)
+    {
+        var stops = await dbContext.RouteStops
+            .AsNoTracking()
+            .Where(x => x.RoutePlanId == record.RoutePlanId)
+            .OrderBy(x => x.SequenceNo)
+            .ToArrayAsync(cancellationToken);
+        var events = await dbContext.RouteExecutionEvents
+            .AsNoTracking()
+            .Where(x => x.DispatchRunId == record.Id)
+            .OrderBy(x => x.SequenceNo)
+            .ToArrayAsync(cancellationToken);
+        return Map(record, events, stops);
     }
 
     private static void ApplyDepartureProjection(LockedGraph graph, DepartDispatchRunCommand command, DateTimeOffset now)
@@ -643,7 +738,7 @@ public sealed class DispatchRunCommandHandler(
             record.CompletedBy,
             record.CancelledBy,
             record.ExceptionReason,
-            stops.OrderBy(x => x.SequenceNo).ThenBy(x => x.Id).Select(x => new DispatchRunStopDto(x.Id, x.SequenceNo, x.Status)).ToArray(),
+            stops.OrderBy(x => x.SequenceNo).ThenBy(x => x.Id).Select(x => new DispatchRunStopDto(x.Id, x.SequenceNo, x.Status, x.ProofRecipient, x.ProofNote, x.DeliveredAt)).ToArray(),
             events.OrderBy(x => x.SequenceNo).ThenBy(x => x.Id).Select(x => new RouteExecutionEventDto(x.Id, x.DispatchRunId, x.RoutePlanId, x.RouteStopId, x.EventType, x.SequenceNo, x.OccurredAt, x.ActorId, x.LocationText, x.Latitude, x.Longitude, x.Reason, x.IdempotencyKey, x.CorrelationId)).ToArray(),
             record.CreatedAt,
             record.UpdatedAt,

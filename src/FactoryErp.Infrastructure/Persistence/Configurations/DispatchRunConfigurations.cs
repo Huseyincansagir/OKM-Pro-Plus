@@ -123,7 +123,7 @@ public sealed class RouteExecutionEventRecordConfiguration : IEntityTypeConfigur
         {
             table.HasCheckConstraint(
                 "ck_route_execution_events_type",
-                "event_type in ('Departed', 'ArrivedAtStop', 'DepartedStop', 'SkippedStop', 'RouteCompleted', 'Cancelled')");
+                "event_type in ('Departed', 'ArrivedAtStop', 'DeliveredStop', 'DepartedStop', 'SkippedStop', 'RouteCompleted', 'Cancelled')");
             table.HasCheckConstraint(
                 "ck_route_execution_events_sequence",
                 "sequence_no > 0");

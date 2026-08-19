@@ -123,6 +123,9 @@ public sealed class RouteStopRecord
     public DateTimeOffset? ActualArrivalAt { get; set; }
     public DateTimeOffset? ActualDepartureAt { get; set; }
     public DateTimeOffset? SkippedAt { get; set; }
+    public DateTimeOffset? DeliveredAt { get; set; }
+    public string? ProofRecipient { get; set; }
+    public string? ProofNote { get; set; }
     public string? ExceptionReason { get; set; }
     public long RowVersion { get; set; }
 

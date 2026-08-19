@@ -10,6 +10,21 @@ namespace FactoryErp.Api.Controllers;
 [Route("api/v1")]
 public sealed class DispatchRunsController(IDispatchRunCommandHandler handler) : LogisticsControllerBase
 {
+    [Authorize(Policy = PermissionPolicies.ShipmentRead)]
+    [HttpGet("dispatch-runs/{dispatchRunId:guid}")]
+    public async Task<IActionResult> Get(Guid dispatchRunId, CancellationToken cancellationToken)
+    {
+        var result = await handler.GetAsync(dispatchRunId, cancellationToken);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [Authorize(Policy = PermissionPolicies.ShipmentRead)]
+    [HttpGet("shipments/{shipmentId:guid}/dispatch-runs")]
+    public async Task<ActionResult<IReadOnlyCollection<DispatchRunDto>>> ListByShipment(
+        Guid shipmentId,
+        CancellationToken cancellationToken)
+        => Ok(await handler.ListByShipmentAsync(shipmentId, cancellationToken));
+
     [Authorize(Policy = PermissionPolicies.ShipmentDispatch)]
     [HttpPost("route-plans/{routePlanId:guid}/dispatch")]
     public async Task<ActionResult<DispatchRunDto>> Prepare(
@@ -82,6 +97,26 @@ public sealed class DispatchRunsController(IDispatchRunCommandHandler handler) :
                 request.LocationText,
                 request.Latitude,
                 request.Longitude,
+                ExpectedRowVersion(),
+                ActorId(),
+                IdempotencyKey(),
+                CorrelationId()),
+            cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.ShipmentRouteExecute)]
+    [HttpPost("dispatch-runs/{dispatchRunId:guid}/stops/{routeStopId:guid}/deliver")]
+    public async Task<ActionResult<DispatchRunDto>> Deliver(
+        Guid dispatchRunId,
+        Guid routeStopId,
+        [FromBody] DeliverRouteStopRequest request,
+        CancellationToken cancellationToken)
+        => Ok(await handler.HandleAsync(
+            new DeliverStopCommand(
+                dispatchRunId,
+                routeStopId,
+                request.OccurredAt,
+                request.RecipientName,
+                request.Note,
                 ExpectedRowVersion(),
                 ActorId(),
                 IdempotencyKey(),
@@ -188,6 +223,11 @@ public sealed record RouteExecutionLocationRequest(
 public sealed record SkipRouteStopRequest(
     DateTimeOffset OccurredAt,
     string Reason);
+
+public sealed record DeliverRouteStopRequest(
+    DateTimeOffset OccurredAt,
+    string RecipientName,
+    string? Note);
 
 public sealed record CompleteRouteRequest(DateTimeOffset OccurredAt);
 

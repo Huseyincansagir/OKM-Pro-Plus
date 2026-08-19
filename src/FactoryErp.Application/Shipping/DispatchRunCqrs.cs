@@ -66,6 +66,17 @@ public sealed record DepartStopCommand(
     string IdempotencyKey,
     string CorrelationId);
 
+public sealed record DeliverStopCommand(
+    Guid DispatchRunId,
+    Guid RouteStopId,
+    DateTimeOffset OccurredAt,
+    string RecipientName,
+    string? Note,
+    long ExpectedDispatchRunRowVersion,
+    Guid ActorId,
+    string IdempotencyKey,
+    string CorrelationId);
+
 public sealed record SkipStopCommand(
     Guid DispatchRunId,
     Guid RouteStopId,
@@ -96,7 +107,10 @@ public sealed record CancelDispatchRunCommand(
 public sealed record DispatchRunStopDto(
     Guid RouteStopId,
     int SequenceNo,
-    string Status);
+    string Status,
+    string? ProofRecipient,
+    string? ProofNote,
+    DateTimeOffset? DeliveredAt);
 
 public sealed record RouteExecutionEventDto(
     Guid Id,
@@ -141,9 +155,15 @@ public interface IDispatchRunCommandHandler
       ICommandHandler<ConfirmDispatchCommand, DispatchRunDto>,
       ICommandHandler<DepartDispatchRunCommand, DispatchRunDto>,
       ICommandHandler<ArriveAtStopCommand, DispatchRunDto>,
+      ICommandHandler<DeliverStopCommand, DispatchRunDto>,
       ICommandHandler<DepartStopCommand, DispatchRunDto>,
       ICommandHandler<SkipStopCommand, DispatchRunDto>,
       ICommandHandler<CompleteRouteCommand, DispatchRunDto>,
       ICommandHandler<CancelDispatchRunCommand, DispatchRunDto>
 {
+    Task<DispatchRunDto?> GetAsync(Guid dispatchRunId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<DispatchRunDto>> ListByShipmentAsync(
+        Guid shipmentId,
+        CancellationToken cancellationToken = default);
 }

@@ -55,8 +55,8 @@ public static class StockMovementEffects
 
     public static string FromMovementType(string movementType) => movementType switch
     {
-        "ProductionIn" or "WarehouseTransferIn" => In,
-        "WarehouseTransferOut" or "DeliveryIssue" => Out,
+        "ProductionIn" or "WarehouseTransferIn" or "CountIn" => In,
+        "WarehouseTransferOut" or "DeliveryIssue" or "CountOut" => Out,
         _ => Unknown,
     };
 }

@@ -76,6 +76,9 @@ export function StockList() {
       pageDescription="GET /stocks. Kullanılabilir miktar sunucu availableQtyBase alanıdır. Liste en fazla 100 kayıttır."
       pageActions={
         <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => router.push("/depo/sayimlar")}>
+            Sayımlar
+          </Button>
           <Button variant="secondary" onClick={() => router.push("/depo/hareketler")}>
             Hareketler
           </Button>

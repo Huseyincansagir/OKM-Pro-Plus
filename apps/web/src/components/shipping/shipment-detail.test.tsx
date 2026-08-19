@@ -45,7 +45,7 @@ describe("ShipmentDetailBoard", () => {
     render(<ShipmentDetailBoard id="s1" />);
     expect(await screen.findAllByText("Preparing")).not.toHaveLength(0);
     expect(screen.getByText("2000")).toBeInTheDocument();
-    expect(screen.getByText("Teslim henüz yok")).toBeInTheDocument();
+    expect(screen.getByText("Teslim POD ile yazılır")).toBeInTheDocument();
     expect(screen.queryByText("Delivered")).not.toBeInTheDocument();
   });
 });

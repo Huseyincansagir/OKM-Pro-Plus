@@ -17,12 +17,25 @@ import { ApiError } from "@/lib/api/types";
 import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
 import { getShipment, shipmentStatusKind, type ShipmentDetail } from "@/lib/shipping/shipments";
+import {
+  deliverStop,
+  listDispatchRuns,
+  listLoadPlans,
+  listShipmentPackages,
+  type DispatchRun,
+} from "@/lib/shipping/dispatch";
+import { Input } from "@/components/ui/input";
 
 export function ShipmentDetailBoard({ id }: { id: string }) {
   const router = useRouter();
   const user = useSessionStore((state) => state.user);
   const canRead = (user?.permissions ?? []).includes("shipment.read");
+  const canExecute = (user?.permissions ?? []).includes("shipment.route-execute");
   const [row, setRow] = useState<ShipmentDetail | null>(null);
+  const [dispatchRun, setDispatchRun] = useState<DispatchRun | null>(null);
+  const [packages, setPackages] = useState<Array<{ id: string; status: string }>>([]);
+  const [loadPlans, setLoadPlans] = useState<Array<{ id: string; status: string }>>([]);
+  const [recipient, setRecipient] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(canRead);
@@ -37,9 +50,18 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
     setLoading(true);
     setError(null);
     setDenied(false);
-    getShipment(id)
-      .then((result) => {
-        if (!cancelled) setRow(result);
+    Promise.all([
+      getShipment(id),
+      listDispatchRuns(id).catch(() => []),
+      listShipmentPackages(id).catch(() => []),
+      listLoadPlans(id).catch(() => []),
+    ])
+      .then(([result, runs, packageRows, planRows]) => {
+        if (cancelled) return;
+        setRow(result);
+        setDispatchRun(runs[0] ?? null);
+        setPackages(packageRows);
+        setLoadPlans(planRows);
       })
       .catch((caught) => {
         if (cancelled) return;
@@ -66,7 +88,7 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
         { label: row?.id.slice(0, 8) || "Kart" },
       ]}
       pageTitle="Sevkiyat"
-      pageDescription="GET /shipments/{id}. API durumları Preparing, Loaded, InTransit. Teslim komutu ve POD bu dilimde yoktur."
+      pageDescription="GET /shipments/{id}. Teslim: Arrived durakta recipient ile POST .../deliver. POD imza dosyası yok; metin kanıtı."
       pageActions={
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => router.push("/sevkiyat")}>
@@ -93,9 +115,11 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
         <p className="text-sm text-slate-600">Yükleniyor…</p>
       ) : (
         <div className="space-y-4">
-          <Alert tone="info" title="Teslim henüz yok">
-            Rota complete sonrası belge InTransit kalır. Deliver / POD API’si yoktur; sahte teslim gösterilmez.
-          </Alert>
+          {row.status !== "Delivered" && row.status !== "PartiallyDelivered" ? (
+            <Alert tone="info" title="Teslim POD ile yazılır">
+              Complete, teslim kanıtı olan duraklarda shipment’ı Delivered yapar. Kanıt yoksa InTransit kalır.
+            </Alert>
+          ) : null}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <KpiMetric
               label="Durum"
@@ -153,6 +177,60 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                 rows={row.items}
                 getRowId={(line) => line.id}
               />
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Paket / yük planı / sefer</CardTitle>
+            </CardHeader>
+            <CardBody className="space-y-3 text-sm">
+              <p>Paket: {packages.length} · Yük planı: {loadPlans.map((plan) => plan.status).join(", ") || "yok"}</p>
+              {dispatchRun ? (
+                <div className="space-y-2">
+                  <p>
+                    Sefer {dispatchRun.id.slice(0, 8)} · {dispatchRun.status}
+                  </p>
+                  <DataTable
+                    columns={[
+                      { id: "seq", header: "Sıra", accessor: (stop) => String(stop.sequenceNo) },
+                      { id: "st", header: "Durum", accessor: (stop) => stop.status },
+                      { id: "pod", header: "Teslim alan", accessor: (stop) => stop.proofRecipient || "—" },
+                    ]}
+                    rows={dispatchRun.stops}
+                    getRowId={(stop) => stop.routeStopId}
+                  />
+                  {canExecute && dispatchRun.rowVersion !== null
+                    ? dispatchRun.stops
+                        .filter((stop) => stop.status === "Arrived")
+                        .map((stop) => (
+                          <div key={stop.routeStopId} className="flex flex-wrap items-end gap-2">
+                            <Input
+                              label={`Teslim alan #${stop.sequenceNo}`}
+                              value={recipient}
+                              onChange={(event) => setRecipient(event.target.value)}
+                            />
+                            <Button
+                              onClick={() => {
+                                void deliverStop(dispatchRun.id, stop.routeStopId, {
+                                  recipientName: recipient,
+                                  rowVersion: dispatchRun.rowVersion as number,
+                                })
+                                  .then((next) => {
+                                    setDispatchRun(next);
+                                    setReload((value) => value + 1);
+                                  })
+                                  .catch((caught) => setError(userFacingMessage(caught)));
+                              }}
+                            >
+                              Teslim yaz
+                            </Button>
+                          </div>
+                        ))
+                    : null}
+                </div>
+              ) : (
+                <p>Bu sevkiyata bağlı sefer yok.</p>
+              )}
             </CardBody>
           </Card>
         </div>

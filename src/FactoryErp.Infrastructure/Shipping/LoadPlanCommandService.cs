@@ -285,6 +285,22 @@ public sealed partial class LoadPlanCommandService(
         return record is null ? null : Map(record);
     }
 
+    public async Task<IReadOnlyCollection<LoadPlanDto>> ListLoadPlansByShipmentAsync(
+        Guid shipmentId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.LoadPlans
+            .AsNoTracking()
+            .Include(x => x.LoadUnits)
+                .ThenInclude(x => x.Items)
+                    .ThenInclude(x => x.StopAllocations)
+            .Where(x => x.ShipmentId == shipmentId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(Map).ToArray();
+    }
+
     private async Task<ShipmentRecord?> LockShipmentAsync(Guid shipmentId, CancellationToken cancellationToken)
         => await dbContext.Shipments
             .FromSqlInterpolated($"SELECT * FROM shipments WHERE id = {shipmentId} FOR UPDATE")
