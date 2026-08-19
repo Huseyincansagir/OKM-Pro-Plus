@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, Shield, UserRound, Users } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
@@ -183,10 +184,13 @@ export function CustomerList() {
                   id: "code",
                   header: "Kod",
                   accessor: (row) => (
-                    <span className="inline-flex items-center gap-2 font-semibold text-navy-950">
+                    <Link
+                      href={`/satis/musteriler/${row.id}`}
+                      className="inline-flex items-center gap-2 font-semibold text-teal-600"
+                    >
                       <Glyph icon={Building2} />
                       {row.customerCode}
-                    </span>
+                    </Link>
                   ),
                 },
                 {

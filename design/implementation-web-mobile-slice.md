@@ -454,7 +454,9 @@ Next Slice: WEB SLICE 007 — Customer list + quote-request bind
 | UI | Backend |
 |---|---|
 | `GET /satis/musteriler` | `GET /api/v1/customers` (`customer.read`) |
-| Teklif inceleme seçici | aynı liste, yalnızca `Active` |
+| `GET /satis/musteriler/{id}` | `GET /api/v1/customers/{id}` |
+| Cari kartı | `GET /api/v1/current-accounts/{id}` (`current-account.read`); 404 = hesap yok, ₺0 yazılmaz |
+| Teklif inceleme seçici | müşteri listesi, yalnızca `Active` |
 | İncelemeye al | `POST /quote-requests/{id}/review` `{ customerId }` |
 
 ### 2. Kurallar

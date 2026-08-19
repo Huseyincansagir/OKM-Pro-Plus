@@ -62,6 +62,10 @@ describe("CustomerList", () => {
     expect(await screen.findByText("DEMO-001")).toBeInTheDocument();
     expect(screen.getByText("Demo Horeca Tedarik")).toBeInTheDocument();
     expect(screen.getByLabelText("Aktif: 1")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /DEMO-001/ })).toHaveAttribute(
+      "href",
+      "/satis/musteriler/c1",
+    );
     expect(screen.queryByText(/1[.\s]?285[.\s]?750/)).not.toBeInTheDocument();
   });
 });
