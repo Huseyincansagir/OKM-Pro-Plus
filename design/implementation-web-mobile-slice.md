@@ -560,6 +560,49 @@ Olmayan endpoint çağrılmaz: `GET /orders`, iç ürün listesi, fiyat listesi 
 ```text
 WEB SLICE 009
 STATUS: PASS
-Next Slice: GET /orders listesi (controller yok) veya iç ürün tahtası
+Next Slice: WEB SLICE 010 — Customer price lists + directory
+```
+
+## WEB SLICE 010 — Müşteri fiyat listesi ve firma rehberi
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web + backend compile)
+**Kapsam:** O-012 `PriceList + CustomerPriceGroup + ProductPrice` API; `GET /customers/{id}/price-context`; rehber kartında yetkili/adres; `POST /customers/{id}/contacts`; `POST /customers/{id}/outbound-emails`. Fiyat cari bakiyeye bağlı değildir. Personel teklifte liste fiyatını override edebilir. SMTP yoksa e-posta `Queued` kalır.
+**Baseline:** WEB SLICE 009 PASS.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| `/satis/musteriler` rehber | `GET /customers` (+ yetkili, fiyat grubu) |
+| `/satis/musteriler/{id}` | `GET /customers/{id}` kart + contacts/addresses |
+| Fiyat grubu ata | `POST /customers/{id}/price-group` (`customer.update`) |
+| Yetkili ekle | `POST /customers/{id}/contacts` |
+| E-posta | `POST /customers/{id}/outbound-emails` (`customer.message`) |
+| Liste fiyatı önerisi | `GET /customers/{id}/price-context` (`price.resolve`) |
+| Listeler | `GET/POST /price-lists`, `POST /products/{id}/prices`, `GET/POST /customer-price-groups` |
+
+### 2. Kurallar
+
+- Fiyat grubu ticari listedir; `boundToCurrentAccount` her zaman `false`.
+- Liste fiyatı yoksa teklif yine personel `unitPrice` ister; uydurulmaz.
+- Uygulanan fiyat snapshot’a `listUnitPrice` + override ile yazılır.
+- E-posta yalnızca karttaki/aktif yetkilideki adrese gider. SMTP yoksa Sent yazılmaz.
+
+### 3. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 121 test |
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web build` | PASS |
+| `dotnet build FactoryErp.sln -c Release` | PASS; 0 warning / 0 error |
+| `dotnet test` | Bu makinede .NET 8 runtime yok; resolver/model testleri derlendi |
+
+```text
+WEB SLICE 010
+STATUS: PASS
+Next Slice: GET /orders listesi veya iç ürün tahtası
 ```
 
