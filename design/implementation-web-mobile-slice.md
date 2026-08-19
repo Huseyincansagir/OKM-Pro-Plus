@@ -730,7 +730,28 @@ Next Slice: WEB SLICE 016 — Warehouse transfer and shipment command boards
 ```text
 WEB SLICE 016
 STATUS: PASS
-Next Slice: personel master veya yükleme/teslim (Deliver/POD yok)
+Next Slice: WEB SLICE 017 — Deliver/POD, count, personnel, barcode resolve
+```
+
+## WEB SLICE 017 — Deliver/POD, count, personnel, barcode resolve
+
+**Tarih:** 2026-08-19
+**Durum:** PASS
+**Kapsam:** `POST .../stops/{id}/deliver` + POD (recipient/note); complete yalnızca tüm açık duraklarda teslim kanıtı varsa shipment `Delivered`. `GET` vehicles/drivers/dispatch-runs/load-plans by shipment. Transfer formunda `POST /mobile/barcodes/resolve` (`barcode.resolve`). `GET/POST /stock-counts` + complete (`CountIn`/`CountOut`). `GET/POST /employees` (maaş yok). `/personel`, `/depo/sayimlar`.
+
+### Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 182 test |
+| typecheck / lint / build | PASS |
+| Domain tests | PASS; 123 |
+| `dotnet build -c Release` | PASS; 0 warning / 0 error |
+
+```text
+WEB SLICE 017
+STATUS: PASS
+Next Slice: kamera/USB tarayıcı ve dosya POD; load-plan oluşturma sihirbazı
 ```
 
 
