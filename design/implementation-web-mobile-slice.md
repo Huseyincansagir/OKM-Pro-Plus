@@ -398,6 +398,47 @@ Olmayan endpoint çağrılmaz: `GET /orders`, `GET /production/orders`, `GET /pa
 ```text
 WEB SLICE 005
 STATUS: PASS
-Next Slice: WEB SLICE 006 — Internal product catalog
+Next Slice: WEB SLICE 006 — Quote request inbox
+```
+
+## WEB SLICE 006 — Quote request inbox
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web gates)
+**Kapsam:** `/satis/teklif-talepleri` liste ve `/satis/teklif-talepleri/[id]` detay. İnceleme `POST /quote-requests/{id}/review` + `customerId: null`. Müşteri listesi, teklif belgesi ve sipariş yok. Dashboard kromu simetrik KPI/grafik ayakları ve küçük `Glyph` ikonlarıyla korundu.
+**Baseline:** WEB SLICE 005 PASS.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| `GET /satis/teklif-talepleri` | `GET /api/v1/quote-requests` |
+| `GET /satis/teklif-talepleri/{id}` | `GET /api/v1/quote-requests/{id}` |
+| İncelemeye al | `POST /api/v1/quote-requests/{id}/review` (`quote-request.review`, Idempotency-Key) |
+
+Olmayan endpoint çağrılmaz: `GET /customers`, teklif oluştur, sipariş.
+
+### 2. Kurallar
+
+- Satış menüsü artık bu listeye gider. Detayda Satış aktif kalır.
+- Liste KPI’ları yalnızca yüklenen son 100 kayıttan sayılır; şirket geneli toplam iddia edilmez.
+- Detay kaleminde `quantityBase` sunucu alanıdır; istemci çarpmaz.
+- İnceleme gövdesi `{ customerId: null }`. GET /customers olmadığı için bağlama UI’sı yok.
+- `quote-request.review` yoksa buton gizlenir; 403 ayrıca gösterilir.
+- Küçük semboller `Glyph` ile; KPI kartları eşit yükseklik (ikincil satır + iz boşluğu).
+
+### 3. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 84 test |
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web build` | PASS; `/satis/teklif-talepleri`, `/satis/teklif-talepleri/[id]` |
+
+```text
+WEB SLICE 006
+STATUS: PASS
+Next Slice: WEB SLICE 007 — Internal product catalog (liste API’si gelince) veya diğer operasyon listeleri
 ```
 
