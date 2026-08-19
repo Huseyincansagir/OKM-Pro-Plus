@@ -59,5 +59,30 @@ describe("QuoteCheckout", () => {
       viewMode: "Packaging",
     });
     expect(JSON.stringify(payload)).not.toContain("quantityBase");
+  }, 15000);
+
+  it("does not submit an empty contact form", async () => {
+    const user = userEvent.setup();
+    useQuoteBasketStore.getState().addLine({
+      productId: "p1",
+      slug: "ultra-soft",
+      name: "Ultra Soft",
+      code: "PS-033",
+      primaryImageUrl: null,
+      enteredQuantity: 1,
+      enteredPackagingId: "pkg-case",
+      packagingName: "Koli",
+      catalogQuantityInBaseUom: 2000,
+      baseUomCode: "ADT",
+      viewMode: "Packaging",
+      note: "",
+    });
+
+    render(<QuoteCheckout />);
+    await user.click(screen.getByRole("button", { name: "Bilgilerimi gir ve teklif iste" }));
+    await user.click(screen.getByRole("button", { name: "Teklif talebini gönder" }));
+
+    expect(await screen.findByText("Firma adı zorunludur.")).toBeInTheDocument();
+    expect(submitPublicQuoteRequest).not.toHaveBeenCalled();
   });
 });

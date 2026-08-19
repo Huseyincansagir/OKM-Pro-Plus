@@ -68,8 +68,22 @@ export function QuoteCheckout() {
     );
   }
 
+  function contactError(): string | null {
+    if (!companyName.trim()) return "Firma adı zorunludur.";
+    if (!contactName.trim()) return "Yetkili adı zorunludur.";
+    if (!phone.trim()) return "Telefon zorunludur.";
+    if (!email.trim() || !email.includes("@")) return "Geçerli bir e-posta girin.";
+    if (!consent) return "İletişim onayı zorunludur.";
+    return null;
+  }
+
   async function submit() {
     if (honeypot) {
+      return;
+    }
+    const fieldError = contactError();
+    if (fieldError) {
+      setError(fieldError);
       return;
     }
     setError(null);
@@ -164,7 +178,14 @@ export function QuoteCheckout() {
           </div>
         </div>
       ) : (
-        <div className="mt-6 max-w-lg space-y-4">
+        <form
+          className="mt-6 max-w-lg space-y-4"
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
+        >
           {error ? <Alert tone="danger" title="Talep gönderilemedi">{error}</Alert> : null}
           <Input
             label="Firma adı"
@@ -212,14 +233,14 @@ export function QuoteCheckout() {
               Bilgileri düzenle
             </Button>
             <Button
-              onClick={() => void submit()}
+              type="submit"
               loading={submitting}
-              disabled={!consent || submitting}
+              disabled={submitting}
             >
               Teklif talebini gönder
             </Button>
           </div>
-        </div>
+        </form>
       )}
     </div>
   );

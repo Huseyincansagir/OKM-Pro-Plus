@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 export type BreadcrumbItem = {
@@ -14,9 +15,9 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
           return (
             <li key={`${item.label}-${index}`} className="flex items-center gap-1">
               {item.href && !last ? (
-                <a href={item.href} className="hover:text-navy-800">
+                <Link href={item.href} className="hover:text-navy-800">
                   {item.label}
-                </a>
+                </Link>
               ) : (
                 <span className={last ? "text-navy-800" : undefined}>{item.label}</span>
               )}

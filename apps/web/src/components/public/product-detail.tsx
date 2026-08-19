@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
 import { ErrorState } from "@/components/states/error-state";
+import { QuantityEntryPreview } from "@/components/quantity/quantity-entry-preview";
 import { QuantityViewToggle } from "@/components/quantity/quantity-view-toggle";
 import { getPublicProduct } from "@/lib/catalog/catalog-client";
 import { packagingDefinitionLabel, sellablePackagings } from "@/lib/catalog/map-product";
@@ -25,16 +26,27 @@ export function ProductDetail({ slug }: { slug: string }) {
   const [viewMode, setViewMode] = useState<QuantityViewMode>("Packaging");
   const [note, setNote] = useState("");
   const [added, setAdded] = useState(false);
+  const [quantityError, setQuantityError] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    setProduct(null);
     getPublicProduct(slug)
       .then((result) => {
+        if (cancelled) return;
         setProduct(result);
         const options = sellablePackagings(result);
         setPackagingId(options[0]?.id ?? "");
       })
-      .catch((caught) => setError(userFacingMessage(caught)));
-  }, [slug]);
+      .catch((caught) => {
+        if (!cancelled) setError(userFacingMessage(caught));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, reload]);
 
   const options = useMemo(() => (product ? sellablePackagings(product) : []), [product]);
   const selected = options.find((item) => item.id === packagingId) ?? options[0];
@@ -42,7 +54,11 @@ export function ProductDetail({ slug }: { slug: string }) {
   if (error) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8">
-        <ErrorState title="Ürün yüklenemedi" description={error} />
+        <ErrorState
+          title="Ürün yüklenemedi"
+          description={error}
+          onRetry={() => setReload((value) => value + 1)}
+        />
       </div>
     );
   }
@@ -57,8 +73,10 @@ export function ProductDetail({ slug }: { slug: string }) {
     }
     const quantity = Number(enteredQuantity);
     if (!Number.isFinite(quantity) || quantity <= 0) {
+      setQuantityError("Geçerli bir miktar girin.");
       return;
     }
+    setQuantityError(null);
     addLine({
       productId: product.id,
       slug: product.slug,
@@ -85,7 +103,11 @@ export function ProductDetail({ slug }: { slug: string }) {
         <div className="grid min-h-72 place-items-center rounded-2xl border border-surface-200 bg-surface-100 text-slate-500">
           {product.primaryImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.primaryImageUrl} alt="" className="h-full w-full rounded-2xl object-cover" />
+            <img
+              src={product.primaryImageUrl}
+              alt={product.name}
+              className="h-full w-full rounded-2xl object-cover"
+            />
           ) : (
             "Görsel yok"
           )}
@@ -112,13 +134,17 @@ export function ProductDetail({ slug }: { slug: string }) {
               operationPackagingId={packagingId}
             />
             <Input
-              label="Miktar"
+              label={selected ? `Miktar (${selected.name})` : "Miktar"}
               name="quantity"
               type="number"
               min={selected?.allowPartial ? 0.01 : 1}
               step={selected?.allowPartial ? "0.01" : "1"}
               value={enteredQuantity}
-              onChange={(event) => setEnteredQuantity(event.target.value)}
+              error={quantityError ?? undefined}
+              onChange={(event) => {
+                setEnteredQuantity(event.target.value);
+                setQuantityError(null);
+              }}
             />
             <Select
               label="İşlem ambalajı"
@@ -131,10 +157,11 @@ export function ProductDetail({ slug }: { slug: string }) {
               }))}
             />
             {selected ? (
-              <p className="text-xs text-slate-600">
-                Katalog tanımı: {packagingDefinitionLabel(selected, product.baseUomCode)}. Temel karşılık
-                gönderimde sunucu tarafından hesaplanır.
-              </p>
+              <QuantityEntryPreview
+                displayQuantity={enteredQuantity}
+                displayUnit={selected.name}
+                conversionLabel={`${packagingDefinitionLabel(selected, product.baseUomCode)}. Görünüm yalnızca etiketi değiştirir; temel karşılık gönderimde sunucu tarafından hesaplanır.`}
+              />
             ) : null}
             <Input
               label="Ürün notu"

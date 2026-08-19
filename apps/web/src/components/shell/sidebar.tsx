@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
+import Link from "next/link";
 import { Factory } from "lucide-react";
 import { NAVIGATION } from "@/config/navigation";
 import { useSessionStore } from "@/lib/auth/session-store";
@@ -113,7 +114,7 @@ export const Sidebar = forwardRef<
                 }
 
                 return (
-                  <a
+                  <Link
                     key={item.label}
                     href={item.href}
                     title={compact ? item.label : undefined}
@@ -129,7 +130,7 @@ export const Sidebar = forwardRef<
                         {item.badge}
                       </span>
                     ) : null}
-                  </a>
+                  </Link>
                 );
               })}
             </nav>

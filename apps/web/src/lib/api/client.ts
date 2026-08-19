@@ -55,7 +55,13 @@ export async function apiRequest<T>(options: ApiRequestOptions): Promise<T> {
     options.auth !== false &&
     !options.skipRefresh
   ) {
-    const refreshed = await refreshSession();
+    let refreshed = false;
+    try {
+      refreshed = await refreshSession();
+    } catch {
+      useSessionStore.getState().setAnonymous();
+      throw toApiError(0, { detail: "Oturum yenilenemedi." }, "Oturum yenilenemedi.");
+    }
     if (refreshed) {
       return apiRequest<T>({
         ...options,

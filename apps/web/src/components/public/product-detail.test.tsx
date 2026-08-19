@@ -53,7 +53,20 @@ describe("ProductDetail", () => {
     expect(line.enteredPackagingId).toBe("pkg-case");
     expect(line.viewMode).toBe("BaseUnit");
     expect(line).not.toHaveProperty("quantityBase");
-    expect(screen.getByText(/Temel karşılık gönderimde sunucu tarafından hesaplanır/)).toBeInTheDocument();
+    expect(screen.getByText(/temel karşılık gönderimde sunucu tarafından hesaplanır/i)).toBeInTheDocument();
+    expect(screen.queryByText("Temel karşılık:")).not.toBeInTheDocument();
+  });
+
+  it("shows a quantity error instead of adding a silent line", async () => {
+    const user = userEvent.setup();
+    render(<ProductDetail slug="ultra-soft" />);
+    await screen.findByRole("heading", { name: "Ultra Soft" });
+    const quantity = screen.getByRole("spinbutton", { name: /Miktar/ });
+    await user.clear(quantity);
+    await user.type(quantity, "0");
+    await user.click(screen.getByRole("button", { name: "Teklife ekle" }));
+    expect(await screen.findByText("Geçerli bir miktar girin.")).toBeInTheDocument();
+    expect(useQuoteBasketStore.getState().lines).toHaveLength(0);
   });
 
   it("does not change packaging when viewMode changes", async () => {

@@ -87,4 +87,24 @@ describe("apiRequest", () => {
     });
     expect(useSessionStore.getState().status).toBe("anonymous");
   });
+
+  it("clears the session when refresh throws a network error", async () => {
+    useSessionStore.getState().setAuthenticated({
+      id: "1",
+      userName: "admin",
+      displayName: "Admin",
+      roles: [],
+      permissions: [],
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockRejectedValueOnce(new Error("network"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiRequest({ path: "/orders/1", method: "GET" })).rejects.toMatchObject({
+      kind: "network",
+    });
+    expect(useSessionStore.getState().status).toBe("anonymous");
+  });
 });
