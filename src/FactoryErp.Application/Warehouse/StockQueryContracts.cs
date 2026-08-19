@@ -6,6 +6,13 @@ public sealed record WarehouseDto(
     string Name,
     bool IsActive);
 
+public sealed record WarehouseLocationDto(
+    Guid Id,
+    Guid WarehouseId,
+    string Code,
+    string Name,
+    bool IsActive);
+
 public sealed record StockRowDto(
     Guid Id,
     Guid ProductId,
@@ -57,6 +64,10 @@ public static class StockMovementEffects
 public interface IStockQueryService
 {
     Task<IReadOnlyCollection<WarehouseDto>> ListWarehousesAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<WarehouseLocationDto>?> ListWarehouseLocationsAsync(
+        Guid warehouseId,
+        CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<StockRowDto>> ListStocksAsync(CancellationToken cancellationToken = default);
 

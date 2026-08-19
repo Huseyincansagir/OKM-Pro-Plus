@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/types";
 import { apiRequest } from "@/lib/api/client";
-import { listStocks, mapStockRow } from "@/lib/warehouse/stocks";
+import { listStocks, listWarehouseLocations, mapStockRow } from "@/lib/warehouse/stocks";
 
 vi.mock("@/lib/api/client", () => ({
   apiRequest: vi.fn(),
@@ -44,5 +44,15 @@ describe("listStocks", () => {
 
     vi.mocked(apiRequest).mockResolvedValue({ items: [] });
     await expect(listStocks()).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it("lists locations from GET /warehouses/{id}/locations", async () => {
+    vi.mocked(apiRequest).mockResolvedValue([{ id: "l1", code: "A1", isActive: true }]);
+    const rows = await listWarehouseLocations("w1");
+    expect(apiRequest).toHaveBeenCalledWith({
+      path: "/warehouses/w1/locations",
+      method: "GET",
+    });
+    expect(rows[0].code).toBe("A1");
   });
 });

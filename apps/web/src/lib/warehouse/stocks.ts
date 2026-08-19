@@ -70,8 +70,36 @@ export function mapStockRow(raw: unknown): StockRow {
   };
 }
 
+export type WarehouseLocation = {
+  id: string;
+  warehouseId: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+};
+
+export function mapWarehouseLocation(raw: unknown): WarehouseLocation {
+  const record = asRecord(raw);
+  return {
+    id: String(record.id ?? ""),
+    warehouseId: String(record.warehouseId ?? ""),
+    code: String(record.code ?? ""),
+    name: String(record.name ?? ""),
+    isActive: record.isActive === true,
+  };
+}
+
 export async function listWarehouses(): Promise<WarehouseSummary[]> {
   return (await listArray("/warehouses", "Depo listesi beklenen biçimde değil.")).map(mapWarehouse);
+}
+
+export async function listWarehouseLocations(warehouseId: string): Promise<WarehouseLocation[]> {
+  return (
+    await listArray(
+      `/warehouses/${warehouseId}/locations`,
+      "Lokasyon listesi beklenen biçimde değil.",
+    )
+  ).map(mapWarehouseLocation);
 }
 
 export async function listStocks(): Promise<StockRow[]> {

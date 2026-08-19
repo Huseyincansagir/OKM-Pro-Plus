@@ -31,6 +31,7 @@ import {
   submitSalesOrder,
   type SalesOrderDetail as SalesOrderDetailModel,
 } from "@/lib/sales/orders";
+import { createDeliveryNote } from "@/lib/shipping/delivery-notes";
 
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
@@ -67,8 +68,10 @@ export function OrderDetail({ id }: { id: string }) {
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(canRead);
   const [reload, setReload] = useState(0);
+  const canCreateNote = permissions.includes("delivery-note.create");
   const [submitOpen, setSubmitOpen] = useState(false);
   const [decideOpen, setDecideOpen] = useState<"approve" | "reject" | null>(null);
+  const [noteOpen, setNoteOpen] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -140,6 +143,37 @@ export function OrderDetail({ id }: { id: string }) {
 
   const submittable = Boolean(detail && canSubmit && canSubmitSalesOrder(detail.status));
   const decidable = Boolean(detail && canDecideSalesOrder(detail.status));
+  const remainingLines =
+    detail?.items.filter((item) => item.remainingQty !== null && item.remainingQty > 0) ?? [];
+  const shippable = Boolean(
+    detail &&
+      canCreateNote &&
+      ["Approved", "Preparing", "PartiallyShipped"].includes(detail.status) &&
+      remainingLines.length > 0,
+  );
+
+  async function confirmDeliveryNote() {
+    if (!detail) return;
+    setActing(true);
+    setActionError(null);
+    try {
+      const note = await createDeliveryNote({
+        salesOrderId: detail.id,
+        items: remainingLines.map((item) => ({
+          salesOrderItemId: item.id,
+          enteredQuantity: item.remainingQty as number,
+          enteredPackagingId: null,
+          viewMode: "BaseUnit",
+        })),
+      });
+      setNoteOpen(false);
+      router.push(`/sevkiyat/irsaliyeler/${note.id}`);
+    } catch (caught) {
+      setActionError(userFacingMessage(caught));
+    } finally {
+      setActing(false);
+    }
+  }
 
   return (
     <AppShell
@@ -169,6 +203,7 @@ export function OrderDetail({ id }: { id: string }) {
               Reddet
             </Button>
           ) : null}
+          {shippable ? <Button onClick={() => setNoteOpen(true)}>İrsaliye oluştur</Button> : null}
         </div>
       }
     >
@@ -400,6 +435,35 @@ export function OrderDetail({ id }: { id: string }) {
         )}
         {actionError && decideOpen ? (
           <Alert tone="danger" title="İşlem kaydedilemedi">
+            {actionError}
+          </Alert>
+        ) : null}
+      </Dialog>
+
+      <Dialog
+        open={noteOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setNoteOpen(false);
+            setActionError(null);
+          }
+        }}
+        title="İrsaliye oluştur"
+        description="Kalan temel miktar (remainingQty) BaseUnit olarak gönderilir. İstemci ambalaj çarpanı uygulamaz."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setNoteOpen(false)}>
+              Vazgeç
+            </Button>
+            <Button loading={acting} onClick={() => void confirmDeliveryNote()}>
+              Taslak irsaliye
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">{remainingLines.length} kalan kalem. Stok issue anında düşer.</p>
+        {actionError && noteOpen ? (
+          <Alert tone="danger" title="İrsaliye oluşmadı">
             {actionError}
           </Alert>
         ) : null}

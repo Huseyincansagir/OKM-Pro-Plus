@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { FileText, Layers, Receipt, Wallet } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiMetric } from "@/components/dashboard/kpi-metric";
@@ -162,6 +163,47 @@ export function FinanceBoard() {
         </div>
       ) : (
         <div className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>İrsaliyeler</CardTitle>
+            </CardHeader>
+            <CardBody>
+              {!canReadNotes ? (
+                <p className="text-sm text-slate-600">delivery-note.read yok.</p>
+              ) : loading || !notes ? (
+                <p className="text-sm text-slate-600">Yükleniyor…</p>
+              ) : notes.length === 0 ? (
+                <EmptyState title="İrsaliye yok" description="GET /delivery-notes boş." />
+              ) : (
+                <DataTable
+                  columns={[
+                    {
+                      id: "no",
+                      header: "Belge",
+                      accessor: (row) => (
+                        <Link className="font-semibold text-teal-600" href={`/sevkiyat/irsaliyeler/${row.id}`}>
+                          {row.documentNumber || row.id.slice(0, 8)}
+                        </Link>
+                      ),
+                    },
+                    {
+                      id: "status",
+                      header: "Durum",
+                      accessor: (row) => (
+                        <StatusBadge
+                          status={row.status === "Issued" ? "success" : "pending"}
+                          label={row.status}
+                        />
+                      ),
+                    },
+                    { id: "items", header: "Kalem", accessor: (row) => String(row.itemCount) },
+                  ]}
+                  rows={notes}
+                  getRowId={(row) => row.id}
+                />
+              )}
+            </CardBody>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Faturalar</CardTitle>

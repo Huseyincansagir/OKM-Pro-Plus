@@ -23,14 +23,9 @@ async function listArray(path: string, title: string): Promise<unknown[]> {
   return raw;
 }
 
-export type TransferRow = {
-  id: string;
-  productId: string;
-  status: string;
-  quantityBase: number | null;
-  enteredQuantity: number;
-  createdAt: string;
-};
+export type { TransferRow } from "@/lib/warehouse/transfers";
+export { listTransfers, mapTransfer, transferStatusKind } from "@/lib/warehouse/transfers";
+export { shipmentStatusKind } from "@/lib/shipping/shipments";
 
 export type ProductionRow = {
   id: string;
@@ -50,12 +45,7 @@ export type ShipmentRow = {
   createdAt: string;
 };
 
-export function transferStatusKind(status: string): StatusKind {
-  if (status === "Draft") return "pending";
-  if (status === "Completed") return "success";
-  if (status === "Cancelled") return "critical";
-  return "info";
-}
+
 
 export function productionStatusKind(status: string): StatusKind {
   if (status === "Planned") return "pending";
@@ -65,28 +55,9 @@ export function productionStatusKind(status: string): StatusKind {
   return "info";
 }
 
-export function shipmentStatusKind(status: string): StatusKind {
-  if (status === "Draft" || status === "Planned") return "pending";
-  if (status === "Dispatched" || status === "InTransit") return "active";
-  if (status === "Delivered" || status === "Completed") return "success";
-  if (status === "Cancelled") return "critical";
-  return "info";
-}
 
-export function mapTransfer(raw: unknown): TransferRow {
-  const record = asRecord(raw);
-  return {
-    id: String(record.id ?? ""),
-    productId: String(record.productId ?? ""),
-    status: String(record.status ?? ""),
-    quantityBase: asFiniteNumber(record.quantityBase),
-    enteredQuantity:
-      typeof record.enteredQuantity === "number" && Number.isFinite(record.enteredQuantity)
-        ? record.enteredQuantity
-        : 0,
-    createdAt: String(record.createdAt ?? ""),
-  };
-}
+
+
 
 export function mapProduction(raw: unknown): ProductionRow {
   const record = asRecord(raw);
@@ -113,9 +84,7 @@ export function mapShipment(raw: unknown): ShipmentRow {
   };
 }
 
-export async function listTransfers(): Promise<TransferRow[]> {
-  return (await listArray("/warehouse-transfers", "Transfer listesi")).map(mapTransfer);
-}
+
 
 export async function listProductionOrders(): Promise<ProductionRow[]> {
   return (await listArray("/production/orders", "Üretim listesi")).map(mapProduction);

@@ -17,6 +17,29 @@ public sealed class StockQueryService(FactoryErpDbContext dbContext) : IStockQue
         return rows.Select(x => new WarehouseDto(x.Id, x.Code, x.Name, x.IsActive)).ToArray();
     }
 
+    public async Task<IReadOnlyCollection<WarehouseLocationDto>?> ListWarehouseLocationsAsync(
+        Guid warehouseId,
+        CancellationToken cancellationToken = default)
+    {
+        var exists = await dbContext.Warehouses
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == warehouseId, cancellationToken);
+        if (!exists)
+        {
+            return null;
+        }
+
+        var rows = await dbContext.WarehouseLocations
+            .AsNoTracking()
+            .Where(x => x.WarehouseId == warehouseId)
+            .OrderBy(x => x.Code)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows
+            .Select(x => new WarehouseLocationDto(x.Id, x.WarehouseId, x.Code, x.Name, x.IsActive))
+            .ToArray();
+    }
+
     public async Task<IReadOnlyCollection<StockRowDto>> ListStocksAsync(CancellationToken cancellationToken = default)
     {
         var rows = await dbContext.Stocks

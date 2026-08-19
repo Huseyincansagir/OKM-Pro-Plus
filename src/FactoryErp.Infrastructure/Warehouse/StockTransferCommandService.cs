@@ -85,7 +85,7 @@ public sealed class StockTransferCommandService(
                 record.Status,
             })), cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
-        var result = Map(record);
+        var result = await MapAsync(record, cancellationToken);
         await idempotencyStore.SaveAsync(
             scope,
             idempotencyKey,
@@ -105,7 +105,7 @@ public sealed class StockTransferCommandService(
             .OrderByDescending(x => x.CreatedAt)
             .Take(100)
             .ToArrayAsync(cancellationToken);
-        return rows.Select(Map).ToArray();
+        return await MapManyAsync(rows, cancellationToken);
     }
 
     public async Task<StockTransferDto?> GetAsync(Guid transferId, CancellationToken cancellationToken = default)
@@ -113,7 +113,7 @@ public sealed class StockTransferCommandService(
         var record = await dbContext.StockTransfers
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == transferId, cancellationToken);
-        return record is null ? null : Map(record);
+        return record is null ? null : await MapAsync(record, cancellationToken);
     }
 
     public async Task<StockTransferDto?> CompleteAsync(
@@ -204,7 +204,7 @@ public sealed class StockTransferCommandService(
                 targetMovement = "WarehouseTransferIn",
             })), cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
-        var result = Map(record);
+        var result = await MapAsync(record, cancellationToken);
         await idempotencyStore.SaveAsync(
             scope,
             idempotencyKey,
@@ -252,7 +252,7 @@ public sealed class StockTransferCommandService(
             correlationId,
             AfterJson: JsonSerializer.Serialize(new { record.Status, record.CancelledAt })), cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
-        var result = Map(record);
+        var result = await MapAsync(record, cancellationToken);
         await idempotencyStore.SaveAsync(
             scope,
             idempotencyKey,
@@ -363,14 +363,49 @@ public sealed class StockTransferCommandService(
             record.CompletedAt,
             record.CancelledAt);
 
-    private static StockTransferDto Map(StockTransferRecord record)
-        => new(
+    private async Task<StockTransferDto> MapAsync(StockTransferRecord record, CancellationToken cancellationToken)
+    {
+        var mapped = await MapManyAsync(new[] { record }, cancellationToken);
+        return mapped[0];
+    }
+
+    private async Task<IReadOnlyList<StockTransferDto>> MapManyAsync(
+        IReadOnlyCollection<StockTransferRecord> rows,
+        CancellationToken cancellationToken)
+    {
+        if (rows.Count == 0)
+        {
+            return Array.Empty<StockTransferDto>();
+        }
+
+        var productIds = rows.Select(x => x.ProductId).Distinct().ToArray();
+        var warehouseIds = rows.SelectMany(x => new[] { x.SourceWarehouseId, x.TargetWarehouseId }).Distinct().ToArray();
+        var locationIds = rows.SelectMany(x => new[] { x.SourceLocationId, x.TargetLocationId }).Distinct().ToArray();
+        var products = await dbContext.Products
+            .AsNoTracking()
+            .Where(x => productIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Code, cancellationToken);
+        var warehouses = await dbContext.Warehouses
+            .AsNoTracking()
+            .Where(x => warehouseIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Code, cancellationToken);
+        var locations = await dbContext.WarehouseLocations
+            .AsNoTracking()
+            .Where(x => locationIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Code, cancellationToken);
+
+        return rows.Select(record => new StockTransferDto(
             record.Id,
             record.ProductId,
+            products.GetValueOrDefault(record.ProductId, string.Empty),
             record.SourceWarehouseId,
+            warehouses.GetValueOrDefault(record.SourceWarehouseId, string.Empty),
             record.SourceLocationId,
+            locations.GetValueOrDefault(record.SourceLocationId, string.Empty),
             record.TargetWarehouseId,
+            warehouses.GetValueOrDefault(record.TargetWarehouseId, string.Empty),
             record.TargetLocationId,
+            locations.GetValueOrDefault(record.TargetLocationId, string.Empty),
             record.EnteredQuantity,
             record.EnteredPackagingId,
             record.ViewMode,
@@ -379,7 +414,8 @@ public sealed class StockTransferCommandService(
             record.Status,
             record.CreatedAt,
             record.CompletedAt,
-            record.CancelledAt);
+            record.CancelledAt)).ToArray();
+    }
 
     private async Task<T?> TryReplayAsync<T>(
         string scope,

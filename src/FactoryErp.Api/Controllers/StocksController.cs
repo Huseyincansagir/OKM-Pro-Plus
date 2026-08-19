@@ -14,6 +14,14 @@ public sealed class WarehousesController(IStockQueryService stockQueryService) :
     [HttpGet]
     public async Task<ActionResult<IReadOnlyCollection<WarehouseDto>>> List(CancellationToken cancellationToken)
         => Ok(await stockQueryService.ListWarehousesAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.StockRead)]
+    [HttpGet("{warehouseId:guid}/locations")]
+    public async Task<IActionResult> ListLocations(Guid warehouseId, CancellationToken cancellationToken)
+    {
+        var result = await stockQueryService.ListWarehouseLocationsAsync(warehouseId, cancellationToken);
+        return result is null ? NotFound() : Ok(result);
+    }
 }
 
 [ApiController]

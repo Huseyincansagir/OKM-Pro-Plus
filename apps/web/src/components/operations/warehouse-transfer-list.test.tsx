@@ -2,12 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WarehouseTransferList } from "@/components/operations/warehouse-transfer-list";
 import { resetSessionStore, useSessionStore } from "@/lib/auth/session-store";
-import { listTransfers } from "@/lib/operations/boards";
+import { listTransfers } from "@/lib/warehouse/transfers";
 import { setWindowWidth } from "@/test/viewport";
 
-vi.mock("@/lib/operations/boards", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/operations/boards")>(
-    "@/lib/operations/boards",
+vi.mock("@/lib/warehouse/transfers", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/warehouse/transfers")>(
+    "@/lib/warehouse/transfers",
   );
   return { ...actual, listTransfers: vi.fn() };
 });
