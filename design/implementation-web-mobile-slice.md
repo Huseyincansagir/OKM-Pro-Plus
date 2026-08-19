@@ -603,6 +603,47 @@ Next Slice: WEB SLICE 010 — Customer price lists + directory
 ```text
 WEB SLICE 010
 STATUS: PASS
-Next Slice: GET /orders listesi veya iç ürün tahtası
+Next Slice: WEB SLICE 011 — Sales order list
+```
+
+## WEB SLICE 011 — Sales order list
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web + backend compile)
+**Kapsam:** `GET /api/v1/orders` (`order.read`), `/satis/siparisler` liste ve `/satis/siparisler/[id]` detay. Detay mevcut `GET /orders/{id}` + `submit` / `approve` / `reject`. Serbest sipariş oluşturma yok (iç ürün listesi yok).
+**Baseline:** WEB SLICE 010 PASS.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| `GET /satis/siparisler` | `GET /api/v1/orders` |
+| `GET /satis/siparisler/{id}` | `GET /api/v1/orders/{id}` |
+| Onaya gönder | `POST /orders/{id}/submit` |
+| Onayla / Reddet | `POST /orders/{id}/approve` / `reject` |
+
+Olmayan: `POST /orders` formu, ürün seçici, `GET /orders` filtre query.
+
+### 2. Kurallar
+
+- Liste en fazla 100; KPI bu pencereden.
+- `orderedQty` / `remainingQty` sunucu alanıdır.
+- Red gerekçesi zorunlu.
+- Onay stok yoksa backend reddeder; sahte başarı yok.
+
+### 3. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 130 test |
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web build` | PASS; `/satis/siparisler`, `/satis/siparisler/[id]` |
+| `dotnet build FactoryErp.sln -c Release` | PASS; 0 warning / 0 error |
+
+```text
+WEB SLICE 011
+STATUS: PASS
+Next Slice: iç ürün tahtası
 ```
 
