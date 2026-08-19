@@ -480,6 +480,42 @@ Next Slice: WEB SLICE 007 — Customer list + quote-request bind
 ```text
 WEB SLICE 007
 STATUS: PASS
-Next Slice: Quote belgesi veya GET /orders listesi (API hazır olunca)
+Next Slice: WEB SLICE 008 — Staff customer create
+```
+
+## WEB SLICE 008 — Staff customer create
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web + backend compile)
+**Kapsam:** `POST /api/v1/customers` (`customer.create`, Idempotency-Key), `/satis/musteriler/yeni`. Kod sunucu `MUS-YYYY-######`. Personel kartı `Active`. Public talep otomatik müşteri olmaz. PATCH yok.
+**Baseline:** WEB SLICE 007 PASS.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| `GET /satis/musteriler/yeni` | form |
+| Kartı aç | `POST /api/v1/customers` |
+
+### 2. Kurallar
+
+- Unvan zorunlu; kod/bakiye istemci üretmez.
+- `customer.create` yoksa form gizlenir.
+- Başarıda detay rotasına gidilir.
+
+### 3. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 105 test |
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web build` | PASS; `/satis/musteriler/yeni` |
+| `dotnet build -c Release` | PASS; 0 warning / 0 error |
+
+```text
+WEB SLICE 008
+STATUS: PASS
+Next Slice: GET /orders listesi veya Quote belgesi (ikisi de henüz API’siz)
 ```
 
