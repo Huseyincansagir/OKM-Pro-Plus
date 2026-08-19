@@ -34,3 +34,22 @@ public sealed class StocksController(IStockQueryService stockQueryService) : Con
         return result is null ? NotFound() : Ok(result);
     }
 }
+
+[ApiController]
+[Authorize]
+[Route("api/v1/stock-movements")]
+public sealed class StockMovementsController(IStockQueryService stockQueryService) : ControllerBase
+{
+    [Authorize(Policy = PermissionPolicies.StockRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<StockMovementRowDto>>> List(CancellationToken cancellationToken)
+        => Ok(await stockQueryService.ListStockMovementsAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.StockRead)]
+    [HttpGet("{movementId:guid}")]
+    public async Task<IActionResult> Get(Guid movementId, CancellationToken cancellationToken)
+    {
+        var result = await stockQueryService.GetStockMovementAsync(movementId, cancellationToken);
+        return result is null ? NotFound() : Ok(result);
+    }
+}

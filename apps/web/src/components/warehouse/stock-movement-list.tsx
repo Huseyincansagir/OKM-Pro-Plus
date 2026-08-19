@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Boxes, Layers, Package, Warehouse } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Layers, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiMetric } from "@/components/dashboard/kpi-metric";
 import { EmptyState } from "@/components/states/empty-state";
@@ -12,18 +13,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Glyph } from "@/components/ui/glyph";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ApiError } from "@/lib/api/types";
 import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
-import { listStocks, listWarehouses, type StockRow } from "@/lib/warehouse/stocks";
+import {
+  formatMovementInstant,
+  listStockMovements,
+  movementEffectKind,
+  movementEffectLabel,
+  movementTypeLabel,
+  type StockMovementRow,
+} from "@/lib/warehouse/stock-movements";
 
-export function StockList() {
+export function StockMovementList() {
   const router = useRouter();
   const user = useSessionStore((state) => state.user);
-  const permissions = user?.permissions ?? [];
-  const canRead = permissions.includes("stock.read");
-  const [rows, setRows] = useState<StockRow[] | null>(null);
-  const [warehouseCount, setWarehouseCount] = useState<number | null>(null);
+  const canRead = (user?.permissions ?? []).includes("stock.read");
+  const [rows, setRows] = useState<StockMovementRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(canRead);
@@ -38,11 +45,9 @@ export function StockList() {
     setLoading(true);
     setError(null);
     setDenied(false);
-    Promise.all([listStocks(), listWarehouses()])
-      .then(([stocks, warehouses]) => {
-        if (cancelled) return;
-        setRows(stocks);
-        setWarehouseCount(warehouses.length);
+    listStockMovements()
+      .then((result) => {
+        if (!cancelled) setRows(result);
       })
       .catch((caught) => {
         if (cancelled) return;
@@ -61,8 +66,9 @@ export function StockList() {
   }, [canRead, reload]);
 
   const ready = Boolean(rows) && !loading && !error && !denied;
-  const reserved = rows?.filter((row) => (row.reservedQtyBase ?? 0) > 0).length ?? 0;
-  const empty = rows?.filter((row) => row.availableQtyBase === 0).length ?? 0;
+  const inbound = rows?.filter((row) => row.effect === "In").length ?? 0;
+  const outbound = rows?.filter((row) => row.effect === "Out").length ?? 0;
+  const reversed = rows?.filter((row) => Boolean(row.reversedFromId)).length ?? 0;
   const total = rows?.length ?? 0;
 
   return (
@@ -70,14 +76,15 @@ export function StockList() {
       currentHref="/depo"
       breadcrumbs={[
         { label: "Çalışma alanı", href: "/dashboard" },
-        { label: "Depo" },
+        { label: "Depo", href: "/depo" },
+        { label: "Hareketler" },
       ]}
-      pageTitle="Stok"
-      pageDescription="GET /stocks. Kullanılabilir miktar sunucu availableQtyBase alanıdır. Liste en fazla 100 kayıttır."
+      pageTitle="Stok hareketleri"
+      pageDescription="GET /stock-movements. Miktar sunucu quantityBase alanıdır; işaretli bakiye veya kartex toplamı üretilmez. Liste en fazla 100 kayıttır."
       pageActions={
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => router.push("/depo/hareketler")}>
-            Hareketler
+          <Button variant="secondary" onClick={() => router.push("/depo")}>
+            Stok
           </Button>
           <Button variant="secondary" onClick={() => router.push("/depo/transferler")}>
             Transferler
@@ -95,37 +102,37 @@ export function StockList() {
           label="Satır"
           value={ready ? String(total) : "—"}
           unit="kayıt"
-          icon={Package}
+          icon={Layers}
           tone="navy"
           unavailable={!ready}
-          caption="GET /stocks · pencere"
+          caption="GET /stock-movements · pencere"
         />
         <KpiMetric
-          label="Rezerve"
-          value={ready ? String(reserved) : "—"}
+          label="Giriş"
+          value={ready ? String(inbound) : "—"}
           unit="satır"
-          icon={Layers}
-          tone="amber"
-          unavailable={!ready}
-          caption="reservedQtyBase > 0"
-        />
-        <KpiMetric
-          label="Sıfır available"
-          value={ready ? String(empty) : "—"}
-          unit="satır"
-          icon={Boxes}
+          icon={ArrowDownLeft}
           tone="teal"
           unavailable={!ready}
-          caption="Sunucu availableQtyBase = 0"
+          caption="effect = In"
         />
         <KpiMetric
-          label="Depo"
-          value={ready && warehouseCount !== null ? String(warehouseCount) : "—"}
-          unit="kart"
-          icon={Warehouse}
+          label="Çıkış"
+          value={ready ? String(outbound) : "—"}
+          unit="satır"
+          icon={ArrowUpRight}
+          tone="amber"
+          unavailable={!ready}
+          caption="effect = Out"
+        />
+        <KpiMetric
+          label="Ters kayıt"
+          value={ready ? String(reversed) : "—"}
+          unit="satır"
+          icon={RotateCcw}
           tone="navy"
           unavailable={!ready}
-          caption="GET /warehouses"
+          caption="reversedFromId dolu"
         />
       </div>
 
@@ -133,63 +140,79 @@ export function StockList() {
         <CardBody>
           {!canRead ? (
             <PermissionDenied
-              title="Stok bu oturumda görünmez"
+              title="Hareketler bu oturumda görünmez"
               description="stock.read yok. Bu kontrol yalnızca görünürlük içindir; gerçek yetki backend’dedir."
             />
           ) : denied ? (
             <PermissionDenied />
           ) : error ? (
             <ErrorState
-              title="Stok yüklenemedi"
+              title="Hareketler yüklenemedi"
               description={error}
               onRetry={() => setReload((value) => value + 1)}
             />
           ) : loading ? (
             <DataTable
               columns={[
-                { id: "code", header: "Ürün", accessor: () => null },
-                { id: "onHand", header: "Eldeki", accessor: () => null },
+                { id: "type", header: "Tür", accessor: () => null },
+                { id: "qty", header: "Temel miktar", accessor: () => null },
               ]}
               rows={[]}
               getRowId={() => ""}
               loading
             />
           ) : !rows || rows.length === 0 ? (
-            <EmptyState title="Stok satırı yok" description="Bu pencerede stok kaydı yok." />
+            <EmptyState
+              title="Hareket yok"
+              description="Bu pencerede stok hareketi yok. Transfer, üretim girişi veya irsaliye çıkışı henüz yazılmamış olabilir."
+            />
           ) : (
             <DataTable
               columns={[
                 {
-                  id: "code",
-                  header: "Ürün",
+                  id: "type",
+                  header: "Tür",
                   accessor: (row) => (
-                    <span className="inline-flex items-center gap-2">
-                      <Glyph icon={Package} />
-                      {row.productCode || row.productId.slice(0, 8)}
-                    </span>
+                    <Link
+                      href={`/depo/hareketler/${row.id}`}
+                      className="inline-flex items-center gap-2 font-semibold text-teal-600"
+                    >
+                      <Glyph icon={Layers} />
+                      {movementTypeLabel(row.movementType)}
+                    </Link>
                   ),
                 },
-                { id: "name", header: "Ad", accessor: (row) => row.productName || "—" },
                 {
-                  id: "wh",
-                  header: "Depo",
-                  accessor: (row) => row.warehouseCode || "—",
+                  id: "effect",
+                  header: "Yön",
+                  accessor: (row) => (
+                    <StatusBadge
+                      status={movementEffectKind(row.effect)}
+                      label={movementEffectLabel(row.effect)}
+                    />
+                  ),
                 },
+                {
+                  id: "product",
+                  header: "Ürün",
+                  accessor: (row) => row.productCode || row.productId.slice(0, 8) || "—",
+                },
+                { id: "wh", header: "Depo", accessor: (row) => row.warehouseCode || "—" },
                 { id: "loc", header: "Lokasyon", accessor: (row) => row.locationCode || "—" },
                 {
-                  id: "onHand",
-                  header: "Eldeki",
-                  accessor: (row) => (row.onHandQtyBase === null ? "—" : String(row.onHandQtyBase)),
+                  id: "qty",
+                  header: "Temel miktar",
+                  accessor: (row) => (row.quantityBase === null ? "—" : String(row.quantityBase)),
                 },
                 {
-                  id: "reserved",
-                  header: "Rezerve",
-                  accessor: (row) => (row.reservedQtyBase === null ? "—" : String(row.reservedQtyBase)),
+                  id: "source",
+                  header: "Kaynak",
+                  accessor: (row) => row.sourceEntityType || "—",
                 },
                 {
-                  id: "available",
-                  header: "Kullanılabilir",
-                  accessor: (row) => (row.availableQtyBase === null ? "—" : String(row.availableQtyBase)),
+                  id: "when",
+                  header: "Zaman",
+                  accessor: (row) => formatMovementInstant(row.createdAt),
                 },
               ]}
               rows={rows}
