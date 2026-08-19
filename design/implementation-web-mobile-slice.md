@@ -317,3 +317,43 @@ STATUS: PASS
 Next Slice: WEB SLICE 004 — Public Catalog
 ```
 
+## WEB SLICE 004 — Public Catalog
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web gates)
+**Kapsam:** `/katalog`, ürün detay, client-side teklif sepeti, `POST /api/v1/public/quote-requests`. Server-side basket yok. İç ERP sidebar yok.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| `GET /katalog` | `GET /api/v1/public/catalog/products` |
+| `GET /katalog/[slug]` | `GET /api/v1/public/catalog/products/{slug}` |
+| `GET /katalog/sepet` | yok (Zustand sepet) |
+| Teklif gönder | `POST /api/v1/public/quote-requests` |
+
+Olmayan quote basket / finalize endpoint’i çağrılmaz.
+
+### 2. Kurallar
+
+- Public shell; stok, fiyat, maliyet, risk gösterilmez. DTO mapper extra alanları düşürür.
+- Sepet satırı `enteredQuantity` + `enteredPackagingId` + `viewMode`. `quantityBase` client üretmez; katalog tanımı `1 Koli = N adet` olarak gösterilir.
+- `viewMode` toggle işlem ambalajını değiştirmez.
+- Public quote backend’de idempotent değil; otomatik retry yok. Gönderim hatasında form korunur.
+- Oturum gerekmez; middleware `/katalog` public.
+
+### 3. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 61 test |
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web build` | PASS; `/katalog`, `/katalog/[slug]`, `/katalog/sepet` |
+
+```text
+WEB SLICE 004
+STATUS: PASS
+Next Slice: WEB SLICE 005 — Dashboard
+```
+
