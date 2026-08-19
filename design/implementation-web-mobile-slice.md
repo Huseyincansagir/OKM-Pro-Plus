@@ -176,15 +176,25 @@ Agent A promptundaki `base | transaction | packaging` kullanılmadı. Kaynak: `d
 
 ## 6. Test kapsamı
 
+Komut: `pnpm --dir apps/web test` (Vitest). İzleme: `pnpm --dir apps/web test:watch`.
+Paylaşılan jsdom yardımcısı: `apps/web/src/test/viewport.ts`. Quantity harness kalıcı state kullanır; her render’da sıfırlanan object ile invariant gizlenmez.
+
 | Dosya | Doğrulama |
 |---|---|
-| `quantity-view-toggle.test.tsx` | Yalnızca viewMode değişir; ok tuşu dahil |
-| `quantity-entry-preview.test.tsx` | Client conversion yok |
-| `app-shell.test.tsx` | Render, collapse, mobile drawer + Escape |
+| `viewport.test.ts` | 320 / 768 / 1024 kırılımları |
+| `quantity-view-toggle.test.tsx` | Yalnızca viewMode; ok tuşu; disabled; aynı moda tıklama |
+| `quantity-entry-preview.test.tsx` | Client conversion yok; çelişkili canonical değer korunur |
+| `design-system-preview.test.tsx` | Preview display.* seçer; işlem miktarı/stok aynı kalır |
+| `app-shell.test.tsx` | Render, desktop collapse, tablet collapsed, mobile Escape |
+| `connection-status.test.tsx` | Bağlı / çevrimdışı |
 | `dialog.test.tsx` / `drawer.test.tsx` | Focus, Escape, focus return |
-| `data-table.test.tsx` | loading / empty / error / sort / selection |
-| `status-badge.test.tsx` | Metin + ikon |
-| `states.test.tsx` | Empty / error / permission |
+| `dropdown-menu.test.tsx` | Aç / seç / Escape |
+| `data-table.test.tsx` | loading / empty / error / sort / selection / pagination |
+| `form-controls.test.tsx` | aria-invalid, describedby, hint gizleme |
+| `button.test.tsx` | loading disabled + aria-busy |
+| `tabs.test.tsx` | aria-selected değişimi |
+| `status-badge.test.tsx` | Altı status: metin + ikon |
+| `states.test.tsx` | Empty / retry / permission |
 
 ## 7. Gate sonuçları
 
@@ -192,7 +202,7 @@ Agent A promptundaki `base | transaction | packaging` kullanılmadı. Kaynak: `d
 |---|---|
 | `pnpm --dir apps/web typecheck` | PASS |
 | `pnpm --dir apps/web lint` | PASS |
-| `pnpm --dir apps/web test` | PASS; 17 test |
+| `pnpm --dir apps/web test` | PASS; 40 test |
 | `pnpm --dir apps/web build` | PASS; Next.js 15.5.23 (önceki oturum doğrulaması + bu oturum typecheck/lint/test) |
 | `dotnet build FactoryErp.sln --configuration Release` | PASS; 0 warning / 0 error |
 | `dotnet test FactoryErp.sln` | Domain 122 PASS, Architecture 5 PASS. Infrastructure 48 PASS / 30 FAIL: `127.0.0.1:5432` yok. WEB 002 backend’e dokunmadı. Bu makinede .NET 8 runtime yok; testler `DOTNET_ROLL_FORWARD=LatestMajor` ile koştu. |
@@ -217,7 +227,7 @@ STATUS: PASS
 
 Typecheck: PASS
 Lint: PASS
-Tests: PASS (17)
+Tests: PASS (40)
 Build: PASS
 Backend Build: PASS
 Backend Tests: Domain+Architecture PASS; Infrastructure integration BLOCKED (no local Postgres)
