@@ -29,6 +29,9 @@ export function requiresIdempotencyKey(method: string, path: string): boolean {
     return false;
   }
   const normalized = path.startsWith("/") ? path : `/${path}`;
+  if (normalized.startsWith("/public/")) {
+    return false;
+  }
   return IDEMPOTENT_PREFIXES.some(
     (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
   );

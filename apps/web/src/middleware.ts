@@ -15,6 +15,7 @@ export function middleware(request: NextRequest) {
 
   const isPublic =
     pathname === "/giris" ||
+    pathname.startsWith("/katalog") ||
     pathname.startsWith("/api/auth/login") ||
     pathname.startsWith("/api/auth/refresh") ||
     pathname.startsWith("/api/auth/logout");

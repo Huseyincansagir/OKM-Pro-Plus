@@ -8,5 +8,6 @@ describe("requiresIdempotencyKey", () => {
     expect(requiresIdempotencyKey("GET", "/orders/1")).toBe(false);
     expect(requiresIdempotencyKey("POST", "/auth/login")).toBe(false);
     expect(requiresIdempotencyKey("POST", "/public/quote-requests")).toBe(false);
+    expect(requiresIdempotencyKey("POST", "/public/catalog/products")).toBe(false);
   });
 });
