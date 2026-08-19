@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/types";
 import { apiRequest } from "@/lib/api/client";
 import {
+  getQuoteRequest,
   listQuoteRequests,
+  mapQuoteRequestDetail,
   mapQuoteRequestSummary,
   quoteRequestSourceLabel,
   quoteRequestStatusKind,
   quoteRequestStatusLabel,
   readSystemHealth,
+  reviewQuoteRequest,
 } from "@/lib/dashboard/quote-requests";
 
 vi.mock("@/lib/api/client", () => ({
@@ -124,5 +127,84 @@ describe("quote-requests client", () => {
       method: "GET",
     });
     expect(health).toEqual({ status: "operational" });
+  });
+
+  it("reads a quote request detail without client-side conversion", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({
+      id: "qr-1",
+      requestNumber: "TLT-1",
+      status: "Received",
+      source: "Public",
+      candidateName: "Acme / Ali",
+      candidateEmail: "a@b.com",
+      candidatePhone: "555",
+      createdAt: "2026-08-19T00:00:00Z",
+      items: [
+        {
+          id: "l1",
+          productId: "p1",
+          enteredQuantity: 5,
+          enteredPackagingId: "pkg",
+          quantityBase: 10000,
+          packagingSnapshot: JSON.stringify({ name: "Koli" }),
+        },
+      ],
+    });
+
+    const detail = await getQuoteRequest("qr-1");
+    expect(apiRequest).toHaveBeenCalledWith({
+      path: "/quote-requests/qr-1",
+      method: "GET",
+    });
+    expect(detail.items[0]).toMatchObject({
+      enteredQuantity: 5,
+      quantityBase: 10000,
+      packagingName: "Koli",
+    });
+  });
+
+  it("reviews with null customerId and no quantityBase", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({
+      id: "qr-1",
+      requestNumber: "TLT-1",
+      status: "InReview",
+      source: "Public",
+      candidateName: "Acme",
+      items: [],
+      createdAt: "2026-08-19T00:00:00Z",
+    });
+
+    await reviewQuoteRequest("qr-1", null);
+
+    const argument = vi.mocked(apiRequest).mock.calls[0][0];
+    expect(argument.path).toBe("/quote-requests/qr-1/review");
+    expect(argument.method).toBe("POST");
+    expect(argument.idempotent).toBe(true);
+    expect(argument.body).toEqual({ customerId: null });
+    expect(JSON.stringify(argument.body)).not.toContain("quantityBase");
+  });
+});
+
+describe("mapQuoteRequestDetail", () => {
+  it("keeps server quantityBase on lines and does not invent packaging math", () => {
+    const detail = mapQuoteRequestDetail({
+      id: "qr-1",
+      requestNumber: "TLT-1",
+      status: "Received",
+      source: "Public",
+      candidateName: "Acme",
+      candidateEmail: "a@b.com",
+      items: [
+        {
+          id: "l1",
+          enteredQuantity: 2,
+          quantityBase: 4000,
+          packagingSnapshot: '{"name":"Koli","quantityInBaseUom":2000}',
+        },
+      ],
+    });
+    expect(detail.items[0].quantityBase).toBe(4000);
+    expect(detail.items[0].packagingName).toBe("Koli");
+    expect(detail.candidateEmail).toBe("a@b.com");
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   Building2,
   CalendarDays,
@@ -20,6 +21,7 @@ import { KpiMetric } from "@/components/dashboard/kpi-metric";
 import { RailListCard } from "@/components/dashboard/rail-list-card";
 import { UnavailableChart } from "@/components/dashboard/unavailable-chart";
 import { Badge } from "@/components/ui/badge";
+import { Glyph } from "@/components/ui/glyph";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
@@ -264,6 +266,7 @@ export function OperationsDashboard() {
                 { label: "Toplam Satış" },
                 { label: "Günlük Ortalama" },
                 { label: "En Yüksek Gün" },
+                { label: "Karşılaştırma" },
               ]}
               reason="Satış zaman serisi yok. Sahte grafik çizilmez."
             />
@@ -304,9 +307,9 @@ export function OperationsDashboard() {
                     Yenile
                   </Button>
                 ) : null}
-                <span className="text-xs font-semibold text-teal-600/70" title="Aktivite listesi yok">
+                <Link href="/satis/teklif-talepleri" className="text-xs font-semibold text-teal-600">
                   Tüm Aktiviteler
-                </span>
+                </Link>
               </div>
             </CardHeader>
             <CardBody className="pt-3">
@@ -353,9 +356,7 @@ export function OperationsDashboard() {
                         header: "Tür",
                         accessor: () => (
                           <span className="inline-flex items-center gap-2">
-                            <span className="grid h-7 w-7 place-items-center rounded-lg bg-teal-500/10 text-teal-700">
-                              <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
-                            </span>
+                            <Glyph icon={ClipboardList} />
                             Teklif talebi
                           </span>
                         ),
@@ -370,7 +371,12 @@ export function OperationsDashboard() {
                         id: "record",
                         header: "İlgili Kayıt",
                         accessor: (row) => (
-                          <span className="font-semibold text-teal-600">{row.requestNumber}</span>
+                          <Link
+                            href={`/satis/teklif-talepleri/${row.id}`}
+                            className="font-semibold text-teal-600"
+                          >
+                            {row.requestNumber}
+                          </Link>
                         ),
                       },
                       {

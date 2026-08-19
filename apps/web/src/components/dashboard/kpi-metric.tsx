@@ -47,25 +47,24 @@ export function KpiMetric({
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[12px] font-semibold text-slate-500">{label}</p>
-            <p className="mt-1 flex items-baseline gap-1.5 text-[25px] font-extrabold tracking-tight text-navy-950">
+            <p className="mt-1 flex min-h-8 items-baseline gap-1.5 text-[25px] font-extrabold tracking-tight text-navy-950">
               <span>{value}</span>
               {unit ? (
                 <span className="text-sm font-semibold text-slate-500">{unit}</span>
               ) : null}
             </p>
-            {secondary ? (
-              <p className="mt-0.5 text-xs text-slate-500">{secondary}</p>
-            ) : null}
+            <p className="mt-0.5 min-h-4 text-xs text-slate-500">{secondary ?? "\u00a0"}</p>
           </div>
         </div>
-        <div className="mt-auto flex items-center justify-between gap-3 border-t border-surface-200 pt-2">
+        <div className="mt-auto flex min-h-7 items-center justify-between gap-3 border-t border-surface-200 pt-2">
           <p className="text-[11px] text-slate-500">{caption}</p>
-          {showEmptyTrack ? (
-            <span
-              className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-200"
-              aria-hidden="true"
-            />
-          ) : null}
+          <span
+            className={cn(
+              "h-1.5 w-16 overflow-hidden rounded-full bg-surface-200",
+              showEmptyTrack ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden="true"
+          />
         </div>
       </CardBody>
     </Card>

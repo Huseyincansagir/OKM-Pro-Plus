@@ -79,7 +79,11 @@ export const Sidebar = forwardRef<
             ) : null}
             <nav className="flex flex-col gap-1">
               {section.items.map((item) => {
-                const active = item.href === currentHref;
+                const active =
+                  item.href === currentHref ||
+                  (item.implemented === true &&
+                    item.href !== "/" &&
+                    currentHref.startsWith(`${item.href}/`));
                 const Icon = item.icon;
                 const ready = item.implemented === true;
                 const className = cn(

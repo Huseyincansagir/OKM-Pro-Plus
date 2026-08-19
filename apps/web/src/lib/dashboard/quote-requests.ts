@@ -12,6 +12,21 @@ export type QuoteRequestSummary = {
   createdAt: string;
 };
 
+export type QuoteRequestLine = {
+  id: string;
+  productId: string;
+  enteredQuantity: number;
+  enteredPackagingId: string | null;
+  quantityBase: number | null;
+  packagingName: string;
+};
+
+export type QuoteRequestDetail = QuoteRequestSummary & {
+  candidateEmail: string;
+  candidatePhone: string;
+  items: QuoteRequestLine[];
+};
+
 export type SystemHealth = {
   status: string;
 };
@@ -54,7 +69,57 @@ export function quoteRequestStatusLabel(status: string): string {
 
 export function quoteRequestSourceLabel(source: string): string {
   if (source === "Public") return "Public katalog";
+  if (source === "Internal") return "İç kayıt";
   return source || "—";
+}
+
+function packagingNameFromSnapshot(raw: unknown): string {
+  if (typeof raw !== "string" || !raw) {
+    return "—";
+  }
+  try {
+    const parsed = JSON.parse(raw) as { name?: unknown };
+    return typeof parsed.name === "string" && parsed.name ? parsed.name : "—";
+  } catch {
+    return "—";
+  }
+}
+
+export function mapQuoteRequestLine(raw: unknown): QuoteRequestLine {
+  const record = asRecord(raw);
+  const quantityBase =
+    typeof record.quantityBase === "number" && Number.isFinite(record.quantityBase)
+      ? record.quantityBase
+      : null;
+  return {
+    id: String(record.id ?? ""),
+    productId: String(record.productId ?? ""),
+    enteredQuantity:
+      typeof record.enteredQuantity === "number" && Number.isFinite(record.enteredQuantity)
+        ? record.enteredQuantity
+        : 0,
+    enteredPackagingId:
+      typeof record.enteredPackagingId === "string" ? record.enteredPackagingId : null,
+    quantityBase,
+    packagingName: packagingNameFromSnapshot(record.packagingSnapshot),
+  };
+}
+
+export function mapQuoteRequestDetail(raw: unknown): QuoteRequestDetail {
+  const record = asRecord(raw);
+  const summary = mapQuoteRequestSummary(record);
+  const items = Array.isArray(record.items) ? record.items.map(mapQuoteRequestLine) : [];
+  return {
+    ...summary,
+    candidateEmail: String(record.candidateEmail ?? ""),
+    candidatePhone: String(record.candidatePhone ?? ""),
+    itemCount: items.length,
+    items,
+  };
+}
+
+export function canReviewQuoteRequest(status: string): boolean {
+  return status === "Received" || status === "InReview";
 }
 
 export async function listQuoteRequests(): Promise<QuoteRequestSummary[]> {
@@ -71,6 +136,36 @@ export async function listQuoteRequests(): Promise<QuoteRequestSummary[]> {
     });
   }
   return raw.map(mapQuoteRequestSummary);
+}
+
+export async function getQuoteRequest(id: string): Promise<QuoteRequestDetail> {
+  const raw = await apiRequest<unknown>({
+    path: `/quote-requests/${id}`,
+    method: "GET",
+  });
+  const detail = mapQuoteRequestDetail(raw);
+  if (!detail.id) {
+    throw new ApiError({
+      kind: "not_found",
+      status: 404,
+      title: "Bulunamadı",
+      detail: "Teklif talebi bulunamadı.",
+    });
+  }
+  return detail;
+}
+
+export async function reviewQuoteRequest(
+  id: string,
+  customerId: string | null = null,
+): Promise<QuoteRequestDetail> {
+  const raw = await apiRequest<unknown>({
+    path: `/quote-requests/${id}/review`,
+    method: "POST",
+    body: { customerId },
+    idempotent: true,
+  });
+  return mapQuoteRequestDetail(raw);
 }
 
 export async function readSystemHealth(): Promise<SystemHealth> {

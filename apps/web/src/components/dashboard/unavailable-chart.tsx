@@ -50,7 +50,7 @@ export function UnavailableChart({
             </p>
           </div>
         </div>
-        <div className="mt-3 grid gap-2 border-t border-surface-200 pt-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-surface-200 pt-3 sm:grid-cols-4">
           {stats.map((stat) => (
             <div key={stat.label}>
               <p className="text-[10px] font-extrabold tracking-wide text-slate-500 uppercase">

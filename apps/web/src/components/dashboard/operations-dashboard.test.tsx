@@ -64,7 +64,10 @@ describe("OperationsDashboard", () => {
     expect(screen.queryByText(/1[.\s]?285[.\s]?750/)).not.toBeInTheDocument();
     expect(screen.queryByText(/%18[,.]6/)).not.toBeInTheDocument();
     expect(screen.queryByText(/965[.\s]?430/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Satış" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Satış" })).toHaveAttribute(
+      "href",
+      "/satis/teklif-talepleri",
+    );
   });
 
   it("skips the quote list API when quote-request.read is missing", async () => {
