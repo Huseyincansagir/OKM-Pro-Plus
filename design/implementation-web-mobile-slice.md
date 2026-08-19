@@ -247,3 +247,73 @@ WEB SLICE 003 — Auth & API Client
 [4]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/design/mobile-toggle-api-and-schema.md "Canonical QuantityViewMode"
 
 [5]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/AGENTS.md "Factory ERP repository agent instructions"
+
+## WEB SLICE 003 — Auth & API Client
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web gates)
+**Kapsam:** `/giris`, session bootstrap, BFF token storage, typed API client, error normalizer, 401 single-flight refresh. Public catalog, dashboard iş verisi ve native mobile yok.
+**Baseline:** WEB SLICE 002 PASS.
+
+### 1. Sözleşme
+
+Kaynak: mevcut `AuthController` ve `design/web-slice-003-api-contract-review.md`.
+
+| Endpoint | Client yüzeyi |
+|---|---|
+| `POST /api/v1/auth/login` | Next BFF `POST /api/auth/login` |
+| `POST /api/v1/auth/refresh` | Next BFF `POST /api/auth/refresh` |
+| `POST /api/v1/auth/logout` | Next BFF `POST /api/auth/logout` |
+| `GET /api/v1/auth/me` | Next BFF `GET /api/auth/me` |
+| Diğer `/api/v1/*` | Next proxy `app/api/v1/[...path]`; `auth/login` ve `auth/refresh` proxy’den kapalı |
+
+Backend CORS yok; tarayıcı doğrudan API origin’ine gitmez.
+
+### 2. Token kararı
+
+Ham `refreshToken` JSON’da mevcuttur (backend). WEB 003 bunu tarayıcıya iletmez.
+
+- Access ve refresh: `HttpOnly`, `SameSite=Lax` cookie (`fe_access`, `fe_refresh`)
+- `localStorage` / `sessionStorage` yok
+- Zustand yalnızca user summary + auth status tutar
+- Cookie `secure` yalnızca production
+- Refresh cookie path: `/api/auth`
+
+Sayfa yenilemede BFF `/api/auth/me` access yoksa refresh cookie ile döner.
+
+### 3. Auth lifecycle
+
+Login → cookie set + memory user → `/`
+Access 401 → tek shared refresh → aynı Idempotency-Key ile bir replay
+Refresh 401 → session clear → `/giris`
+403 → refresh yok; `permission_denied`
+Logout → backend revoke denemesi; hata olsa da cookie ve client state temizlenir
+
+### 4. Test
+
+51 web testi. Yeni: error normalizer, secret-stripping, idempotency prefix, 401 single-flight/replay, 403 no-refresh, login form boş/401.
+
+### 5. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web test` | PASS; 51 test |
+| `pnpm --dir apps/web build` | PASS; Next.js 15.5.23; `/giris` + auth BFF route’ları |
+| Backend kod | Değiştirilmedi |
+
+### 6. Sınır
+
+- Public catalog: WEB SLICE 004
+- Dashboard iş verisi: WEB SLICE 005
+- CORS/HSTS/rate-limit backend: operations/security slice
+- Public quote idempotency backend gap açık
+- Signing key production override backend sorumluluğu
+
+```text
+WEB SLICE 003
+STATUS: PASS
+Next Slice: WEB SLICE 004 — Public Catalog
+```
+
