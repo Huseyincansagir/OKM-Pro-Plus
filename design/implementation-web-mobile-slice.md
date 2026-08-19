@@ -670,7 +670,28 @@ Next Slice: WEB SLICE 012 — Internal products
 ```text
 WEB SLICE 012–013
 STATUS: PASS
-Next Slice: cari/personel tahtaları veya stok koleksiyonu (GET /stocks yok)
+Next Slice: WEB SLICE 014 — Stocks and finance collections
 ```
+
+## WEB SLICE 014 — Stocks and finance collections
+
+**Tarih:** 2026-08-19
+**Durum:** PASS
+**Kapsam:** `GET /stocks`, `GET /warehouses` (`stock.read`), `/depo`; transferler `/depo/transferler`; `GET /invoices`, `GET /delivery-notes`, `GET /current-accounts`, `/cari`. Kullanılabilir miktar sunucu `availableQtyBase`; bakiye yoksa ₺0 yazılmaz.
+
+### Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 149 test |
+| typecheck / lint / build | PASS; `/depo`, `/depo/transferler`, `/cari` |
+| `dotnet build -c Release` | PASS; 0 warning / 0 error |
+
+```text
+WEB SLICE 014
+STATUS: PASS
+Next Slice: personel tahtası (employee API yok) veya stok hareketleri
+```
+
 
 
