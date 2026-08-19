@@ -20,6 +20,21 @@ describe("QuantityEntryPreview", () => {
     expect(screen.queryByText("10.000")).not.toBeInTheDocument();
   });
 
+  it("keeps contradictory server values as-is instead of recomputing", () => {
+    render(
+      <QuantityEntryPreview
+        displayQuantity={2}
+        displayUnit="Palet"
+        baseQuantity="99"
+        baseUnit="kg"
+        conversionLabel="sunucu snapshot"
+      />,
+    );
+
+    expect(screen.getByText("Giriş: 2 Palet")).toBeInTheDocument();
+    expect(screen.getByText("99 kg")).toBeInTheDocument();
+  });
+
   it("shows loading and error states", () => {
     const { rerender } = render(<QuantityEntryPreview isLoading />);
     expect(screen.getByLabelText("Yükleniyor")).toBeInTheDocument();

@@ -1,12 +1,29 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusBadge, type StatusKind } from "@/components/ui/status-badge";
+
+const statuses: Array<{ status: StatusKind; label: string }> = [
+  { status: "pending", label: "Onay bekliyor" },
+  { status: "active", label: "Hazırlanıyor" },
+  { status: "success", label: "Tamamlandı" },
+  { status: "critical", label: "Kritik" },
+  { status: "info", label: "İzleniyor" },
+  { status: "inactive", label: "Pasif" },
+];
 
 describe("StatusBadge", () => {
-  it("renders Turkish text with an icon and does not rely on color alone", () => {
-    const { container } = render(<StatusBadge status="pending" />);
+  it.each(statuses)(
+    "renders $label with an icon so status is not color-only",
+    ({ status, label }) => {
+      const { container } = render(<StatusBadge status={status} />);
 
-    expect(screen.getByText("Onay bekliyor")).toBeInTheDocument();
-    expect(container.querySelector("svg")).not.toBeNull();
+      expect(screen.getByText(label)).toBeInTheDocument();
+      expect(container.querySelector("svg")).not.toBeNull();
+    },
+  );
+
+  it("accepts an override label", () => {
+    render(<StatusBadge status="pending" label="Onaya gönderildi" />);
+    expect(screen.getByText("Onaya gönderildi")).toBeInTheDocument();
   });
 });

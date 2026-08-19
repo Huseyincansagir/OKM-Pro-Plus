@@ -110,4 +110,25 @@ describe("DataTable", () => {
     expect(onSelectionChange).toHaveBeenCalledTimes(1);
     expect(onSelectionChange).toHaveBeenCalledWith(["ornek-1"]);
   });
+
+  it("notifies the parent when pagination changes", async () => {
+    const user = userEvent.setup();
+    const onPageChange = vi.fn();
+
+    render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getRowId={(row) => row.id}
+        page={1}
+        pageSize={1}
+        totalCount={2}
+        onPageChange={onPageChange}
+      />,
+    );
+
+    expect(screen.getByText("Sayfa 1 / 2")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sonraki" }));
+    expect(onPageChange).toHaveBeenCalledWith(2);
+  });
 });

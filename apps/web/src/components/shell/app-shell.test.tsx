@@ -2,19 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { AppShell } from "@/components/shell/app-shell";
-
-function setWidth(width: number) {
-  Object.defineProperty(window, "innerWidth", {
-    configurable: true,
-    writable: true,
-    value: width,
-  });
-  window.dispatchEvent(new Event("resize"));
-}
+import { setWindowWidth } from "@/test/viewport";
 
 describe("AppShell", () => {
   it("renders sidebar, topbar and content together", async () => {
-    setWidth(1280);
+    setWindowWidth(1280);
     render(
       <AppShell pageTitle="Önizleme" pageDescription="AppShell içerik alanı">
         <p>İçerik gövdesi</p>
@@ -32,7 +24,7 @@ describe("AppShell", () => {
 
   it("collapses the sidebar on desktop", async () => {
     const user = userEvent.setup();
-    setWidth(1280);
+    setWindowWidth(1280);
     render(
       <AppShell pageTitle="Daralt">
         <p>Gövde</p>
@@ -42,12 +34,23 @@ describe("AppShell", () => {
     const collapse = await screen.findByLabelText("Menüyü daralt");
     await user.click(collapse);
     expect(screen.getByLabelText("Menüyü genişlet")).toBeInTheDocument();
-    expect(screen.getByTitle("Dashboard")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dashboard")).toBeInTheDocument();
+  });
+
+  it("starts collapsed on tablet", async () => {
+    setWindowWidth(900);
+    render(
+      <AppShell pageTitle="Tablet">
+        <p>Gövde</p>
+      </AppShell>,
+    );
+
+    expect(await screen.findByLabelText("Menüyü genişlet")).toBeInTheDocument();
   });
 
   it("opens and closes the mobile drawer with Escape", async () => {
     const user = userEvent.setup();
-    setWidth(375);
+    setWindowWidth(375);
     render(
       <AppShell pageTitle="Mobil">
         <p>Gövde</p>
