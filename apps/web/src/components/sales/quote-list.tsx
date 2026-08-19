@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Shield, UserRound, Users } from "lucide-react";
+import { FileText, Inbox, Stamp, Wallet } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiMetric } from "@/components/dashboard/kpi-metric";
 import { EmptyState } from "@/components/states/empty-state";
@@ -13,38 +13,45 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Glyph } from "@/components/ui/glyph";
-import { StatusBadge, type StatusKind } from "@/components/ui/status-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ApiError } from "@/lib/api/types";
 import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
 import {
-  customerStatusLabel,
-  listCustomers,
-  type CustomerSummary,
-} from "@/lib/sales/customers";
+  listQuotes,
+  quoteStatusKind,
+  quoteStatusLabel,
+  type QuoteSummary,
+} from "@/lib/sales/quotes";
 
-function statusKind(status: string): StatusKind {
-  if (status === "Active") return "success";
-  if (status === "Candidate") return "pending";
-  if (status === "Blocked") return "critical";
-  return "inactive";
-}
-
-function formatDate(iso: string): string {
+function formatDateTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
     return iso || "—";
   }
-  return new Intl.DateTimeFormat("tr-TR", { dateStyle: "short" }).format(date);
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
 }
 
-export function CustomerList() {
+function formatMoney(value: number | null, currency: string): string {
+  if (value === null || !currency) {
+    return "—";
+  }
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+export function QuoteList() {
   const router = useRouter();
   const user = useSessionStore((state) => state.user);
   const permissions = user?.permissions ?? [];
-  const canRead = permissions.includes("customer.read");
-  const canCreate = permissions.includes("customer.create");
-  const [rows, setRows] = useState<CustomerSummary[] | null>(null);
+  const canRead = permissions.includes("quote.read");
+  const [rows, setRows] = useState<QuoteSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(canRead);
@@ -59,7 +66,7 @@ export function CustomerList() {
     setLoading(true);
     setError(null);
     setDenied(false);
-    listCustomers()
+    listQuotes()
       .then((result) => {
         if (!cancelled) setRows(result);
       })
@@ -80,32 +87,36 @@ export function CustomerList() {
   }, [canRead, reload]);
 
   const ready = Boolean(rows) && !loading && !error && !denied;
-  const active = rows?.filter((row) => row.status === "Active").length ?? 0;
-  const candidate = rows?.filter((row) => row.status === "Candidate").length ?? 0;
-  const blocked = rows?.filter((row) => row.status === "Blocked").length ?? 0;
+  const draft = rows?.filter((row) => row.status === "Draft").length ?? 0;
+  const issued = rows?.filter((row) => row.status === "Issued").length ?? 0;
   const total = rows?.length ?? 0;
+  const issuedGross = (rows ?? [])
+    .filter((row) => row.status === "Issued")
+    .reduce<number | null>((sum, row) => {
+      if (row.totalGross === null) {
+        return sum;
+      }
+      return (sum ?? 0) + row.totalGross;
+    }, null);
 
   return (
     <AppShell
-      currentHref="/satis/musteriler"
+      currentHref="/satis/teklifler"
       breadcrumbs={[
         { label: "Çalışma alanı", href: "/dashboard" },
         { label: "Satış", href: "/satis/teklif-talepleri" },
-        { label: "Müşteriler" },
+        { label: "Teklifler" },
       ]}
-      pageTitle="Müşteriler"
-      pageDescription="Aktif kartlar teklif talebine bağlanabilir. Liste en fazla 100 kayıttır."
+      pageTitle="Teklifler"
+      pageDescription="Talepten oluşan belgeler. Fiyat personel girer; tutarlar sunucudan gelir. Liste en fazla 100 kayıttır."
       pageActions={
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => router.push("/satis/teklif-talepleri")}>
             Teklif talepleri
           </Button>
-          <Button variant="secondary" onClick={() => router.push("/satis/teklifler")}>
-            Teklifler
+          <Button variant="secondary" onClick={() => router.push("/satis/musteriler")}>
+            Müşteriler
           </Button>
-          {canCreate ? (
-            <Button onClick={() => router.push("/satis/musteriler/yeni")}>Yeni müşteri</Button>
-          ) : null}
           {canRead ? (
             <Button variant="secondary" loading={loading} onClick={() => setReload((value) => value + 1)}>
               Yenile
@@ -116,37 +127,36 @@ export function CustomerList() {
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiMetric
-          label="Aktif"
-          value={ready ? String(active) : "—"}
-          unit="kart"
-          icon={Building2}
-          tone="teal"
-          unavailable={!ready}
-          caption="GET /customers · Active"
-        />
-        <KpiMetric
-          label="Aday"
-          value={ready ? String(candidate) : "—"}
-          unit="kart"
-          icon={UserRound}
+          label="Taslak"
+          value={ready ? String(draft) : "—"}
+          unit="belge"
+          icon={Inbox}
           tone="amber"
           unavailable={!ready}
-          caption="GET /customers · Candidate"
+          caption="GET /quotes · Draft"
         />
         <KpiMetric
-          label="Engelli"
-          value={ready ? String(blocked) : "—"}
-          unit="kart"
-          icon={Shield}
-          tone="navy"
+          label="Kesinleşti"
+          value={ready ? String(issued) : "—"}
+          unit="belge"
+          icon={Stamp}
+          tone="teal"
           unavailable={!ready}
-          caption="GET /customers · Blocked"
+          caption="GET /quotes · Issued"
+        />
+        <KpiMetric
+          label="Kesinleşen tutar"
+          value={ready ? formatMoney(issuedGross, "TRY") : "—"}
+          icon={Wallet}
+          tone="teal"
+          unavailable={!ready}
+          caption="Liste penceresi · Issued TotalGross"
         />
         <KpiMetric
           label="Toplam"
           value={ready ? String(total) : "—"}
           unit="kayıt"
-          icon={Users}
+          icon={FileText}
           tone="navy"
           unavailable={!ready}
           caption="Liste penceresi · en fazla 100"
@@ -157,22 +167,22 @@ export function CustomerList() {
         <CardBody>
           {!canRead ? (
             <PermissionDenied
-              title="Müşteriler bu oturumda görünmez"
-              description="customer.read yok. Bu kontrol yalnızca görünürlük içindir; gerçek yetki backend’dedir."
+              title="Teklifler bu oturumda görünmez"
+              description="quote.read yok. Bu kontrol yalnızca görünürlük içindir; gerçek yetki backend’dedir."
             />
           ) : denied ? (
             <PermissionDenied />
           ) : error ? (
             <ErrorState
-              title="Müşteriler yüklenemedi"
+              title="Teklifler yüklenemedi"
               description={error}
               onRetry={() => setReload((value) => value + 1)}
             />
           ) : loading ? (
             <DataTable
               columns={[
-                { id: "code", header: "Kod", accessor: () => null },
-                { id: "name", header: "Unvan", accessor: () => null },
+                { id: "number", header: "Belge", accessor: () => null },
+                { id: "customer", header: "Müşteri", accessor: () => null },
                 { id: "status", header: "Durum", accessor: () => null },
               ]}
               rows={[]}
@@ -181,46 +191,54 @@ export function CustomerList() {
             />
           ) : !rows || rows.length === 0 ? (
             <EmptyState
-              title="Müşteri yok"
-              description="Henüz müşteri kartı yok veya liste boş."
+              title="Teklif yok"
+              description="Henüz teklif belgesi yok. İncelemedeki talepten oluşturulur; ürün listesinden serbest teklif yok."
             />
           ) : (
             <DataTable
               columns={[
                 {
-                  id: "code",
-                  header: "Kod",
+                  id: "number",
+                  header: "Belge",
                   accessor: (row) => (
                     <Link
-                      href={`/satis/musteriler/${row.id}`}
+                      href={`/satis/teklifler/${row.id}`}
                       className="inline-flex items-center gap-2 font-semibold text-teal-600"
                     >
-                      <Glyph icon={Building2} />
-                      {row.customerCode}
+                      <Glyph icon={FileText} />
+                      {row.quoteNumber}
                     </Link>
                   ),
                 },
                 {
-                  id: "name",
-                  header: "Unvan",
-                  accessor: (row) => row.legalName,
-                },
-                {
-                  id: "contact",
-                  header: "İletişim",
-                  accessor: (row) => row.email || row.phone || "—",
+                  id: "customer",
+                  header: "Müşteri",
+                  accessor: (row) =>
+                    row.customerCode
+                      ? `${row.customerCode} · ${row.customerLegalName}`
+                      : row.customerLegalName || "—",
                 },
                 {
                   id: "status",
                   header: "Durum",
                   accessor: (row) => (
-                    <StatusBadge status={statusKind(row.status)} label={customerStatusLabel(row.status)} />
+                    <StatusBadge status={quoteStatusKind(row.status)} label={quoteStatusLabel(row.status)} />
                   ),
+                },
+                {
+                  id: "total",
+                  header: "Tutar",
+                  accessor: (row) => formatMoney(row.totalGross, row.currencyCode || "TRY"),
+                },
+                {
+                  id: "items",
+                  header: "Kalem",
+                  accessor: (row) => String(row.itemCount),
                 },
                 {
                   id: "createdAt",
                   header: "Kayıt",
-                  accessor: (row) => formatDate(row.createdAt),
+                  accessor: (row) => formatDateTime(row.createdAt),
                 },
               ]}
               rows={rows}

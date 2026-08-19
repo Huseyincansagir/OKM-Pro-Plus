@@ -4,6 +4,8 @@ import { requiresIdempotencyKey } from "@/lib/api/headers";
 describe("requiresIdempotencyKey", () => {
   it("requires the header only on mutating command prefixes", () => {
     expect(requiresIdempotencyKey("POST", "/customers")).toBe(true);
+    expect(requiresIdempotencyKey("POST", "/quotes")).toBe(true);
+    expect(requiresIdempotencyKey("POST", "/quotes/1/issue")).toBe(true);
     expect(requiresIdempotencyKey("POST", "/orders")).toBe(true);
     expect(requiresIdempotencyKey("POST", "/orders/1/approve")).toBe(true);
     expect(requiresIdempotencyKey("GET", "/orders/1")).toBe(false);

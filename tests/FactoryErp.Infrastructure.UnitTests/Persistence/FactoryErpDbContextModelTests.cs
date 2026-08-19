@@ -17,6 +17,8 @@ public sealed class FactoryErpDbContextModelTests
         context.Model.FindEntityType(typeof(AuditLogRecord))!.GetTableName().Should().Be("audit_logs");
         context.Model.FindEntityType(typeof(IdempotencyRecord))!.GetTableName().Should().Be("idempotency_records");
         context.Model.FindEntityType(typeof(OutboxMessageRecord))!.GetTableName().Should().Be("outbox_messages");
+        context.Model.FindEntityType(typeof(QuoteRecord))!.GetTableName().Should().Be("quotes");
+        context.Model.FindEntityType(typeof(QuoteItemRecord))!.GetTableName().Should().Be("quote_items");
     }
 
     [Fact]

@@ -61,6 +61,25 @@ public sealed class SalesFoundationModelTests
     }
 
     [Fact]
+    public void Quote_has_unique_number_request_and_status_constraint()
+    {
+        using var context = CreateContext();
+        var model = context.GetService<IDesignTimeModel>().Model;
+        var quote = model.FindEntityType(typeof(QuoteRecord))!;
+        var item = model.FindEntityType(typeof(QuoteItemRecord))!;
+
+        quote.GetIndexes().Should().Contain(index => index.IsUnique && index.Properties.Select(x => x.Name)
+            .SequenceEqual(new[] { nameof(QuoteRecord.QuoteNumber) }));
+        quote.GetIndexes().Should().Contain(index => index.IsUnique && index.Properties.Select(x => x.Name)
+            .SequenceEqual(new[] { nameof(QuoteRecord.QuoteRequestId) }));
+        quote.GetCheckConstraints().Should().Contain(constraint => constraint.Name == "ck_quotes_status");
+        quote.FindProperty(nameof(QuoteRecord.RowVersion))!.IsConcurrencyToken.Should().BeTrue();
+        item.GetCheckConstraints().Should().Contain(constraint => constraint.Name == "ck_quote_items_base_positive");
+        item.GetIndexes().Should().Contain(index => index.IsUnique && index.Properties.Select(x => x.Name)
+            .SequenceEqual(new[] { nameof(QuoteItemRecord.QuoteId), nameof(QuoteItemRecord.QuoteRequestItemId) }));
+    }
+
+    [Fact]
     public void Approval_has_order_and_decision_indexes()
     {
         using var context = CreateContext();

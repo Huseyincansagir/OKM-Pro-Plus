@@ -190,3 +190,44 @@ public sealed class SalesOrderApprovalRecord
 
     public SalesOrderRecord SalesOrder { get; set; } = null!;
 }
+
+public sealed class QuoteRecord
+{
+    public Guid Id { get; set; }
+    public string QuoteNumber { get; set; } = string.Empty;
+    public string Status { get; set; } = "Draft";
+    public Guid CustomerId { get; set; }
+    public Guid QuoteRequestId { get; set; }
+    public string CurrencyCode { get; set; } = "TRY";
+    public decimal TotalNet { get; set; }
+    public decimal TotalTax { get; set; }
+    public decimal TotalGross { get; set; }
+    public DateTimeOffset? ValidUntil { get; set; }
+    public DateTimeOffset? IssuedAt { get; set; }
+    public Guid? IssuedBy { get; set; }
+    public long RowVersion { get; set; }
+    public Guid? CreatedBy { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public ICollection<QuoteItemRecord> Items { get; } = new List<QuoteItemRecord>();
+}
+
+public sealed class QuoteItemRecord
+{
+    public Guid Id { get; set; }
+    public Guid QuoteId { get; set; }
+    public Guid ProductId { get; set; }
+    public Guid QuoteRequestItemId { get; set; }
+    public decimal EnteredQuantity { get; set; }
+    public Guid? EnteredPackagingId { get; set; }
+    public decimal QuantityBase { get; set; }
+    public string PackagingSnapshot { get; set; } = "{}";
+    public decimal UnitPrice { get; set; }
+    public string? TaxCode { get; set; }
+    public string PriceSnapshot { get; set; } = "{}";
+    public decimal LineNet { get; set; }
+    public long RowVersion { get; set; }
+
+    public QuoteRecord Quote { get; set; } = null!;
+}

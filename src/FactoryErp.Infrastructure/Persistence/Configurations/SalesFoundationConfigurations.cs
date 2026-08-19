@@ -316,3 +316,72 @@ public sealed class SalesOrderApprovalRecordConfiguration : IEntityTypeConfigura
         builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.DecidedBy).OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public sealed class QuoteRecordConfiguration : IEntityTypeConfiguration<QuoteRecord>
+{
+    public void Configure(EntityTypeBuilder<QuoteRecord> builder)
+    {
+        builder.ToTable("quotes", table =>
+        {
+            table.HasCheckConstraint("ck_quotes_status", "status in ('Draft', 'Issued')");
+            table.HasCheckConstraint("ck_quotes_totals_non_negative", "total_net >= 0 and total_tax >= 0 and total_gross >= 0");
+        });
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Property(x => x.QuoteNumber).HasColumnName("quote_number").HasMaxLength(80).IsRequired();
+        builder.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).IsRequired();
+        builder.Property(x => x.CustomerId).HasColumnName("customer_id");
+        builder.Property(x => x.QuoteRequestId).HasColumnName("quote_request_id");
+        builder.Property(x => x.CurrencyCode).HasColumnName("currency_code").HasMaxLength(3).IsRequired();
+        builder.Property(x => x.TotalNet).HasColumnName("total_net").HasPrecision(18, 2);
+        builder.Property(x => x.TotalTax).HasColumnName("total_tax").HasPrecision(18, 2);
+        builder.Property(x => x.TotalGross).HasColumnName("total_gross").HasPrecision(18, 2);
+        builder.Property(x => x.ValidUntil).HasColumnName("valid_until").HasColumnType("timestamptz");
+        builder.Property(x => x.IssuedAt).HasColumnName("issued_at").HasColumnType("timestamptz");
+        builder.Property(x => x.IssuedBy).HasColumnName("issued_by");
+        builder.Property(x => x.RowVersion).HasColumnName("row_version").HasColumnType("bigint").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate().HasDefaultValue(1L);
+        builder.Property(x => x.CreatedBy).HasColumnName("created_by");
+        builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("timestamptz");
+        builder.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasColumnType("timestamptz");
+        builder.HasIndex(x => x.QuoteNumber).IsUnique();
+        builder.HasIndex(x => x.QuoteRequestId).IsUnique();
+        builder.HasIndex(x => new { x.Status, x.CreatedAt });
+        builder.HasOne<CustomerRecord>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<QuoteRequestRecord>().WithMany().HasForeignKey(x => x.QuoteRequestId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.IssuedBy).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.CreatedBy).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public sealed class QuoteItemRecordConfiguration : IEntityTypeConfiguration<QuoteItemRecord>
+{
+    public void Configure(EntityTypeBuilder<QuoteItemRecord> builder)
+    {
+        builder.ToTable("quote_items", table =>
+        {
+            table.HasCheckConstraint("ck_quote_items_entered_positive", "entered_quantity > 0");
+            table.HasCheckConstraint("ck_quote_items_base_positive", "quantity_base > 0");
+            table.HasCheckConstraint("ck_quote_items_unit_price_non_negative", "unit_price >= 0");
+            table.HasCheckConstraint("ck_quote_items_line_net_non_negative", "line_net >= 0");
+        });
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Property(x => x.QuoteId).HasColumnName("quote_id");
+        builder.Property(x => x.ProductId).HasColumnName("product_id");
+        builder.Property(x => x.QuoteRequestItemId).HasColumnName("quote_request_item_id");
+        builder.Property(x => x.EnteredQuantity).HasColumnName("entered_quantity").HasPrecision(18, 6);
+        builder.Property(x => x.EnteredPackagingId).HasColumnName("entered_packaging_id");
+        builder.Property(x => x.QuantityBase).HasColumnName("quantity_base").HasPrecision(18, 6);
+        builder.Property(x => x.PackagingSnapshot).HasColumnName("packaging_snapshot").HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.UnitPrice).HasColumnName("unit_price").HasPrecision(18, 2);
+        builder.Property(x => x.TaxCode).HasColumnName("tax_code").HasMaxLength(40);
+        builder.Property(x => x.PriceSnapshot).HasColumnName("price_snapshot").HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.LineNet).HasColumnName("line_net").HasPrecision(18, 2);
+        builder.Property(x => x.RowVersion).HasColumnName("row_version").HasColumnType("bigint").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate().HasDefaultValue(1L);
+        builder.HasIndex(x => new { x.QuoteId, x.QuoteRequestItemId }).IsUnique();
+        builder.HasOne(x => x.Quote).WithMany(x => x.Items).HasForeignKey(x => x.QuoteId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ProductRecord>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ProductPackagingRecord>().WithMany().HasForeignKey(x => x.EnteredPackagingId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<QuoteRequestItemRecord>().WithMany().HasForeignKey(x => x.QuoteRequestItemId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

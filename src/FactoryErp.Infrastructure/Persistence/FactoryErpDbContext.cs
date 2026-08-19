@@ -40,6 +40,8 @@ public sealed class FactoryErpDbContext(DbContextOptions<FactoryErpDbContext> op
     public DbSet<ProductPriceRecord> ProductPrices => Set<ProductPriceRecord>();
     public DbSet<QuoteRequestRecord> QuoteRequests => Set<QuoteRequestRecord>();
     public DbSet<QuoteRequestItemRecord> QuoteRequestItems => Set<QuoteRequestItemRecord>();
+    public DbSet<QuoteRecord> Quotes => Set<QuoteRecord>();
+    public DbSet<QuoteItemRecord> QuoteItems => Set<QuoteItemRecord>();
     public DbSet<StockReservationRecord> StockReservations => Set<StockReservationRecord>();
     public DbSet<SalesOrderRecord> SalesOrders => Set<SalesOrderRecord>();
     public DbSet<SalesOrderItemRecord> SalesOrderItems => Set<SalesOrderItemRecord>();

@@ -97,6 +97,50 @@ public sealed record SalesOrderDto(
 public sealed record RejectOrderRequest(string Comment);
 public sealed record ApproveOrderRequest(string? Comment);
 
+public sealed record CreateQuoteItemInput(
+    Guid QuoteRequestItemId,
+    decimal UnitPrice,
+    string? TaxCode,
+    string ViewMode = "Packaging");
+
+public sealed record CreateQuoteRequest(
+    Guid QuoteRequestId,
+    string CurrencyCode,
+    DateTimeOffset? ValidUntil,
+    IReadOnlyCollection<CreateQuoteItemInput> Items);
+
+public sealed record QuoteItemDto(
+    Guid Id,
+    Guid ProductId,
+    Guid QuoteRequestItemId,
+    decimal EnteredQuantity,
+    Guid? EnteredPackagingId,
+    decimal QuantityBase,
+    string PackagingSnapshot,
+    decimal UnitPrice,
+    string? TaxCode,
+    decimal LineNet,
+    long RowVersion);
+
+public sealed record QuoteDto(
+    Guid Id,
+    string QuoteNumber,
+    string Status,
+    Guid CustomerId,
+    string CustomerCode,
+    string CustomerLegalName,
+    Guid QuoteRequestId,
+    string CurrencyCode,
+    decimal TotalNet,
+    decimal TotalTax,
+    decimal TotalGross,
+    DateTimeOffset? ValidUntil,
+    DateTimeOffset? IssuedAt,
+    Guid? IssuedBy,
+    long RowVersion,
+    IReadOnlyCollection<QuoteItemDto> Items,
+    DateTimeOffset CreatedAt);
+
 public interface ISalesCommandService
 {
     Task<QuoteRequestDto> CreatePublicQuoteRequestAsync(
@@ -155,6 +199,24 @@ public interface ISalesCommandService
         Guid orderId,
         Guid actorId,
         string comment,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<QuoteDto>> ListQuotesAsync(CancellationToken cancellationToken = default);
+
+    Task<QuoteDto?> GetQuoteAsync(Guid quoteId, CancellationToken cancellationToken = default);
+
+    Task<QuoteDto> CreateQuoteAsync(
+        CreateQuoteRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<QuoteDto?> IssueQuoteAsync(
+        Guid quoteId,
+        Guid actorId,
         string idempotencyKey,
         string correlationId,
         CancellationToken cancellationToken = default);

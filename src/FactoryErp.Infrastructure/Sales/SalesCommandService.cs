@@ -577,6 +577,269 @@ public sealed class SalesCommandService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<QuoteDto>> ListQuotesAsync(CancellationToken cancellationToken = default)
+    {
+        var quotes = await dbContext.Quotes
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return await MapQuotesAsync(quotes, cancellationToken);
+    }
+
+    public async Task<QuoteDto?> GetQuoteAsync(Guid quoteId, CancellationToken cancellationToken = default)
+    {
+        var quote = await dbContext.Quotes
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == quoteId, cancellationToken);
+        if (quote is null)
+        {
+            return null;
+        }
+
+        var mapped = await MapQuotesAsync(new[] { quote }, cancellationToken);
+        return mapped[0];
+    }
+
+    public async Task<QuoteDto> CreateQuoteAsync(
+        CreateQuoteRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.Items is null || request.Items.Count == 0)
+        {
+            throw new DomainException(new("QUOTE_ITEMS_REQUIRED", "Teklif en az bir kalem içermelidir."));
+        }
+
+        if (request.Items.GroupBy(x => x.QuoteRequestItemId).Any(group => group.Count() > 1))
+        {
+            throw new DomainException(new("QUOTE_ITEM_DUPLICATE", "Aynı talep kalemi birden fazla fiyatlanamaz."));
+        }
+
+        foreach (var line in request.Items)
+        {
+            if (line.UnitPrice < 0)
+            {
+                throw new DomainException(new("PRICE_INVALID", "Birim fiyat negatif olamaz."));
+            }
+        }
+
+        var idempotencyScope = $"quote:create:{actorId}";
+        var payloadHash = ComputePayloadHash(request);
+        var replay = await TryReplayAsync<QuoteDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var quoteRequest = await dbContext.QuoteRequests
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == request.QuoteRequestId, cancellationToken);
+        if (quoteRequest is null)
+        {
+            throw new DomainException(new("QUOTE_REQUEST_NOT_FOUND", "Teklif talebi bulunamadı."));
+        }
+
+        if (quoteRequest.Status != "InReview")
+        {
+            throw new DomainException(new("QUOTE_REQUEST_NOT_CONVERTIBLE", "Teklif yalnızca incelemedeki talepten oluşturulur."));
+        }
+
+        if (!quoteRequest.CustomerId.HasValue)
+        {
+            throw new DomainException(new("QUOTE_CUSTOMER_REQUIRED", "Teklif için talep aktif müşteriye bağlı olmalıdır."));
+        }
+
+        var customer = await dbContext.Customers.SingleOrDefaultAsync(
+            x => x.Id == quoteRequest.CustomerId.Value && !x.IsDeleted && x.Status == "Active",
+            cancellationToken);
+        if (customer is null)
+        {
+            throw new DomainException(new("CUSTOMER_NOT_ACTIVE", "Teklif yalnızca aktif müşteri için oluşturulabilir."));
+        }
+
+        var alreadyConverted = await dbContext.Quotes.AnyAsync(
+            x => x.QuoteRequestId == quoteRequest.Id,
+            cancellationToken);
+        if (alreadyConverted || quoteRequest.Status == "Converted")
+        {
+            throw new DomainException(new("QUOTE_REQUEST_ALREADY_CONVERTED", "Bu teklif talebi için zaten teklif belgesi var."));
+        }
+
+        var requestItemIds = quoteRequest.Items.Select(x => x.Id).ToHashSet();
+        var pricedIds = request.Items.Select(x => x.QuoteRequestItemId).ToHashSet();
+        if (!requestItemIds.SetEquals(pricedIds))
+        {
+            throw new DomainException(new(
+                "QUOTE_ITEMS_MUST_MATCH_REQUEST",
+                "Teklif kalemleri talep satırlarıyla birebir eşleşmelidir."));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        if (request.ValidUntil is { } validUntil && validUntil <= now)
+        {
+            throw new DomainException(new("QUOTE_VALID_UNTIL_INVALID", "Geçerlilik tarihi gelecekte olmalıdır."));
+        }
+
+        var quote = new QuoteRecord
+        {
+            Id = Guid.NewGuid(),
+            QuoteNumber = await NextNumberAsync("quote", "TEK", now, cancellationToken),
+            Status = "Draft",
+            CustomerId = customer.Id,
+            QuoteRequestId = quoteRequest.Id,
+            CurrencyCode = string.IsNullOrWhiteSpace(request.CurrencyCode)
+                ? "TRY"
+                : request.CurrencyCode.Trim().ToUpperInvariant(),
+            ValidUntil = request.ValidUntil,
+            CreatedBy = actorId,
+            CreatedAt = now,
+            UpdatedAt = now,
+            RowVersion = 1,
+        };
+
+        var requestItemsById = quoteRequest.Items.ToDictionary(x => x.Id);
+        foreach (var line in request.Items)
+        {
+            var requestItem = requestItemsById[line.QuoteRequestItemId];
+            var preview = await productCatalogService.PreviewQuantityAsync(
+                new QuantityPreviewRequest(
+                    requestItem.ProductId,
+                    requestItem.EnteredQuantity,
+                    requestItem.EnteredPackagingId,
+                    line.ViewMode,
+                    "Quote",
+                    null),
+                cancellationToken);
+            if (preview is null)
+            {
+                throw new DomainException(new("PRODUCT_OR_PACKAGING_NOT_FOUND", "Teklif kalemindeki ürün veya ambalaj bulunamadı."));
+            }
+
+            var lineNet = decimal.Round(preview.QuantityBase * line.UnitPrice, 2, MidpointRounding.AwayFromZero);
+            quote.Items.Add(new QuoteItemRecord
+            {
+                Id = Guid.NewGuid(),
+                ProductId = requestItem.ProductId,
+                QuoteRequestItemId = requestItem.Id,
+                EnteredQuantity = requestItem.EnteredQuantity,
+                EnteredPackagingId = requestItem.EnteredPackagingId,
+                QuantityBase = preview.QuantityBase,
+                PackagingSnapshot = JsonSerializer.Serialize(preview.EnteredPackaging),
+                UnitPrice = line.UnitPrice,
+                TaxCode = string.IsNullOrWhiteSpace(line.TaxCode) ? null : line.TaxCode.Trim(),
+                PriceSnapshot = JsonSerializer.Serialize(new { unitPrice = line.UnitPrice, currency = quote.CurrencyCode, at = now }),
+                LineNet = lineNet,
+                RowVersion = 1,
+            });
+        }
+
+        quote.TotalNet = quote.Items.Sum(x => x.LineNet);
+        quote.TotalTax = 0;
+        quote.TotalGross = quote.TotalNet + quote.TotalTax;
+        quoteRequest.Status = "Converted";
+        dbContext.Quotes.Add(quote);
+        await auditWriter.AppendAsync(new(
+            "QuoteCreated",
+            nameof(QuoteRecord),
+            quote.Id,
+            actorId,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new
+            {
+                quote.QuoteNumber,
+                quote.Status,
+                quote.QuoteRequestId,
+                quote.Items.Count,
+                quote.TotalNet,
+            })));
+        await auditWriter.AppendAsync(new(
+            "QuoteRequestConverted",
+            nameof(QuoteRequestRecord),
+            quoteRequest.Id,
+            actorId,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new { quoteRequest.Status, quoteId = quote.Id })));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var result = MapQuote(quote, customer.CustomerCode, customer.LegalName);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            201,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    public async Task<QuoteDto?> IssueQuoteAsync(
+        Guid quoteId,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        var idempotencyScope = $"quote:issue:{actorId}:{quoteId}";
+        var payloadHash = ComputePayloadHash(new { quoteId, actorId, action = "issue" });
+        var replay = await TryReplayAsync<QuoteDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var quote = await dbContext.Quotes
+            .Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.Id == quoteId, cancellationToken);
+        if (quote is null)
+        {
+            return null;
+        }
+
+        if (quote.Status != "Draft")
+        {
+            throw new DomainException(new("STATE_TRANSITION_CONFLICT", "Teklif yalnızca taslakken kesinleştirilebilir."));
+        }
+
+        if (quote.Items.Count == 0)
+        {
+            throw new DomainException(new("QUOTE_ITEMS_REQUIRED", "Teklif en az bir kalem içermelidir."));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        quote.Status = "Issued";
+        quote.IssuedAt = now;
+        quote.IssuedBy = actorId;
+        quote.UpdatedAt = now;
+        await auditWriter.AppendAsync(new(
+            "QuoteIssued",
+            nameof(QuoteRecord),
+            quote.Id,
+            actorId,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new { quote.QuoteNumber, quote.Status, quote.IssuedAt })));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var customer = await dbContext.Customers.SingleAsync(x => x.Id == quote.CustomerId, cancellationToken);
+        var result = MapQuote(quote, customer.CustomerCode, customer.LegalName);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            200,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
     private async Task<T?> TryReplayAsync<T>(
         string scope,
         string key,
@@ -695,4 +958,60 @@ public sealed class SalesCommandService(
                 x.TaxCode,
                 x.RowVersion)).ToArray(),
             order.CreatedAt);
+
+    private async Task<IReadOnlyList<QuoteDto>> MapQuotesAsync(
+        IReadOnlyCollection<QuoteRecord> quotes,
+        CancellationToken cancellationToken)
+    {
+        if (quotes.Count == 0)
+        {
+            return Array.Empty<QuoteDto>();
+        }
+
+        var customerIds = quotes.Select(x => x.CustomerId).Distinct().ToArray();
+        var customers = await dbContext.Customers
+            .AsNoTracking()
+            .Where(x => customerIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+
+        return quotes.Select(quote =>
+        {
+            customers.TryGetValue(quote.CustomerId, out var customer);
+            return MapQuote(
+                quote,
+                customer?.CustomerCode ?? string.Empty,
+                customer?.LegalName ?? string.Empty);
+        }).ToArray();
+    }
+
+    private static QuoteDto MapQuote(QuoteRecord quote, string customerCode, string customerLegalName)
+        => new(
+            quote.Id,
+            quote.QuoteNumber,
+            quote.Status,
+            quote.CustomerId,
+            customerCode,
+            customerLegalName,
+            quote.QuoteRequestId,
+            quote.CurrencyCode,
+            quote.TotalNet,
+            quote.TotalTax,
+            quote.TotalGross,
+            quote.ValidUntil,
+            quote.IssuedAt,
+            quote.IssuedBy,
+            quote.RowVersion,
+            quote.Items.Select(x => new QuoteItemDto(
+                x.Id,
+                x.ProductId,
+                x.QuoteRequestItemId,
+                x.EnteredQuantity,
+                x.EnteredPackagingId,
+                x.QuantityBase,
+                x.PackagingSnapshot,
+                x.UnitPrice,
+                x.TaxCode,
+                x.LineNet,
+                x.RowVersion)).ToArray(),
+            quote.CreatedAt);
 }

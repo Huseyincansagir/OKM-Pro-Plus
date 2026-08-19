@@ -13,6 +13,7 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next)
         "/api/v1/shipments",
         "/api/v1/production",
         "/api/v1/quote-requests",
+        "/api/v1/quotes",
         "/api/v1/warehouse-transfers",
         "/api/v1/vehicle-types",
         "/api/v1/vehicles",

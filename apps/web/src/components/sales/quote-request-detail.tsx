@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ClipboardList, Globe2, Mail, Package, Phone, UserRound } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { EmptyState } from "@/components/states/empty-state";
@@ -28,6 +29,7 @@ import {
   reviewQuoteRequest,
   type QuoteRequestDetail as QuoteRequestDetailModel,
 } from "@/lib/dashboard/quote-requests";
+import { canCreateQuoteFromRequest } from "@/lib/sales/quotes";
 
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
@@ -41,11 +43,13 @@ function formatDateTime(iso: string): string {
 }
 
 export function QuoteRequestDetail({ id }: { id: string }) {
+  const router = useRouter();
   const user = useSessionStore((state) => state.user);
   const permissions = user?.permissions ?? [];
   const canRead = permissions.includes("quote-request.read");
   const canReview = permissions.includes("quote-request.review");
   const canReadCustomers = permissions.includes("customer.read");
+  const canCreateQuote = permissions.includes("quote.create");
   const [detail, setDetail] = useState<QuoteRequestDetailModel | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
@@ -118,6 +122,9 @@ export function QuoteRequestDetail({ id }: { id: string }) {
   }
 
   const reviewable = Boolean(detail && canReviewQuoteRequest(detail.status));
+  const quoteCreatable = Boolean(
+    detail && canCreateQuote && canCreateQuoteFromRequest(detail.status, detail.customerId),
+  );
 
   return (
     <AppShell
@@ -134,8 +141,15 @@ export function QuoteRequestDetail({ id }: { id: string }) {
           <Button variant="secondary" onClick={() => setReload((value) => value + 1)} loading={loading}>
             Yenile
           </Button>
+          {quoteCreatable ? (
+            <Button onClick={() => router.push(`/satis/teklifler/yeni?quoteRequestId=${detail!.id}`)}>
+              Teklif oluştur
+            </Button>
+          ) : null}
           {canReview && reviewable ? (
-            <Button onClick={() => setConfirmOpen(true)}>İncelemeye al</Button>
+            <Button variant={quoteCreatable ? "secondary" : "primary"} onClick={() => setConfirmOpen(true)}>
+              İncelemeye al
+            </Button>
           ) : null}
         </div>
       }
@@ -239,6 +253,16 @@ export function QuoteRequestDetail({ id }: { id: string }) {
                     İnceleme yalnızca Status=Active kartlara bağlar. Aday kartı burada oluşturulmaz.
                   </Alert>
                 )}
+                {detail.status === "Converted" ? (
+                  <Alert tone="success" title="Talep dönüştürüldü">
+                    Teklif belgesi oluştu. Sipariş bu dilimde yoktur; belgeyi teklifler listesinden açın.
+                  </Alert>
+                ) : null}
+                {canCreateQuote && detail.status === "InReview" && !detail.customerId ? (
+                  <p className="text-sm text-slate-600">
+                    Teklif oluşturmak için Active müşteri bağlayın.
+                  </p>
+                ) : null}
                 {!canReview ? (
                   <p className="text-sm text-slate-600">
                     quote-request.review yok. Buton gizlidir; yetki backend’dedir.

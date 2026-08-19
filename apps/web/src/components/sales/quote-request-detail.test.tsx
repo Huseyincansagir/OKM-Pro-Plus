@@ -96,4 +96,31 @@ describe("QuoteRequestDetail", () => {
     await user.click(within(dialog).getByRole("button", { name: "İncelemeye al" }));
     expect(reviewQuoteRequest).toHaveBeenCalledWith("qr-1", null);
   });
+
+  it("offers quote create only for InReview requests with a bound customer", async () => {
+    authenticate(["quote-request.read", "quote.create"]);
+    vi.mocked(getQuoteRequest).mockResolvedValue({
+      ...detail,
+      status: "InReview",
+      customerId: "c1",
+    });
+
+    render(<QuoteRequestDetail id="qr-1" />);
+
+    expect(await screen.findByRole("button", { name: "Teklif oluştur" })).toBeInTheDocument();
+  });
+
+  it("hides quote create when the request has no customer", async () => {
+    authenticate(["quote-request.read", "quote.create"]);
+    vi.mocked(getQuoteRequest).mockResolvedValue({
+      ...detail,
+      status: "InReview",
+      customerId: null,
+    });
+
+    render(<QuoteRequestDetail id="qr-1" />);
+
+    expect(await screen.findByText("Teklif oluşturmak için Active müşteri bağlayın.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Teklif oluştur" })).not.toBeInTheDocument();
+  });
 });
