@@ -73,6 +73,7 @@ public sealed class IdentitySeeder(
             ("10000000-0000-0000-0000-000000000067", "price.resolve", "sales", "resolve"),
             ("10000000-0000-0000-0000-000000000068", "customer.update", "sales", "update"),
             ("10000000-0000-0000-0000-000000000069", "customer.message", "sales", "message"),
+            ("10000000-0000-0000-0000-000000000070", "product.read", "products", "read"),
             ("10000000-0000-0000-0000-000000000017", "delivery-note.create", "shipping", "create"),
             ("10000000-0000-0000-0000-000000000018", "delivery-note.read", "shipping", "read"),
             ("10000000-0000-0000-0000-000000000019", "delivery-note.issue", "shipping", "issue"),

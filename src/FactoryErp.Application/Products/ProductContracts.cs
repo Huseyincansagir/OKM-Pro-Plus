@@ -24,6 +24,22 @@ public sealed record PublicProductDto(
     IReadOnlyCollection<PackagingOptionDto> Packagings,
     string? PrimaryImageUrl);
 
+public sealed record StaffProductDto(
+    Guid Id,
+    string Code,
+    string Slug,
+    string Name,
+    string? Description,
+    string? SizeLabel,
+    string CategoryCode,
+    string CategoryName,
+    bool IsActive,
+    bool IsPublic,
+    UnitOfMeasureDto BaseUom,
+    IReadOnlyCollection<PackagingOptionDto> Packagings,
+    string? PrimaryImageUrl,
+    DateTimeOffset CreatedAt);
+
 public sealed record ProductListQuery(
     string? Search = null,
     string? Category = null,
@@ -76,6 +92,10 @@ public interface IProductCatalogService
     Task<ProductPage> GetPublicProductsAsync(ProductListQuery query, CancellationToken cancellationToken = default);
 
     Task<PublicProductDto?> GetPublicProductBySlugAsync(string slug, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<StaffProductDto>> ListStaffProductsAsync(CancellationToken cancellationToken = default);
+
+    Task<StaffProductDto?> GetStaffProductAsync(Guid productId, CancellationToken cancellationToken = default);
 
     Task<QuantityPreviewResult?> PreviewQuantityAsync(
         QuantityPreviewRequest request,

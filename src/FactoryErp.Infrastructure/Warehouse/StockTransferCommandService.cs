@@ -98,6 +98,16 @@ public sealed class StockTransferCommandService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<StockTransferDto>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.StockTransfers
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(Map).ToArray();
+    }
+
     public async Task<StockTransferDto?> GetAsync(Guid transferId, CancellationToken cancellationToken = default)
     {
         var record = await dbContext.StockTransfers

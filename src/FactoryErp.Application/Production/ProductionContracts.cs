@@ -48,6 +48,9 @@ public interface IProductionCommandService
         string correlationId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<ProductionOrderDto>> ListProductionOrdersAsync(
+        CancellationToken cancellationToken = default);
+
     Task<ProductionOrderDto?> GetProductionOrderAsync(
         Guid productionOrderId,
         CancellationToken cancellationToken = default);

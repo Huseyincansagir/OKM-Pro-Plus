@@ -64,6 +64,35 @@ public sealed class ProductCatalogService(FactoryErpDbContext dbContext) : IProd
         return record is null ? null : MapPublicProduct(record, now);
     }
 
+    public async Task<IReadOnlyCollection<StaffProductDto>> ListStaffProductsAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var records = await dbContext.Products
+            .AsNoTracking()
+            .Include(x => x.BaseUom)
+            .Include(x => x.Category)
+            .Include(x => x.Packagings)
+            .Include(x => x.Images)
+            .OrderBy(x => x.Name)
+            .ThenBy(x => x.Code)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return records.Select(record => MapStaffProduct(record, now)).ToArray();
+    }
+
+    public async Task<StaffProductDto?> GetStaffProductAsync(Guid productId, CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var record = await dbContext.Products
+            .AsNoTracking()
+            .Include(x => x.BaseUom)
+            .Include(x => x.Category)
+            .Include(x => x.Packagings)
+            .Include(x => x.Images)
+            .SingleOrDefaultAsync(x => x.Id == productId, cancellationToken);
+        return record is null ? null : MapStaffProduct(record, now);
+    }
+
     public async Task<QuantityPreviewResult?> PreviewQuantityAsync(
         QuantityPreviewRequest request,
         CancellationToken cancellationToken = default)
@@ -172,6 +201,38 @@ public sealed class ProductCatalogService(FactoryErpDbContext dbContext) : IProd
             1,
             record.Packaging?.QuantityInBaseUom ?? 1,
             record.Product.BaseUom.Code);
+    }
+
+    private static StaffProductDto MapStaffProduct(ProductRecord record, DateTimeOffset now)
+    {
+        var packagings = record.Packagings
+            .Where(packaging => IsEffective(packaging, now))
+            .OrderBy(packaging => PackagingSortOrder(packaging.Level))
+            .ThenBy(packaging => packaging.Name)
+            .Select(MapPackaging)
+            .ToArray();
+
+        var primaryImage = record.Images
+            .Where(image => image.IsPrimary)
+            .OrderBy(image => image.SortOrder)
+            .Select(image => image.Url)
+            .FirstOrDefault();
+
+        return new StaffProductDto(
+            record.Id,
+            record.Code,
+            record.Slug,
+            record.Name,
+            record.Description,
+            record.SizeLabel,
+            record.Category?.Code ?? string.Empty,
+            record.Category?.Name ?? string.Empty,
+            record.IsActive,
+            record.IsPublic,
+            new UnitOfMeasureDto(record.BaseUom.Code, record.BaseUom.DisplayName, record.BaseUom.Dimension, record.BaseUom.DecimalScale),
+            packagings,
+            primaryImage,
+            record.CreatedAt);
     }
 
     private static PublicProductDto MapPublicProduct(ProductRecord record, DateTimeOffset now)

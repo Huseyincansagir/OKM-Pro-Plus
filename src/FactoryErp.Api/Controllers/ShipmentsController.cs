@@ -21,6 +21,11 @@ public sealed class ShipmentsController(ILogisticsCommandService service) : Logi
     }
 
     [Authorize(Policy = PermissionPolicies.ShipmentRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<ShipmentDto>>> List(CancellationToken cancellationToken)
+        => Ok(await service.ListShipmentsAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.ShipmentRead)]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {

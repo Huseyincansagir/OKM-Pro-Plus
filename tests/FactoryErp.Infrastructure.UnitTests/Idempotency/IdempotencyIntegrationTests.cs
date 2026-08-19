@@ -167,6 +167,12 @@ public sealed class IdempotencyIntegrationTests
         public Task<PublicProductDto?> GetPublicProductBySlugAsync(string slug, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
+        public Task<IReadOnlyCollection<StaffProductDto>> ListStaffProductsAsync(CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<StaffProductDto?> GetStaffProductAsync(Guid productId, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
         public Task<QuantityPreviewResult?> PreviewQuantityAsync(QuantityPreviewRequest request, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 

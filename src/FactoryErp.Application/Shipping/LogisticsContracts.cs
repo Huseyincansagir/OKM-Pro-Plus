@@ -201,6 +201,8 @@ public interface ILogisticsCommandService
         string correlationId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<ShipmentDto>> ListShipmentsAsync(CancellationToken cancellationToken = default);
+
     Task<ShipmentDto?> GetShipmentAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<RoutePlanDto> CreateRoutePlanAsync(

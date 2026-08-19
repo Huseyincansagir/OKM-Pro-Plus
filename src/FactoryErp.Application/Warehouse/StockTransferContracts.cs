@@ -36,6 +36,8 @@ public interface IStockTransferCommandService
         string correlationId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<StockTransferDto>> ListAsync(CancellationToken cancellationToken = default);
+
     Task<StockTransferDto?> GetAsync(
         Guid transferId,
         CancellationToken cancellationToken = default);

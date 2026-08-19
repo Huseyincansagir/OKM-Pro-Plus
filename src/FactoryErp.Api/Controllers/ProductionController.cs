@@ -26,6 +26,11 @@ public sealed class ProductionController(IProductionCommandService productionCom
     }
 
     [Authorize(Policy = PermissionPolicies.ProductionRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<ProductionOrderDto>>> List(CancellationToken cancellationToken)
+        => Ok(await productionCommandService.ListProductionOrdersAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.ProductionRead)]
     [HttpGet("{productionOrderId:guid}")]
     public async Task<IActionResult> Get(Guid productionOrderId, CancellationToken cancellationToken)
     {

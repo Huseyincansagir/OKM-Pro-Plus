@@ -26,6 +26,11 @@ public sealed class StockTransfersController(IStockTransferCommandService stockT
     }
 
     [Authorize(Policy = PermissionPolicies.StockTransferRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<StockTransferDto>>> List(CancellationToken cancellationToken)
+        => Ok(await stockTransferCommandService.ListAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.StockTransferRead)]
     [HttpGet("{transferId:guid}")]
     public async Task<IActionResult> Get(Guid transferId, CancellationToken cancellationToken)
     {

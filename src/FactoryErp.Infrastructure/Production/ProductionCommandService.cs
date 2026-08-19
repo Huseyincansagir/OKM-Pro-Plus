@@ -67,6 +67,17 @@ public sealed class ProductionCommandService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<ProductionOrderDto>> ListProductionOrdersAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var orders = await dbContext.ProductionOrders
+            .AsNoTracking()
+            .OrderByDescending(x => x.Id)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return orders.Select(order => Map(order, Array.Empty<ProductionRecord>())).ToArray();
+    }
+
     public async Task<ProductionOrderDto?> GetProductionOrderAsync(
         Guid productionOrderId,
         CancellationToken cancellationToken = default)

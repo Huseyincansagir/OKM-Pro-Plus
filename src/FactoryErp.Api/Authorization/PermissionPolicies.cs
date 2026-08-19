@@ -18,6 +18,7 @@ public static class PermissionPolicies
     public const string PriceRead = "permission:price.read";
     public const string PriceManage = "permission:price.manage";
     public const string PriceResolve = "permission:price.resolve";
+    public const string ProductRead = "permission:product.read";
     public const string QuoteRead = "permission:quote.read";
     public const string QuoteCreate = "permission:quote.create";
     public const string QuoteIssue = "permission:quote.issue";

@@ -442,6 +442,17 @@ public sealed class LogisticsCommandService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<ShipmentDto>> ListShipmentsAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.Shipments
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(Map).ToArray();
+    }
+
     public async Task<ShipmentDto?> GetShipmentAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var record = await dbContext.Shipments
