@@ -690,7 +690,27 @@ Next Slice: WEB SLICE 014 — Stocks and finance collections
 ```text
 WEB SLICE 014
 STATUS: PASS
-Next Slice: personel tahtası (employee API yok) veya stok hareketleri
+Next Slice: WEB SLICE 015 — Stock movement ledger
+```
+
+## WEB SLICE 015 — Stock movement ledger
+
+**Tarih:** 2026-08-19
+**Durum:** PASS
+**Kapsam:** `GET /stock-movements`, `GET /stock-movements/{id}` (`stock.read`); `/depo/hareketler`. `quantityBase` her zaman pozitif ledger miktarıdır; `effect` sunucuda `In|Out|Unknown` (ProductionIn/WarehouseTransferIn → In; WarehouseTransferOut/DeliveryIssue → Out). İşaretli bakiye, kartex toplamı veya client conversion yok. Personel tahtası bu dilimde yok; employee collection API hâlâ yok.
+
+### Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 158 test |
+| typecheck / lint / build | PASS; `/depo/hareketler`, `/depo/hareketler/[id]` |
+| `dotnet build -c Release` | PASS; 0 warning / 0 error |
+
+```text
+WEB SLICE 015
+STATUS: PASS
+Next Slice: personel tahtası (employee collection API yok)
 ```
 
 
