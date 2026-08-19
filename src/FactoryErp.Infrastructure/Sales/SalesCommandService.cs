@@ -15,6 +15,7 @@ namespace FactoryErp.Infrastructure.Sales;
 public sealed class SalesCommandService(
     FactoryErpDbContext dbContext,
     IProductCatalogService productCatalogService,
+    ISalesPricingService pricingService,
     IAuditWriter auditWriter,
     IIdempotencyStore idempotencyStore) : ISalesCommandService
 {
@@ -112,11 +113,37 @@ public sealed class SalesCommandService(
     {
         var customers = await dbContext.Customers
             .AsNoTracking()
+            .Include(x => x.Contacts)
             .Where(x => !x.IsDeleted)
             .OrderBy(x => x.LegalName)
             .Take(100)
             .ToArrayAsync(cancellationToken);
-        return customers.Select(MapCustomer).ToArray();
+        var now = DateTimeOffset.UtcNow;
+        var customerIds = customers.Select(x => x.Id).ToArray();
+        var memberships = await dbContext.CustomerPriceGroupMembers
+            .AsNoTracking()
+            .Where(x => customerIds.Contains(x.CustomerId))
+            .ToArrayAsync(cancellationToken);
+        var groupIds = memberships.Select(x => x.CustomerPriceGroupId).Distinct().ToArray();
+        var groups = await dbContext.CustomerPriceGroups
+            .AsNoTracking()
+            .Where(x => groupIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+
+        return customers.Select(customer =>
+        {
+            var selected = CustomerPriceResolver.SelectMembership(
+                memberships
+                    .Where(x => x.CustomerId == customer.Id)
+                    .Select(x => new PriceGroupMembershipCandidate(x.CustomerPriceGroupId, x.EffectiveFrom, x.EffectiveTo)),
+                now);
+            groups.TryGetValue(selected?.CustomerPriceGroupId ?? Guid.Empty, out var group);
+            var primary = customer.Contacts
+                .Where(x => x.IsActive)
+                .OrderByDescending(x => x.IsPrimary)
+                .FirstOrDefault();
+            return MapCustomer(customer, primary?.FullName, group?.Code, group?.Name);
+        }).ToArray();
     }
 
     public async Task<CustomerDto?> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken = default)
@@ -703,6 +730,10 @@ public sealed class SalesCommandService(
             RowVersion = 1,
         };
 
+        var priceContext = await pricingService.GetCustomerPriceContextAsync(customer.Id, null, null, cancellationToken);
+        var listCandidates = (priceContext?.Prices ?? Array.Empty<ResolvedProductPriceDto>())
+            .Select(x => new PriceCandidate(x.ProductId, x.PackagingId, x.UnitPrice, x.CurrencyCode, x.ValidFrom, x.ValidTo))
+            .ToArray();
         var requestItemsById = quoteRequest.Items.ToDictionary(x => x.Id);
         foreach (var line in request.Items)
         {
@@ -721,6 +752,11 @@ public sealed class SalesCommandService(
                 throw new DomainException(new("PRODUCT_OR_PACKAGING_NOT_FOUND", "Teklif kalemindeki ürün veya ambalaj bulunamadı."));
             }
 
+            var listPrice = CustomerPriceResolver.SelectPrice(
+                listCandidates,
+                requestItem.ProductId,
+                requestItem.EnteredPackagingId,
+                now);
             var lineNet = decimal.Round(preview.QuantityBase * line.UnitPrice, 2, MidpointRounding.AwayFromZero);
             quote.Items.Add(new QuoteItemRecord
             {
@@ -732,8 +768,21 @@ public sealed class SalesCommandService(
                 QuantityBase = preview.QuantityBase,
                 PackagingSnapshot = JsonSerializer.Serialize(preview.EnteredPackaging),
                 UnitPrice = line.UnitPrice,
+                ListUnitPrice = listPrice?.UnitPrice,
+                PriceListId = priceContext?.PriceListId,
                 TaxCode = string.IsNullOrWhiteSpace(line.TaxCode) ? null : line.TaxCode.Trim(),
-                PriceSnapshot = JsonSerializer.Serialize(new { unitPrice = line.UnitPrice, currency = quote.CurrencyCode, at = now }),
+                PriceSnapshot = JsonSerializer.Serialize(new
+                {
+                    unitPrice = line.UnitPrice,
+                    listUnitPrice = listPrice?.UnitPrice,
+                    priceListId = priceContext?.PriceListId,
+                    priceListCode = priceContext?.PriceListCode,
+                    customerPriceGroupId = priceContext?.CustomerPriceGroupId,
+                    overridden = listPrice is not null && listPrice.UnitPrice != line.UnitPrice,
+                    boundToCurrentAccount = false,
+                    currency = quote.CurrencyCode,
+                    at = now,
+                }),
                 LineNet = lineNet,
                 RowVersion = 1,
             });
@@ -921,7 +970,11 @@ public sealed class SalesCommandService(
             request.CreatedAt,
             request.CustomerId);
 
-    private static CustomerDto MapCustomer(CustomerRecord customer)
+    private static CustomerDto MapCustomer(
+        CustomerRecord customer,
+        string? primaryContactName = null,
+        string? priceGroupCode = null,
+        string? priceGroupName = null)
         => new(
             customer.Id,
             customer.CustomerCode,
@@ -929,7 +982,10 @@ public sealed class SalesCommandService(
             customer.Status,
             customer.Email,
             customer.Phone,
-            customer.CreatedAt);
+            customer.CreatedAt,
+            primaryContactName,
+            priceGroupCode,
+            priceGroupName);
 
     private static SalesOrderDto MapSalesOrder(SalesOrderRecord order)
         => new(
@@ -1010,6 +1066,8 @@ public sealed class SalesCommandService(
                 x.QuantityBase,
                 x.PackagingSnapshot,
                 x.UnitPrice,
+                x.ListUnitPrice,
+                x.PriceListId,
                 x.TaxCode,
                 x.LineNet,
                 x.RowVersion)).ToArray(),

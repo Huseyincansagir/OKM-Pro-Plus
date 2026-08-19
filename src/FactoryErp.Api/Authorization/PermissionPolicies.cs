@@ -13,6 +13,11 @@ public static class PermissionPolicies
     public const string QuoteRequestReview = "permission:quote-request.review";
     public const string CustomerRead = "permission:customer.read";
     public const string CustomerCreate = "permission:customer.create";
+    public const string CustomerUpdate = "permission:customer.update";
+    public const string CustomerMessage = "permission:customer.message";
+    public const string PriceRead = "permission:price.read";
+    public const string PriceManage = "permission:price.manage";
+    public const string PriceResolve = "permission:price.resolve";
     public const string QuoteRead = "permission:quote.read";
     public const string QuoteCreate = "permission:quote.create";
     public const string QuoteIssue = "permission:quote.issue";

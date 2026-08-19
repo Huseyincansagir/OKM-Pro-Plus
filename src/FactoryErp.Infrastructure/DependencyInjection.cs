@@ -50,6 +50,25 @@ public static class DependencyInjection
         services.AddScoped<IProductCatalogService, ProductCatalogService>();
         services.AddScoped<CatalogSeeder>();
         services.AddScoped<ISalesCommandService, SalesCommandService>();
+        services.AddScoped<ISalesPricingService, PricingCommandService>();
+        services.AddScoped<ICustomerDirectoryService, CustomerDirectoryService>();
+        services.Configure<SmtpOptions>(options =>
+        {
+            options.Host = configuration["Smtp:Host"] ?? options.Host;
+            options.UserName = configuration["Smtp:UserName"] ?? options.UserName;
+            options.Password = configuration["Smtp:Password"] ?? options.Password;
+            options.From = configuration["Smtp:From"] ?? options.From;
+            if (int.TryParse(configuration["Smtp:Port"], out var smtpPort))
+            {
+                options.Port = smtpPort;
+            }
+
+            if (bool.TryParse(configuration["Smtp:EnableSsl"], out var enableSsl))
+            {
+                options.EnableSsl = enableSsl;
+            }
+        });
+        services.AddScoped<ICustomerEmailSender, SmtpCustomerEmailSender>();
         services.AddScoped<IProductionCommandService, ProductionCommandService>();
         services.AddScoped<IStockTransferCommandService, StockTransferCommandService>();
         services.AddScoped<SalesSeeder>();

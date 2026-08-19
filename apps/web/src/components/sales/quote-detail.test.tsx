@@ -40,6 +40,8 @@ const detail = {
       quantityBase: 10000,
       packagingName: "Koli",
       unitPrice: 2,
+      listUnitPrice: 2,
+      priceListId: "pl1",
       taxCode: null,
       lineNet: 20000,
     },

@@ -54,6 +54,9 @@ describe("CustomerList", () => {
         email: "demo@example.local",
         phone: "555",
         createdAt: "2026-08-19T00:00:00Z",
+        primaryContactName: "Demo Yetkili",
+        priceGroupCode: "STANDARD",
+        priceGroupName: "Standart",
       },
     ]);
 

@@ -29,6 +29,25 @@ const customer = {
   email: "demo@example.local",
   phone: "555",
   createdAt: "2026-08-19T00:00:00Z",
+  primaryContactName: "Demo Yetkili",
+  priceGroupCode: "STANDARD",
+  priceGroupName: "Standart Müşteri Grubu",
+  taxNumber: "",
+  taxOffice: "",
+  priceListId: "pl1",
+  priceListCode: "DEFAULT",
+  contacts: [
+    {
+      id: "ct1",
+      fullName: "Demo Yetkili",
+      email: "demo@example.local",
+      phone: "555",
+      roleTitle: "Satın Alma",
+      isPrimary: true,
+      isActive: true,
+    },
+  ],
+  addresses: [],
 };
 
 function authenticate(permissions: string[]) {

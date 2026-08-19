@@ -42,7 +42,10 @@ public sealed record CustomerDto(
     string Status,
     string? Email,
     string? Phone,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string? PrimaryContactName = null,
+    string? PriceGroupCode = null,
+    string? PriceGroupName = null);
 
 public sealed record CreateCustomerRequest(
     string LegalName,
@@ -118,6 +121,8 @@ public sealed record QuoteItemDto(
     decimal QuantityBase,
     string PackagingSnapshot,
     decimal UnitPrice,
+    decimal? ListUnitPrice,
+    Guid? PriceListId,
     string? TaxCode,
     decimal LineNet,
     long RowVersion);

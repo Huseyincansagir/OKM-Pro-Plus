@@ -29,6 +29,8 @@ export type QuoteLine = {
   quantityBase: number | null;
   packagingName: string;
   unitPrice: number | null;
+  listUnitPrice: number | null;
+  priceListId: string | null;
   taxCode: string | null;
   lineNet: number | null;
 };
@@ -106,6 +108,8 @@ export function mapQuoteLine(raw: unknown): QuoteLine {
     quantityBase: asFiniteNumber(record.quantityBase),
     packagingName: packagingNameFromSnapshot(record.packagingSnapshot),
     unitPrice: asFiniteNumber(record.unitPrice),
+    listUnitPrice: asFiniteNumber(record.listUnitPrice),
+    priceListId: record.priceListId ? String(record.priceListId) : null,
     taxCode: record.taxCode ? String(record.taxCode) : null,
     lineNet: asFiniteNumber(record.lineNet),
   };

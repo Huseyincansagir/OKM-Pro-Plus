@@ -315,6 +315,73 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                     b.ToTable("customer_contacts", (string)null);
                 });
 
+            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.CustomerOutboundEmailRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("body");
+
+                    b.Property<Guid?>("ContactId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("contact_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<string>("LastError")
+                        .HasColumnType("text")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("sent_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("ToEmail")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)")
+                        .HasColumnName("to_email");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("CustomerId", "CreatedAt");
+
+                    b.ToTable("customer_outbound_emails", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_customer_outbound_emails_status", "status in ('Queued', 'Sent', 'Failed')");
+                        });
+                });
+
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.CustomerPriceGroupMemberRecord", b =>
                 {
                     b.Property<Guid>("CustomerId")
@@ -3057,10 +3124,19 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("line_net");
 
+                    b.Property<decimal?>("ListUnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("list_unit_price");
+
                     b.Property<string>("PackagingSnapshot")
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("packaging_snapshot");
+
+                    b.Property<Guid?>("PriceListId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("price_list_id");
 
                     b.Property<string>("PriceSnapshot")
                         .IsRequired()
@@ -3104,6 +3180,8 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EnteredPackagingId");
+
+                    b.HasIndex("PriceListId");
 
                     b.HasIndex("ProductId");
 
@@ -5122,6 +5200,26 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.CustomerOutboundEmailRecord", b =>
+                {
+                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.CustomerContactRecord", null)
+                        .WithMany()
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.UserRecord", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.CustomerRecord", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("FactoryErp.Infrastructure.Persistence.Entities.CustomerPriceGroupRecord", b =>
                 {
                     b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.PriceListRecord", "PriceList")
@@ -5755,6 +5853,11 @@ namespace FactoryErp.Infrastructure.Persistence.Migrations
                         .HasForeignKey("QuoteRequestItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("FactoryErp.Infrastructure.Persistence.Entities.PriceListRecord", null)
+                        .WithMany()
+                        .HasForeignKey("PriceListId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Quote");
                 });

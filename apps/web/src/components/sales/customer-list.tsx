@@ -93,8 +93,8 @@ export function CustomerList() {
         { label: "Satış", href: "/satis/teklif-talepleri" },
         { label: "Müşteriler" },
       ]}
-      pageTitle="Müşteriler"
-      pageDescription="Aktif kartlar teklif talebine bağlanabilir. Liste en fazla 100 kayıttır."
+      pageTitle="Firma rehberi"
+      pageDescription="Müşteri kartları rehberdir. Fiyat grubu cariye bağlı değildir. Liste en fazla 100 kayıttır."
       pageActions={
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => router.push("/satis/teklif-talepleri")}>
@@ -207,8 +207,13 @@ export function CustomerList() {
                 },
                 {
                   id: "contact",
-                  header: "İletişim",
-                  accessor: (row) => row.email || row.phone || "—",
+                  header: "Yetkili / iletişim",
+                  accessor: (row) => row.primaryContactName || row.email || row.phone || "—",
+                },
+                {
+                  id: "priceGroup",
+                  header: "Fiyat grubu",
+                  accessor: (row) => row.priceGroupCode || "—",
                 },
                 {
                   id: "status",

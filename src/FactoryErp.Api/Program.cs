@@ -56,6 +56,16 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "customer.read"));
     options.AddPolicy(PermissionPolicies.CustomerCreate, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "customer.create"));
+    options.AddPolicy(PermissionPolicies.CustomerUpdate, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "customer.update"));
+    options.AddPolicy(PermissionPolicies.CustomerMessage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "customer.message"));
+    options.AddPolicy(PermissionPolicies.PriceRead, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "price.read"));
+    options.AddPolicy(PermissionPolicies.PriceManage, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "price.manage"));
+    options.AddPolicy(PermissionPolicies.PriceResolve, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "price.resolve"));
     options.AddPolicy(PermissionPolicies.QuoteRead, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "quote.read"));
     options.AddPolicy(PermissionPolicies.QuoteCreate, policy =>

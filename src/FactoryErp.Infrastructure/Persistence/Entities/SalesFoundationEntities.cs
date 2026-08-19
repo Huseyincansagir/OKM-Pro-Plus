@@ -224,10 +224,27 @@ public sealed class QuoteItemRecord
     public decimal QuantityBase { get; set; }
     public string PackagingSnapshot { get; set; } = "{}";
     public decimal UnitPrice { get; set; }
+    public decimal? ListUnitPrice { get; set; }
+    public Guid? PriceListId { get; set; }
     public string? TaxCode { get; set; }
     public string PriceSnapshot { get; set; } = "{}";
     public decimal LineNet { get; set; }
     public long RowVersion { get; set; }
 
     public QuoteRecord Quote { get; set; } = null!;
+}
+
+public sealed class CustomerOutboundEmailRecord
+{
+    public Guid Id { get; set; }
+    public Guid CustomerId { get; set; }
+    public Guid? ContactId { get; set; }
+    public string ToEmail { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
+    public string Status { get; set; } = "Queued";
+    public string? LastError { get; set; }
+    public Guid CreatedBy { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? SentAt { get; set; }
 }

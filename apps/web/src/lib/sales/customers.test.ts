@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/api/client";
 import {
   createCustomer,
   customerStatusLabel,
+  getCustomerPriceContext,
   listCustomers,
   mapCustomerSummary,
 } from "@/lib/sales/customers";
@@ -33,6 +34,9 @@ describe("mapCustomerSummary", () => {
       email: "demo@example.local",
       phone: "555",
       createdAt: "2026-08-19T00:00:00Z",
+      primaryContactName: "",
+      priceGroupCode: "",
+      priceGroupName: "",
     });
     expect(mapped).not.toHaveProperty("balance");
     expect(mapped).not.toHaveProperty("riskScore");
@@ -83,5 +87,23 @@ describe("listCustomers", () => {
     expect(JSON.stringify(argument.body)).not.toContain("customerCode");
     expect(JSON.stringify(argument.body)).not.toContain("balance");
     expect(created.customerCode).toBe("MUS-2026-000001");
+  });
+
+  it("maps price context without inventing a list price or cari link", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({
+      customerId: "c1",
+      boundToCurrentAccount: false,
+      customerPriceGroupCode: "VADELI",
+      priceListCode: "VADELI",
+      currencyCode: "TRY",
+      prices: [{ productId: "p1", packagingId: null, unitPrice: 14.5 }],
+    });
+    const context = await getCustomerPriceContext("c1");
+    expect(apiRequest).toHaveBeenCalledWith({
+      path: "/customers/c1/price-context",
+      method: "GET",
+    });
+    expect(context.boundToCurrentAccount).toBe(false);
+    expect(context.prices[0].unitPrice).toBe(14.5);
   });
 });

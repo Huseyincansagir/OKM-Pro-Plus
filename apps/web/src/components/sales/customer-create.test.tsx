@@ -61,6 +61,9 @@ describe("CustomerCreate", () => {
       email: "a@b.com",
       phone: "",
       createdAt: "2026-08-19T00:00:00Z",
+      primaryContactName: "",
+      priceGroupCode: "",
+      priceGroupName: "",
     });
 
     render(<CustomerCreate />);

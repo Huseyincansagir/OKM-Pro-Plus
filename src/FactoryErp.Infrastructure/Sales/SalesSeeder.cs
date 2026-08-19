@@ -11,6 +11,8 @@ public sealed class SalesSeeder(FactoryErpDbContext dbContext)
     private static readonly Guid DemoContactId = Guid.Parse("40000000-0000-0000-0000-000000000103");
     private static readonly Guid DefaultPriceListId = Guid.Parse("40000000-0000-0000-0000-000000000201");
     private static readonly Guid StandardPriceGroupId = Guid.Parse("40000000-0000-0000-0000-000000000202");
+    private static readonly Guid CreditPriceListId = Guid.Parse("40000000-0000-0000-0000-000000000203");
+    private static readonly Guid CreditPriceGroupId = Guid.Parse("40000000-0000-0000-0000-000000000204");
     private static readonly Guid IntegrationSalesOrderId = Guid.Parse("eade528b-1cc3-42c9-8009-93066dac6750");
     private static readonly Guid IntegrationSalesOrderItemId = Guid.Parse("eade528b-1cc3-42c9-8009-93066dac6751");
     private static readonly Guid IntegrationDeliveryNoteId = Guid.Parse("eade528b-1cc3-42c9-8009-93066dac675f");
@@ -104,6 +106,35 @@ public sealed class SalesSeeder(FactoryErpDbContext dbContext)
             });
         }
 
+        var creditList = await dbContext.PriceLists.SingleOrDefaultAsync(x => x.Code == "VADELI", cancellationToken);
+        if (creditList is null)
+        {
+            creditList = new PriceListRecord
+            {
+                Id = CreditPriceListId,
+                Code = "VADELI",
+                Name = "Vadeli müşteri TRY listesi",
+                CurrencyCode = "TRY",
+                ValidFrom = DateTimeOffset.UtcNow.Date,
+                IsActive = true,
+            };
+            dbContext.PriceLists.Add(creditList);
+        }
+
+        var creditGroup = await dbContext.CustomerPriceGroups.SingleOrDefaultAsync(x => x.Code == "VADELI", cancellationToken);
+        if (creditGroup is null)
+        {
+            creditGroup = new CustomerPriceGroupRecord
+            {
+                Id = CreditPriceGroupId,
+                Code = "VADELI",
+                Name = "Vadeli müşteri grubu",
+                PriceListId = creditList.Id,
+                IsActive = true,
+            };
+            dbContext.CustomerPriceGroups.Add(creditGroup);
+        }
+
         if (!await dbContext.ProductPrices.AnyAsync(x => x.PriceListId == priceList.Id && x.ProductId == Guid.Parse("30000000-0000-0000-0000-000000000201"), cancellationToken))
         {
             dbContext.ProductPrices.AddRange(
@@ -124,6 +155,31 @@ public sealed class SalesSeeder(FactoryErpDbContext dbContext)
                     ProductId = Guid.Parse("30000000-0000-0000-0000-000000000201"),
                     PackagingId = Guid.Parse("30000000-0000-0000-0000-000000000213"),
                     UnitPrice = 220.00m,
+                    CurrencyCode = "TRY",
+                    ValidFrom = DateTimeOffset.UtcNow.Date,
+                });
+        }
+
+        if (!await dbContext.ProductPrices.AnyAsync(x => x.PriceListId == creditList.Id && x.ProductId == Guid.Parse("30000000-0000-0000-0000-000000000201"), cancellationToken))
+        {
+            dbContext.ProductPrices.AddRange(
+                new ProductPriceRecord
+                {
+                    Id = Guid.Parse("40000000-0000-0000-0000-000000000221"),
+                    PriceListId = creditList.Id,
+                    ProductId = Guid.Parse("30000000-0000-0000-0000-000000000201"),
+                    PackagingId = Guid.Parse("30000000-0000-0000-0000-000000000212"),
+                    UnitPrice = 14.50m,
+                    CurrencyCode = "TRY",
+                    ValidFrom = DateTimeOffset.UtcNow.Date,
+                },
+                new ProductPriceRecord
+                {
+                    Id = Guid.Parse("40000000-0000-0000-0000-000000000222"),
+                    PriceListId = creditList.Id,
+                    ProductId = Guid.Parse("30000000-0000-0000-0000-000000000201"),
+                    PackagingId = Guid.Parse("30000000-0000-0000-0000-000000000213"),
+                    UnitPrice = 255.00m,
                     CurrencyCode = "TRY",
                     ValidFrom = DateTimeOffset.UtcNow.Date,
                 });

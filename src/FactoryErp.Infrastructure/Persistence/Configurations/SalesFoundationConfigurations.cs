@@ -374,14 +374,47 @@ public sealed class QuoteItemRecordConfiguration : IEntityTypeConfiguration<Quot
         builder.Property(x => x.QuantityBase).HasColumnName("quantity_base").HasPrecision(18, 6);
         builder.Property(x => x.PackagingSnapshot).HasColumnName("packaging_snapshot").HasColumnType("jsonb").IsRequired();
         builder.Property(x => x.UnitPrice).HasColumnName("unit_price").HasPrecision(18, 2);
+        builder.Property(x => x.ListUnitPrice).HasColumnName("list_unit_price").HasPrecision(18, 2);
+        builder.Property(x => x.PriceListId).HasColumnName("price_list_id");
         builder.Property(x => x.TaxCode).HasColumnName("tax_code").HasMaxLength(40);
         builder.Property(x => x.PriceSnapshot).HasColumnName("price_snapshot").HasColumnType("jsonb").IsRequired();
         builder.Property(x => x.LineNet).HasColumnName("line_net").HasPrecision(18, 2);
         builder.Property(x => x.RowVersion).HasColumnName("row_version").HasColumnType("bigint").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate().HasDefaultValue(1L);
         builder.HasIndex(x => new { x.QuoteId, x.QuoteRequestItemId }).IsUnique();
+        builder.HasIndex(x => x.PriceListId);
         builder.HasOne(x => x.Quote).WithMany(x => x.Items).HasForeignKey(x => x.QuoteId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ProductRecord>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ProductPackagingRecord>().WithMany().HasForeignKey(x => x.EnteredPackagingId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<QuoteRequestItemRecord>().WithMany().HasForeignKey(x => x.QuoteRequestItemId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<PriceListRecord>().WithMany().HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public sealed class CustomerOutboundEmailRecordConfiguration : IEntityTypeConfiguration<CustomerOutboundEmailRecord>
+{
+    public void Configure(EntityTypeBuilder<CustomerOutboundEmailRecord> builder)
+    {
+        builder.ToTable("customer_outbound_emails", table =>
+        {
+            table.HasCheckConstraint(
+                "ck_customer_outbound_emails_status",
+                "status in ('Queued', 'Sent', 'Failed')");
+        });
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Property(x => x.CustomerId).HasColumnName("customer_id");
+        builder.Property(x => x.ContactId).HasColumnName("contact_id");
+        builder.Property(x => x.ToEmail).HasColumnName("to_email").HasMaxLength(240).IsRequired();
+        builder.Property(x => x.Subject).HasColumnName("subject").HasMaxLength(240).IsRequired();
+        builder.Property(x => x.Body).HasColumnName("body").HasColumnType("text").IsRequired();
+        builder.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).IsRequired();
+        builder.Property(x => x.LastError).HasColumnName("last_error").HasColumnType("text");
+        builder.Property(x => x.CreatedBy).HasColumnName("created_by");
+        builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("timestamptz");
+        builder.Property(x => x.SentAt).HasColumnName("sent_at").HasColumnType("timestamptz");
+        builder.HasIndex(x => new { x.CustomerId, x.CreatedAt });
+        builder.HasOne<CustomerRecord>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<CustomerContactRecord>().WithMany().HasForeignKey(x => x.ContactId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.CreatedBy).OnDelete(DeleteBehavior.Restrict);
     }
 }

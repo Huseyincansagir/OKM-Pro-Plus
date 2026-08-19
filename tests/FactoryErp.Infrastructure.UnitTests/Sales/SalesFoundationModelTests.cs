@@ -80,6 +80,22 @@ public sealed class SalesFoundationModelTests
     }
 
     [Fact]
+    public void Outbound_email_and_quote_list_price_are_persisted()
+    {
+        using var context = CreateContext();
+        var model = context.GetService<IDesignTimeModel>().Model;
+        var email = model.FindEntityType(typeof(CustomerOutboundEmailRecord))!;
+        var item = model.FindEntityType(typeof(QuoteItemRecord))!;
+
+        email.GetTableName().Should().Be("customer_outbound_emails");
+        email.GetCheckConstraints().Should().Contain(constraint =>
+            constraint.Name == "ck_customer_outbound_emails_status");
+        item.FindProperty(nameof(QuoteItemRecord.ListUnitPrice)).Should().NotBeNull();
+        item.GetForeignKeys().Should().Contain(key =>
+            key.Properties.Select(property => property.Name).SequenceEqual(new[] { nameof(QuoteItemRecord.PriceListId) }));
+    }
+
+    [Fact]
     public void Approval_has_order_and_decision_indexes()
     {
         using var context = CreateContext();

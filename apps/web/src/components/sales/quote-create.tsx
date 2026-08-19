@@ -23,6 +23,7 @@ import {
   getQuoteRequest,
   type QuoteRequestDetail,
 } from "@/lib/dashboard/quote-requests";
+import { getCustomerPriceContext } from "@/lib/sales/customers";
 
 export function QuoteCreate({ quoteRequestId }: { quoteRequestId: string | null }) {
   const router = useRouter();
@@ -30,11 +31,14 @@ export function QuoteCreate({ quoteRequestId }: { quoteRequestId: string | null 
   const permissions = user?.permissions ?? [];
   const canCreate = permissions.includes("quote.create");
   const canReadRequest = permissions.includes("quote-request.read");
+  const canResolvePrice = permissions.includes("price.resolve");
   const [request, setRequest] = useState<QuoteRequestDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(Boolean(canCreate && canReadRequest && quoteRequestId));
   const [prices, setPrices] = useState<Record<string, string>>({});
+  const [listPrices, setListPrices] = useState<Record<string, number | null>>({});
+  const [priceListCode, setPriceListCode] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -49,12 +53,36 @@ export function QuoteCreate({ quoteRequestId }: { quoteRequestId: string | null 
     setLoadError(null);
     setDenied(false);
     getQuoteRequest(quoteRequestId)
-      .then((result) => {
+      .then(async (result) => {
         if (cancelled) return;
         setRequest(result);
-        setPrices(
-          Object.fromEntries(result.items.map((item) => [item.id, ""])),
-        );
+        const nextPrices = Object.fromEntries(result.items.map((item) => [item.id, ""]));
+        if (canResolvePrice && result.customerId) {
+          try {
+            const context = await getCustomerPriceContext(result.customerId);
+            if (cancelled) return;
+            setPriceListCode(context.priceListCode);
+            const suggested: Record<string, number | null> = {};
+            for (const item of result.items) {
+              const match = context.prices.find(
+                (price) =>
+                  price.productId === item.productId
+                  && (price.packagingId === item.enteredPackagingId
+                    || (price.packagingId === null && !item.enteredPackagingId)),
+              ) ?? context.prices.find(
+                (price) => price.productId === item.productId && price.packagingId === null,
+              );
+              suggested[item.id] = match?.unitPrice ?? null;
+              if (match?.unitPrice != null) {
+                nextPrices[item.id] = String(match.unitPrice);
+              }
+            }
+            setListPrices(suggested);
+          } catch {
+            if (!cancelled) setListPrices({});
+          }
+        }
+        setPrices(nextPrices);
       })
       .catch((caught) => {
         if (cancelled) return;
@@ -70,7 +98,7 @@ export function QuoteCreate({ quoteRequestId }: { quoteRequestId: string | null 
     return () => {
       cancelled = true;
     };
-  }, [canCreate, canReadRequest, quoteRequestId]);
+  }, [canCreate, canReadRequest, canResolvePrice, quoteRequestId]);
 
   async function onSubmit() {
     if (!request) {
@@ -206,6 +234,13 @@ export function QuoteCreate({ quoteRequestId }: { quoteRequestId: string | null 
                       step="0.01"
                       required
                       value={prices[item.id] ?? ""}
+                      hint={
+                        listPrices[item.id] == null
+                          ? priceListCode
+                            ? `Liste ${priceListCode}: bu kalemde fiyat yok`
+                            : "Liste fiyatı yok; personel girer"
+                          : `Liste ${priceListCode || ""}: ${listPrices[item.id]}`
+                      }
                       onChange={(event) =>
                         setPrices((current) => ({
                           ...current,
