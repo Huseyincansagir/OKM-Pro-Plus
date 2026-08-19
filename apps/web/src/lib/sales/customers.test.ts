@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/types";
 import { apiRequest } from "@/lib/api/client";
-import { customerStatusLabel, listCustomers, mapCustomerSummary } from "@/lib/sales/customers";
+import {
+  createCustomer,
+  customerStatusLabel,
+  listCustomers,
+  mapCustomerSummary,
+} from "@/lib/sales/customers";
 
 vi.mock("@/lib/api/client", () => ({
   apiRequest: vi.fn(),
@@ -52,5 +57,31 @@ describe("listCustomers", () => {
   it("rejects a non-array payload instead of fabricating rows", async () => {
     vi.mocked(apiRequest).mockResolvedValue({ items: [], totalDebt: 1 });
     await expect(listCustomers()).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it("creates a customer without client-generated codes or balances", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({
+      id: "c-new",
+      customerCode: "MUS-2026-000001",
+      legalName: "Acme",
+      status: "Active",
+    });
+
+    const created = await createCustomer({ legalName: "Acme", email: "a@b.com" });
+
+    const argument = vi.mocked(apiRequest).mock.calls[0][0];
+    expect(argument.path).toBe("/customers");
+    expect(argument.method).toBe("POST");
+    expect(argument.idempotent).toBe(true);
+    expect(argument.body).toEqual({
+      legalName: "Acme",
+      email: "a@b.com",
+      phone: null,
+      taxNumber: null,
+      taxOffice: null,
+    });
+    expect(JSON.stringify(argument.body)).not.toContain("customerCode");
+    expect(JSON.stringify(argument.body)).not.toContain("balance");
+    expect(created.customerCode).toBe("MUS-2026-000001");
   });
 });

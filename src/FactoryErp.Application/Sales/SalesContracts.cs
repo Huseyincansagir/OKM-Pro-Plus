@@ -44,6 +44,13 @@ public sealed record CustomerDto(
     string? Phone,
     DateTimeOffset CreatedAt);
 
+public sealed record CreateCustomerRequest(
+    string LegalName,
+    string? Email,
+    string? Phone,
+    string? TaxNumber,
+    string? TaxOffice);
+
 public sealed record CreateSalesOrderItemInput(
     Guid ProductId,
     decimal EnteredQuantity,
@@ -104,6 +111,13 @@ public interface ISalesCommandService
     Task<IReadOnlyCollection<CustomerDto>> ListCustomersAsync(CancellationToken cancellationToken = default);
 
     Task<CustomerDto?> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
+
+    Task<CustomerDto> CreateCustomerAsync(
+        CreateCustomerRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
 
     Task<QuoteRequestDto?> ReviewQuoteRequestAsync(
         Guid quoteRequestId,

@@ -67,5 +67,13 @@ describe("CustomerList", () => {
       "/satis/musteriler/c1",
     );
     expect(screen.queryByText(/1[.\s]?285[.\s]?750/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Yeni müşteri" })).not.toBeInTheDocument();
+  });
+
+  it("shows create only when customer.create is present", async () => {
+    authenticate(["customer.read", "customer.create"]);
+    vi.mocked(listCustomers).mockResolvedValue([]);
+    render(<CustomerList />);
+    expect(await screen.findByRole("button", { name: "Yeni müşteri" })).toBeInTheDocument();
   });
 });

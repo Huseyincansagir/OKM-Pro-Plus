@@ -127,6 +127,72 @@ public sealed class SalesCommandService(
         return customer is null ? null : MapCustomer(customer);
     }
 
+    public async Task<CustomerDto> CreateCustomerAsync(
+        CreateCustomerRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.LegalName))
+        {
+            throw new DomainException(new("CUSTOMER_INVALID", "Müşteri unvanı zorunludur."));
+        }
+
+        var idempotencyScope = $"customer:create:{actorId}";
+        var payloadHash = ComputePayloadHash(new
+        {
+            request.LegalName,
+            request.Email,
+            request.Phone,
+            request.TaxNumber,
+            request.TaxOffice,
+            action = "create",
+        });
+        var replay = await TryReplayAsync<CustomerDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        var customer = new CustomerRecord
+        {
+            Id = Guid.NewGuid(),
+            CustomerCode = await NextNumberAsync("customer", "MUS", now, cancellationToken),
+            LegalName = request.LegalName.Trim(),
+            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
+            Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+            TaxNumber = string.IsNullOrWhiteSpace(request.TaxNumber) ? null : request.TaxNumber.Trim(),
+            TaxOffice = string.IsNullOrWhiteSpace(request.TaxOffice) ? null : request.TaxOffice.Trim(),
+            Status = "Active",
+            IsDeleted = false,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        dbContext.Customers.Add(customer);
+        await auditWriter.AppendAsync(new(
+            "CustomerCreated",
+            nameof(CustomerRecord),
+            customer.Id,
+            actorId,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new { customer.CustomerCode, customer.LegalName, customer.Status })));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var result = MapCustomer(customer);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            201,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
     public async Task<QuoteRequestDto?> ReviewQuoteRequestAsync(
         Guid quoteRequestId,
         Guid actorId,

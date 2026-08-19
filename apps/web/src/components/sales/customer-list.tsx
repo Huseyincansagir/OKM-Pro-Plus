@@ -43,6 +43,7 @@ export function CustomerList() {
   const user = useSessionStore((state) => state.user);
   const permissions = user?.permissions ?? [];
   const canRead = permissions.includes("customer.read");
+  const canCreate = permissions.includes("customer.create");
   const [rows, setRows] = useState<CustomerSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
@@ -99,6 +100,9 @@ export function CustomerList() {
           <Button variant="secondary" onClick={() => router.push("/satis/teklif-talepleri")}>
             Teklif talepleri
           </Button>
+          {canCreate ? (
+            <Button onClick={() => router.push("/satis/musteriler/yeni")}>Yeni müşteri</Button>
+          ) : null}
           {canRead ? (
             <Button variant="secondary" loading={loading} onClick={() => setReload((value) => value + 1)}>
               Yenile

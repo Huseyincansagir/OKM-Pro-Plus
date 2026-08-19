@@ -52,6 +52,39 @@ export async function listCustomers(): Promise<CustomerSummary[]> {
   return raw.map(mapCustomerSummary);
 }
 
+export type CreateCustomerInput = {
+  legalName: string;
+  email?: string;
+  phone?: string;
+  taxNumber?: string;
+  taxOffice?: string;
+};
+
+export async function createCustomer(input: CreateCustomerInput): Promise<CustomerSummary> {
+  const raw = await apiRequest<unknown>({
+    path: "/customers",
+    method: "POST",
+    body: {
+      legalName: input.legalName,
+      email: input.email || null,
+      phone: input.phone || null,
+      taxNumber: input.taxNumber || null,
+      taxOffice: input.taxOffice || null,
+    },
+    idempotent: true,
+  });
+  const mapped = mapCustomerSummary(raw);
+  if (!mapped.id) {
+    throw new ApiError({
+      kind: "unexpected",
+      status: 201,
+      title: "Beklenmeyen yanıt",
+      detail: "Müşteri oluşturuldu ama yanıt geçersiz.",
+    });
+  }
+  return mapped;
+}
+
 export async function getCustomer(id: string): Promise<CustomerSummary> {
   const raw = await apiRequest<unknown>({
     path: `/customers/${id}`,
