@@ -644,6 +644,33 @@ Olmayan: `POST /orders` formu, ürün seçici, `GET /orders` filtre query.
 ```text
 WEB SLICE 011
 STATUS: PASS
-Next Slice: iç ürün tahtası
+Next Slice: WEB SLICE 012 — Internal products
 ```
+
+## WEB SLICE 012 — Internal product board
+
+**Tarih:** 2026-08-19
+**Durum:** PASS
+**Kapsam:** `GET /api/v1/products`, `GET /products/{id}` (`product.read`), `/urunler`. Public katalog ayrı kalır. Stok/fiyat uydurulmaz.
+
+## WEB SLICE 013 — Warehouse / production / shipment lists
+
+**Tarih:** 2026-08-19
+**Durum:** PASS
+**Kapsam:** `GET /warehouse-transfers`, `GET /production/orders`, `GET /shipments` + `/depo`, `/uretim`, `/sevkiyat`.
+
+### Gate (012+013)
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 140 test |
+| typecheck / lint / build | PASS; `/urunler`, `/depo`, `/uretim`, `/sevkiyat` |
+| `dotnet build -c Release` | PASS; 0 warning / 0 error |
+
+```text
+WEB SLICE 012–013
+STATUS: PASS
+Next Slice: cari/personel tahtaları veya stok koleksiyonu (GET /stocks yok)
+```
+
 
