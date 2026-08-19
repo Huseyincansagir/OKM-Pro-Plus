@@ -516,6 +516,50 @@ Next Slice: WEB SLICE 008 — Staff customer create
 ```text
 WEB SLICE 008
 STATUS: PASS
-Next Slice: GET /orders listesi veya Quote belgesi (ikisi de henüz API’siz)
+Next Slice: WEB SLICE 009 — Quote document
+```
+
+## WEB SLICE 009 — Quote document
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web + backend compile; doğrulama bu dilimde)
+**Kapsam:** `quotes` / `quote_items`, `GET/POST /api/v1/quotes`, `POST /quotes/{id}/issue`, `/satis/teklifler` liste-detay-oluştur. Oluşturma yalnızca `InReview` + Active müşteri bağlı `QuoteRequest`. Personel `unitPrice` girer; `quantityBase` ve tutarlar sunucu. Talep `Converted` olur. `QuoteRequestId` tekil. Sipariş ve ürün listesinden serbest teklif yok.
+**Baseline:** WEB SLICE 008 PASS.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| `GET /satis/teklifler` | `GET /api/v1/quotes` (`quote.read`) |
+| `GET /satis/teklifler/{id}` | `GET /api/v1/quotes/{id}` |
+| `GET /satis/teklifler/yeni?quoteRequestId=` | form; kalemler `GET /quote-requests/{id}` |
+| Taslak oluştur | `POST /api/v1/quotes` (`quote.create`, Idempotency-Key) |
+| Kesinleştir | `POST /api/v1/quotes/{id}/issue` (`quote.issue`) |
+
+Olmayan endpoint çağrılmaz: `GET /orders`, iç ürün listesi, fiyat listesi resolve, PDF.
+
+### 2. Kurallar
+
+- Numara sunucu `TEK-YYYY-######`. İstemci kod/tutar/`quantityBase` üretmez.
+- Durum `Draft` → `Issued`. Issue stok rezervasyonu yapmaz.
+- Vergi hesaplanmaz (`totalTax = 0`). Satır tutarı `quantityBase * unitPrice` sunucuda yuvarlanır.
+- `quote.*` yoksa ilgili form/buton gizlenir; yetki backend’dedir.
+- KPI sayıları liste penceresindendir (en fazla 100).
+
+### 3. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 120 test |
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web build` | PASS; `/satis/teklifler`, `/satis/teklifler/[id]`, `/satis/teklifler/yeni` |
+| `dotnet build FactoryErp.sln -c Release` | PASS; 0 warning / 0 error |
+| `dotnet test` | Bu makinede .NET 8 runtime yok (yalnızca 6/10); compile kanıtı build. |
+
+```text
+WEB SLICE 009
+STATUS: PASS
+Next Slice: GET /orders listesi (controller yok) veya iç ürün tahtası
 ```
 
