@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
+import { usePathname } from "next/navigation";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { resetSessionStore, useSessionStore } from "@/lib/auth/session-store";
 
 describe("AuthProvider", () => {
   afterEach(() => {
+    vi.mocked(usePathname).mockReturnValue("/");
     vi.unstubAllGlobals();
     resetSessionStore();
   });
@@ -44,5 +46,24 @@ describe("AuthProvider", () => {
 
     expect(await screen.findByText("Uygulama gövdesi")).toBeInTheDocument();
     expect(useSessionStore.getState().status).toBe("anonymous");
+  });
+
+  it("does not take down the public catalog when /me fails", async () => {
+    vi.mocked(usePathname).mockReturnValue("/katalog");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ title: "Sunucu hatası" }), { status: 500 }),
+      ),
+    );
+
+    render(
+      <AuthProvider>
+        <p>Katalog gövdesi</p>
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByText("Katalog gövdesi")).toBeInTheDocument();
+    expect(screen.queryByText("Oturum doğrulanamadı")).not.toBeInTheDocument();
   });
 });

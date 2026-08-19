@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { fetchCurrentSession, userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
 import { ErrorState } from "@/components/states/error-state";
 
+function isPublicPath(pathname: string): boolean {
+  return pathname === "/giris" || pathname.startsWith("/katalog");
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname() ?? "/";
   const status = useSessionStore((state) => state.status);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -33,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [attempt, status]);
 
-  if (status === "unknown" && bootstrapError) {
+  if (status === "unknown" && bootstrapError && !isPublicPath(pathname)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface-50 p-6">
         <ErrorState
