@@ -30,7 +30,7 @@ export const NAVIGATION: NavSection[] = [
   {
     label: "Çalışma alanı",
     items: [
-      { href: "/", label: "Dashboard", icon: LayoutDashboard, implemented: true },
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, implemented: true },
       { href: "/#satis", label: "Satış", icon: ShoppingCart },
       { href: "/#urunler", label: "Ürünler", icon: Package },
       { href: "/#depo", label: "Depo", icon: Boxes },

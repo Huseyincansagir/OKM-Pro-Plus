@@ -66,6 +66,32 @@ export const Sidebar = forwardRef<
               {section.items.map((item) => {
                 const active = item.href === currentHref;
                 const Icon = item.icon;
+                const ready = item.implemented === true;
+                const className = cn(
+                  "flex min-h-[41px] items-center gap-3 rounded-[11px] px-3 text-[13px]",
+                  ready && active
+                    ? "bg-teal-500 font-semibold text-white"
+                    : "text-white/70",
+                  ready && !active && "hover:bg-white/5",
+                  !ready && "cursor-not-allowed opacity-50",
+                  compact && "justify-center px-0",
+                );
+
+                if (!ready) {
+                  return (
+                    <span
+                      key={item.label}
+                      title="Bu ekran henüz bağlı değil"
+                      aria-label={`${item.label} henüz bağlı değil`}
+                      aria-disabled="true"
+                      className={className}
+                    >
+                      <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+                      {!compact ? <span className="min-w-0 flex-1 truncate">{item.label}</span> : null}
+                    </span>
+                  );
+                }
+
                 return (
                   <a
                     key={item.label}
@@ -74,13 +100,7 @@ export const Sidebar = forwardRef<
                     aria-label={compact ? item.label : undefined}
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "flex min-h-[41px] items-center gap-3 rounded-[11px] px-3 text-[13px]",
-                      active
-                        ? "bg-teal-500 font-semibold text-white"
-                        : "text-white/70 hover:bg-white/5",
-                      compact && "justify-center px-0",
-                    )}
+                    className={className}
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
                     {!compact ? <span className="min-w-0 flex-1 truncate">{item.label}</span> : null}
@@ -99,9 +119,9 @@ export const Sidebar = forwardRef<
 
       {!compact ? (
         <div className="border-t border-white/10 px-4 py-4 text-[11px] leading-5 text-white/60">
-          Tasarım sistemi önizlemesi
+          İç uygulama
           <br />
-          <span className="font-semibold text-white/80">WEB SLICE 002</span>
+          <span className="font-semibold text-white/80">Operasyon özeti</span>
         </div>
       ) : null}
     </aside>

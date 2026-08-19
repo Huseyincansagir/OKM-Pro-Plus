@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
   const session = hasSession(request);
 
   if (pathname === "/giris" && session) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   const isPublic =

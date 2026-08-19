@@ -31,7 +31,7 @@ export function LoginForm() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace("/");
+      router.replace("/dashboard");
     }
   }, [router, status]);
 
@@ -45,7 +45,7 @@ export function LoginForm() {
 
     try {
       await login(parsed.data.userName, parsed.data.password);
-      router.replace("/");
+      router.replace("/dashboard");
     } catch (error) {
       setServerError(userFacingMessage(error));
     }

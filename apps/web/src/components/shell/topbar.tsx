@@ -45,14 +45,18 @@ export function Topbar({
         />
         <input
           disabled
+          title="Arama API’si henüz yok"
           placeholder="Sipariş, ürün veya müşteri ara"
           className="h-[38px] w-full rounded-[10px] border border-surface-200 bg-surface-50 pr-3 pl-9 text-xs text-slate-500"
         />
       </label>
 
       <div className="ml-auto flex items-center gap-2">
-        <span className="hidden h-[34px] items-center rounded-[9px] border border-surface-200 bg-white px-2.5 text-xs text-slate-600 sm:inline-flex">
-          Merkez Depo
+        <span
+          title="Depo seçimi bağlı değil"
+          className="hidden h-[34px] items-center rounded-[9px] border border-surface-200 bg-white px-2.5 text-xs text-slate-600 sm:inline-flex"
+        >
+          Depo bağlı değil
         </span>
         <ConnectionStatus />
         <NotificationArea unreadCount={0} />
