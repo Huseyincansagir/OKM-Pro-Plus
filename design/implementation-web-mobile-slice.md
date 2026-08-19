@@ -710,7 +710,27 @@ Next Slice: WEB SLICE 015 — Stock movement ledger
 ```text
 WEB SLICE 015
 STATUS: PASS
-Next Slice: personel tahtası (employee collection API yok)
+Next Slice: WEB SLICE 016 — Warehouse transfer and shipment command boards
+```
+
+## WEB SLICE 016 — Warehouse transfer and shipment command boards
+
+**Tarih:** 2026-08-19
+**Durum:** PASS
+**Kapsam:** Depo transfer yaşam döngüsü ve sevkiyat hunisi. `GET /warehouses/{id}/locations`; `/depo/transferler/yeni` + `/depo/transferler/{id}` (create/complete/cancel). Sipariş kalan `remainingQty` → `POST /delivery-notes` (BaseUnit); irsaliye issue; Issued → `POST /shipments`. `/sevkiyat/{id}` KPI `Preparing/Loaded/InTransit`. Teslim/POD, sayım, barkod tarama yok.
+
+### Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 175 test |
+| typecheck / lint / build | PASS; `/depo/transferler/yeni`, `/depo/transferler/[id]`, `/sevkiyat/[id]`, `/sevkiyat/irsaliyeler/[id]` |
+| `dotnet build -c Release` | PASS; 0 warning / 0 error |
+
+```text
+WEB SLICE 016
+STATUS: PASS
+Next Slice: personel master veya yükleme/teslim (Deliver/POD yok)
 ```
 
 
