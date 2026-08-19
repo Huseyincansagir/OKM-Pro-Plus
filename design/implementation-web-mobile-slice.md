@@ -357,3 +357,47 @@ STATUS: PASS
 Next Slice: WEB SLICE 005 — Dashboard
 ```
 
+## WEB SLICE 005 — Operations Dashboard
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web gates)
+**Kapsam:** `/dashboard` Genel Bakış. Mockup kromu (`docs/05-assets/mockups/uretim-depo-erp-dashboard-reference.png`) korunur; satış/üretim/sipariş/tahsilat KPI’sı, grafik serisi ve risk listesi uydurulmaz. Native mobile ve operasyon ekranları yok.
+**Baseline:** WEB SLICE 004 PASS.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| `GET /dashboard` | oturum: `GET /api/auth/me` |
+| Son teklif talepleri | `GET /api/v1/quote-requests` (`quote-request.read`) |
+| API durumu | `GET /api/v1/system/health` (`system.read`) |
+| `/` | `redirect("/dashboard")` |
+
+Olmayan endpoint çağrılmaz: `GET /orders`, `GET /production/orders`, `GET /payments`, `GET /invoices`, `GET /delivery-notes`, `GET /current-accounts` listesi, rapor/KPI aggregate.
+
+### 2. Kurallar
+
+- Sayfa başlığı mockup ile aynı: **Genel Bakış**. Tarih chip’i gerçek gündür. Fabrika/depo seçici uydurulmaz (`Depo bağlı değil`).
+- Dört KPI kartı mockup slotlarını (Bugünkü satış, Bugünkü üretim, Bekleyen sipariş, Tahsilat) korur; değer `—`, trend yok. Teklif sayısı sipariş KPI’sı gibi gösterilmez.
+- Canlı veri yalnızca teklif talebi tablosu (son 100 kayıt) ve health. `Received` sayısı tablo başlığında “N alındı” olarak görünür; hata/403 durumunda `0` yazılmaz.
+- Status: `Received` / `InReview` / `Converted` / `Rejected` / `Closed`. `Reviewed` yok.
+- Mapper `quantityBase`, e-posta ve telefonu özet modele taşımaz. Frontend conversion yok.
+- Frontend permission UX’tir; 403 ayrıca `PermissionDenied` olur. Yetki yoksa ilgili API çağrılmaz.
+- Bağlı olmayan menü öğeleri `/#satis` ile dashboard’a dönmez; disabled gösterilir.
+- `/me` 500/network hatası oturumu anonymous yapmaz (middleware cookie loop’u). 401 anonymous’dır.
+
+### 3. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 77 test |
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web build` | PASS; `/dashboard` static |
+
+```text
+WEB SLICE 005
+STATUS: PASS
+Next Slice: WEB SLICE 006 — Internal product catalog
+```
+
