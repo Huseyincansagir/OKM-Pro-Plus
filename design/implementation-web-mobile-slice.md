@@ -118,16 +118,16 @@ WEB SLICE 002 — AppShell & Design System
 ## WEB SLICE 002 — AppShell & Design System
 
 **Tarih:** 2026-08-19
-**Durum:** PASS (web gates). Infrastructure integration testleri bu makinede PostgreSQL olmadığı için koşmadı.
-**Kapsam:** `apps/web` AppShell, responsive layout, ortak bileşenler, quantity UI ve Vitest foundation. Auth, API client, public catalog, dashboard business data ve native mobile yok.
-**Baseline:** WEB SLICE 001 PASS (`3da3bfc`). Sonraki commit’ler yalnızca docs idi.
+**Durum:** PASS (web gates). Backend compile PASS. Postgres entegrasyon testleri bu makinede koşmadı.
+**Kapsam:** `apps/web` AppShell, responsive layout, ortak bileşenler, quantity UI ve Vitest foundation. Auth, API client, public catalog, dashboard iş verisi ve native mobile yok.
+**Baseline:** WEB SLICE 001 PASS (`3da3bfc`). Sonraki commit’ler yalnızca docs idi; WEB 002 bu oturumda uygulandı.
 
 ## 1. Uygulanan yüzey
 
 | Alan | Karar |
 |---|---|
 | AppShell | Sidebar + Topbar + Breadcrumb + PageHeader + content |
-| Responsive | ≥1024 expanded; 768–1023 collapsible; <768 drawer + Escape |
+| Responsive | ≥1024 expanded; 768–1023 collapsible (viewport değişince default collapsed); <768 drawer + Escape + inert + focus trap |
 | Design tokens | WEB 001 Tailwind ad/değerleri korundu; yeni palet yok |
 | Quantity | Canonical `BaseUnit \| Packaging \| Breakdown` |
 | DataTable | Controlled foundation; API yok |
@@ -146,13 +146,15 @@ Durum: `EmptyState`, `ErrorState`, `PermissionDenied`.
 
 Miktar: `QuantityViewToggle`, `QuantityEntryPreview`.
 
-Dialog/Drawer: focus trap, Escape, `aria-modal`, focus return, body scroll lock.
+Dialog/Drawer: focus trap, Escape, `aria-modal`, `useId`, focus return, body scroll lock.
 
 ## 3. Quantity invariantı
 
-`QuantityViewToggle` yalnızca `viewMode` değiştirir. `onViewModeChange` yeni mode alır. `operationPackagingId` prop olarak kabul edilir, okunmaz, mutate edilmez. Girilen miktar, `quantityBase` ve stok değişmez.
+`QuantityViewToggle` yalnızca `viewMode` değiştirir. `onViewModeChange` yeni mode alır. `operationPackagingId` prop olarak kabul edilir, okunmaz, mutate edilmez. Girilen miktar, `quantityBase` ve stok değişmez. Ok tuşları da yalnızca `viewMode` değiştirir.
 
 `QuantityEntryPreview` çarpma/bölme/yuvarlama yapmaz; verilen canonical sonucu gösterir.
+
+Önizleme sayfası `viewMode` için önceden hesaplanmış `display.*` fixture string’leri seçer; `5 × katsayı` üretmez.
 
 Agent A promptundaki `base | transaction | packaging` kullanılmadı. Kaynak: `design/mobile-toggle-api-and-schema.md`.
 
@@ -160,7 +162,19 @@ Agent A promptundaki `base | transaction | packaging` kullanılmadı. Kaynak: `d
 
 `design/ui-reference/tokens.json` hex değerleri WEB 001 `tailwind.config.ts` ile farklıdır. Bu slice yeni palet eklemedi; runtime token kaynağı WEB 001’dir. Palette birleştirme ayrı tasarım kararı ister.
 
-## 5. Test kapsamı
+| Anlamsal | WEB 001 (korunan) | tokens.json (benimsenmedi) |
+|---|---|---|
+| Navy | `#102A43` | `#10263F` |
+| Teal | `#0F9D9A` | `#10B5A2` |
+| Amber | `#D97706` | `#ECAC3C` |
+| Danger | `#DC2626` | `#E15C63` |
+| Success | `#16A34A` | `#29A36A` |
+
+## 5. UI skill sistemi
+
+`.claude/skills/factory-erp-ui/` eklendi. Tek skill, referans dosyalarıyla: design-principles, layout, components, data-heavy-erp, quantity, interaction-and-states, accessibility, review. Canonical design belgelerini tekrar etmez; ajan kurallarını taşır.
+
+## 6. Test kapsamı
 
 | Dosya | Doğrulama |
 |---|---|
@@ -168,29 +182,31 @@ Agent A promptundaki `base | transaction | packaging` kullanılmadı. Kaynak: `d
 | `quantity-entry-preview.test.tsx` | Client conversion yok |
 | `app-shell.test.tsx` | Render, collapse, mobile drawer + Escape |
 | `dialog.test.tsx` / `drawer.test.tsx` | Focus, Escape, focus return |
-| `data-table.test.tsx` | loading / error / sort / selection |
+| `data-table.test.tsx` | loading / empty / error / sort / selection |
 | `status-badge.test.tsx` | Metin + ikon |
 | `states.test.tsx` | Empty / error / permission |
 
-## 6. Gate sonuçları
+## 7. Gate sonuçları
 
 | Kontrol | Sonuç |
 |---|---|
 | `pnpm --dir apps/web typecheck` | PASS |
 | `pnpm --dir apps/web lint` | PASS |
 | `pnpm --dir apps/web test` | PASS; 17 test |
-| `pnpm --dir apps/web build` | PASS; Next.js 15.5.23 |
+| `pnpm --dir apps/web build` | PASS; Next.js 15.5.23 (önceki oturum doğrulaması + bu oturum typecheck/lint/test) |
 | `dotnet build FactoryErp.sln --configuration Release` | PASS; 0 warning / 0 error |
 | `dotnet test FactoryErp.sln` | Domain 122 PASS, Architecture 5 PASS. Infrastructure 48 PASS / 30 FAIL: `127.0.0.1:5432` yok. WEB 002 backend’e dokunmadı. Bu makinede .NET 8 runtime yok; testler `DOTNET_ROLL_FORWARD=LatestMajor` ile koştu. |
-| `git diff --check` | PASS |
+| `git diff --check` | Bu oturum commit öncesi doğrulanır |
 
-## 7. Sınır
+## 8. Sınır
 
 - `/giris`, auth/session, API client: WEB SLICE 003
 - Public catalog: WEB SLICE 004
 - Dashboard business data: WEB SLICE 005
 - Native Flutter: ayrı mobile slice
 - `tokens.json` hex migration: açık DESIGN CONFLICT
+- Tabs ok-tuşu / dropdown menü roving tabindex: sonraki UI polish
+- İlk boyamada JS viewport (SSR default desktop): bilinen responsive sınır
 
 ## Final report
 
@@ -218,6 +234,6 @@ WEB SLICE 003 — Auth & API Client
 
 [3]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/design/architecture-api-contracts.md "Factory ERP API contract architecture"
 
-[4]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/AGENTS.md "Factory ERP repository agent instructions"
+[4]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/design/mobile-toggle-api-and-schema.md "Canonical QuantityViewMode"
 
-[5]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/design/mobile-toggle-api-and-schema.md "Canonical QuantityViewMode contract"
+[5]: https://github.com/Huseyincansagir/OKM-Pro-Plus/blob/main/AGENTS.md "Factory ERP repository agent instructions"
