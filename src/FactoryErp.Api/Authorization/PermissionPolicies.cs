@@ -11,6 +11,8 @@ public static class PermissionPolicies
     public const string QuoteRequestSubmit = "permission:quote-request.submit";
     public const string QuoteRequestRead = "permission:quote-request.read";
     public const string QuoteRequestReview = "permission:quote-request.review";
+    public const string CustomerRead = "permission:customer.read";
+    public const string CustomerCreate = "permission:customer.create";
     public const string DeliveryNoteCreate = "permission:delivery-note.create";
     public const string DeliveryNoteRead = "permission:delivery-note.read";
     public const string DeliveryNoteIssue = "permission:delivery-note.issue";

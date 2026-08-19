@@ -32,6 +32,16 @@ public sealed record QuoteRequestDto(
     string CandidateEmail,
     string CandidatePhone,
     IReadOnlyCollection<QuoteRequestItemDto> Items,
+    DateTimeOffset CreatedAt,
+    Guid? CustomerId = null);
+
+public sealed record CustomerDto(
+    Guid Id,
+    string CustomerCode,
+    string LegalName,
+    string Status,
+    string? Email,
+    string? Phone,
     DateTimeOffset CreatedAt);
 
 public sealed record CreateSalesOrderItemInput(
@@ -90,6 +100,10 @@ public interface ISalesCommandService
     Task<IReadOnlyCollection<QuoteRequestDto>> ListQuoteRequestsAsync(CancellationToken cancellationToken = default);
 
     Task<QuoteRequestDto?> GetQuoteRequestAsync(Guid quoteRequestId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<CustomerDto>> ListCustomersAsync(CancellationToken cancellationToken = default);
+
+    Task<CustomerDto?> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
 
     Task<QuoteRequestDto?> ReviewQuoteRequestAsync(
         Guid quoteRequestId,

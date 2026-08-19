@@ -28,6 +28,7 @@ const detail = {
   candidateName: "Acme / Ali Veli",
   candidateEmail: "a@b.com",
   candidatePhone: "555",
+  customerId: null,
   itemCount: 1,
   createdAt: "2026-08-19T10:00:00Z",
   items: [
@@ -91,7 +92,7 @@ describe("QuoteRequestDetail", () => {
     const openReview = await screen.findByRole("button", { name: "İncelemeye al" });
     await user.click(openReview);
     const dialog = await screen.findByRole("dialog");
-    expect(dialog).toHaveTextContent("customerId: null");
+    expect(dialog).toHaveTextContent("Aktif müşteri seçilemedi");
     await user.click(within(dialog).getByRole("button", { name: "İncelemeye al" }));
     expect(reviewQuoteRequest).toHaveBeenCalledWith("qr-1", null);
   });

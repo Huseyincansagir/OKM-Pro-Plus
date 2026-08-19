@@ -83,7 +83,8 @@ export const Sidebar = forwardRef<
                   item.href === currentHref ||
                   (item.implemented === true &&
                     item.href !== "/" &&
-                    currentHref.startsWith(`${item.href}/`));
+                    currentHref.startsWith(`${item.href}/`)) ||
+                  Boolean(item.activePrefix && currentHref.startsWith(item.activePrefix));
                 const Icon = item.icon;
                 const ready = item.implemented === true;
                 const className = cn(

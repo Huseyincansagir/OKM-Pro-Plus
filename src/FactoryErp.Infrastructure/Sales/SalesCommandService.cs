@@ -108,6 +108,25 @@ public sealed class SalesCommandService(
         return request is null ? null : MapQuoteRequest(request);
     }
 
+    public async Task<IReadOnlyCollection<CustomerDto>> ListCustomersAsync(CancellationToken cancellationToken = default)
+    {
+        var customers = await dbContext.Customers
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .OrderBy(x => x.LegalName)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return customers.Select(MapCustomer).ToArray();
+    }
+
+    public async Task<CustomerDto?> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken = default)
+    {
+        var customer = await dbContext.Customers
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == customerId && !x.IsDeleted, cancellationToken);
+        return customer is null ? null : MapCustomer(customer);
+    }
+
     public async Task<QuoteRequestDto?> ReviewQuoteRequestAsync(
         Guid quoteRequestId,
         Guid actorId,
@@ -570,7 +589,18 @@ public sealed class SalesCommandService(
                 x.EnteredPackagingId,
                 x.QuantityBase,
                 x.PackagingSnapshot)).ToArray(),
-            request.CreatedAt);
+            request.CreatedAt,
+            request.CustomerId);
+
+    private static CustomerDto MapCustomer(CustomerRecord customer)
+        => new(
+            customer.Id,
+            customer.CustomerCode,
+            customer.LegalName,
+            customer.Status,
+            customer.Email,
+            customer.Phone,
+            customer.CreatedAt);
 
     private static SalesOrderDto MapSalesOrder(SalesOrderRecord order)
         => new(

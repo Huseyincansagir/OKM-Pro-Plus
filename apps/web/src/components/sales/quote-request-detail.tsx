@@ -13,7 +13,9 @@ import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { Glyph } from "@/components/ui/glyph";
 import { KpiMetric } from "@/components/dashboard/kpi-metric";
+import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { listCustomers, type CustomerSummary } from "@/lib/sales/customers";
 import { ApiError } from "@/lib/api/types";
 import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
@@ -43,6 +45,7 @@ export function QuoteRequestDetail({ id }: { id: string }) {
   const permissions = user?.permissions ?? [];
   const canRead = permissions.includes("quote-request.read");
   const canReview = permissions.includes("quote-request.review");
+  const canReadCustomers = permissions.includes("customer.read");
   const [detail, setDetail] = useState<QuoteRequestDetailModel | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
@@ -51,6 +54,8 @@ export function QuoteRequestDetail({ id }: { id: string }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [customers, setCustomers] = useState<CustomerSummary[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
   useEffect(() => {
     if (!canRead) {
@@ -81,11 +86,28 @@ export function QuoteRequestDetail({ id }: { id: string }) {
     };
   }, [canRead, id, reload]);
 
+  useEffect(() => {
+    if (!canReadCustomers) {
+      return;
+    }
+    let cancelled = false;
+    listCustomers()
+      .then((rows) => {
+        if (!cancelled) setCustomers(rows.filter((row) => row.status === "Active"));
+      })
+      .catch(() => {
+        if (!cancelled) setCustomers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [canReadCustomers]);
+
   async function confirmReview() {
     setReviewing(true);
     setReviewError(null);
     try {
-      const next = await reviewQuoteRequest(id, null);
+      const next = await reviewQuoteRequest(id, selectedCustomerId || null);
       setDetail(next);
       setConfirmOpen(false);
     } catch (caught) {
@@ -208,13 +230,23 @@ export function QuoteRequestDetail({ id }: { id: string }) {
                 />
               </CardHeader>
               <CardBody className="space-y-3">
-                <Alert tone="info" title="Müşteri listesi yok">
-                  İnceleme `customerId: null` gönderir. GET /customers olmadığı için aday buradan müşteri
-                  kartına bağlanmaz.
-                </Alert>
+                {detail.customerId ? (
+                  <p className="text-sm text-navy-950">
+                    Bağlı müşteri kimliği: {detail.customerId}
+                  </p>
+                ) : (
+                  <Alert tone="info" title="Henüz müşteri bağlı değil">
+                    İnceleme yalnızca Status=Active kartlara bağlar. Aday kartı burada oluşturulmaz.
+                  </Alert>
+                )}
                 {!canReview ? (
                   <p className="text-sm text-slate-600">
                     quote-request.review yok. Buton gizlidir; yetki backend’dedir.
+                  </p>
+                ) : null}
+                {!canReadCustomers ? (
+                  <p className="text-sm text-slate-600">
+                    customer.read yok. Müşteri seçici görünmez; yetki backend’dedir.
                   </p>
                 ) : null}
               </CardBody>
@@ -272,7 +304,7 @@ export function QuoteRequestDetail({ id }: { id: string }) {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Talebi incelemeye al"
-        description="Durum InReview olur. Müşteri bağlanmaz; müşteri listesi endpoint’i yok. Sipariş veya teklif belgesi oluşmaz."
+        description="Durum InReview olur. Sipariş veya teklif belgesi oluşmaz. Yalnızca Active müşteri bağlanır."
         footer={
           <>
             <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
@@ -284,15 +316,31 @@ export function QuoteRequestDetail({ id }: { id: string }) {
           </>
         }
       >
+        {canReadCustomers && customers.length > 0 ? (
+          <Select
+            label="Aktif müşteri"
+            name="customerId"
+            value={selectedCustomerId}
+            onChange={(event) => setSelectedCustomerId(event.target.value)}
+            options={[
+              { value: "", label: "Bağlama (customerId null)" },
+              ...customers.map((customer) => ({
+                value: customer.id,
+                label: `${customer.customerCode} · ${customer.legalName}`,
+              })),
+            ]}
+            hint="Backend yalnızca Active kart kabul eder."
+          />
+        ) : (
+          <p className="text-sm text-slate-600">
+            Aktif müşteri seçilemedi. Gövde customerId: null gider.
+          </p>
+        )}
         {reviewError ? (
           <Alert tone="danger" title="İnceleme kaydedilemedi">
             {reviewError}
           </Alert>
-        ) : (
-          <p className="text-sm text-slate-600">
-            Gönderilecek gövde yalnızca customerId: null. quantityBase eklenmez.
-          </p>
-        )}
+        ) : null}
       </Dialog>
     </AppShell>
   );

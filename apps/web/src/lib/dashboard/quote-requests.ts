@@ -24,6 +24,7 @@ export type QuoteRequestLine = {
 export type QuoteRequestDetail = QuoteRequestSummary & {
   candidateEmail: string;
   candidatePhone: string;
+  customerId: string | null;
   items: QuoteRequestLine[];
 };
 
@@ -113,6 +114,7 @@ export function mapQuoteRequestDetail(raw: unknown): QuoteRequestDetail {
     ...summary,
     candidateEmail: String(record.candidateEmail ?? ""),
     candidatePhone: String(record.candidatePhone ?? ""),
+    customerId: record.customerId ? String(record.customerId) : null,
     itemCount: items.length,
     items,
   };
