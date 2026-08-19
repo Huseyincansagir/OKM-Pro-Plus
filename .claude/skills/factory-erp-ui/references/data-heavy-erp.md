@@ -25,6 +25,15 @@ Filtre özeti görünür ve tek tıkla temizlenir. Toplu işlem seçimsiz disabl
 KPI: başlık + büyük değer + birim + kısa karşılaştırma veya uyarı.
 Sahte trend uydurma. Veri yoksa empty/error; iskelet loading.
 
+Mockup kromunu koru; canlı veriyi yalnızca kendi slotuna koy. Endpoint yoksa `—` / empty ve neden (`GET /orders yok`). Komşu metriği (teklif sayısı ≠ bekleyen sipariş) o slota doldurma. Kesilmiş listeden trend çizme.
+
+Liste/dashboard sayısı kaynak ve pencereyi söyler (`GET /quote-requests · son 100`). Bunu şirket geneli toplam gibi sunma.
+
 ## Finans UI
 
 Para birimi ve vergi satırları hizalı. Onay öncesi eski bakiye / yeni bakiye yan yana. İptal ve iade confirmation’sız olmaz.
+Tutar ve miktar biriminden ayrılmaz; tabloda sayısal kolon sağa hizalı. Dönem toplamı yoksa uydurma.
+
+## Görsel inceleme
+
+Mockup farkını **intentional / necessary / regression** diye sınıflandır. Sahte KPI, sahte rozet veya sahte depo bağlamı ile pixel-match PASS sayılmaz.

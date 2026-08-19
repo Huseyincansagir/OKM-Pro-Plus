@@ -439,6 +439,45 @@ Olmayan endpoint çağrılmaz: `GET /customers`, teklif oluştur, sipariş.
 ```text
 WEB SLICE 006
 STATUS: PASS
-Next Slice: WEB SLICE 007 — Internal product catalog (liste API’si gelince) veya diğer operasyon listeleri
+Next Slice: WEB SLICE 007 — Customer list + quote-request bind
+```
+
+## WEB SLICE 007 — Customer list + quote-request bind
+
+**Tarih:** 2026-08-19
+**Durum:** PASS (web + backend compile)
+**Kapsam:** `GET /api/v1/customers`, `GET /api/v1/customers/{id}`, `/satis/musteriler`, teklif incelemede Active müşteri seçimi. POST /customers ve bakiye/risk yok.
+**Baseline:** WEB SLICE 006 PASS.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| `GET /satis/musteriler` | `GET /api/v1/customers` (`customer.read`) |
+| Teklif inceleme seçici | aynı liste, yalnızca `Active` |
+| İncelemeye al | `POST /quote-requests/{id}/review` `{ customerId }` |
+
+### 2. Kurallar
+
+- Liste en fazla 100, silinmemiş kartlar. KPI sayıları bu pencereden.
+- İnceleme Active olmayan kartı bağlamaz (backend kuralı).
+- Bakiye, risk, cari özet uydurulmaz.
+- QuoteRequestDto artık `customerId` taşır.
+
+### 3. Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 89 test |
+| `pnpm --dir apps/web typecheck` | PASS |
+| `pnpm --dir apps/web lint` | PASS |
+| `pnpm --dir apps/web build` | PASS; `/satis/musteriler` |
+| `dotnet build FactoryErp.sln -c Release` | PASS; 0 warning / 0 error |
+| `dotnet test` | Bu makinede .NET 8 runtime yok (yalnızca 6/10); compile kanıtı build. |
+
+```text
+WEB SLICE 007
+STATUS: PASS
+Next Slice: Quote belgesi veya GET /orders listesi (API hazır olunca)
 ```
 
