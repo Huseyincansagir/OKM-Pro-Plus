@@ -22,6 +22,11 @@ public sealed class InvoicesController(IShippingFinanceCommandService service)
     }
 
     [Authorize(Policy = PermissionPolicies.InvoiceRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<InvoiceDto>>> List(CancellationToken cancellationToken)
+        => Ok(await Service.ListInvoicesAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.InvoiceRead)]
     [HttpGet("{invoiceId:guid}")]
     public async Task<IActionResult> Get(Guid invoiceId, CancellationToken cancellationToken)
     {

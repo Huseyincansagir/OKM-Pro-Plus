@@ -12,6 +12,11 @@ public sealed class CurrentAccountsController(IShippingFinanceCommandService ser
     : ShippingFinanceControllerBase(service)
 {
     [Authorize(Policy = PermissionPolicies.CurrentAccountRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<CurrentAccountDto>>> List(CancellationToken cancellationToken)
+        => Ok(await Service.ListCurrentAccountsAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.CurrentAccountRead)]
     [HttpGet("{customerId:guid}")]
     public async Task<IActionResult> Get(Guid customerId, CancellationToken cancellationToken)
     {

@@ -124,6 +124,17 @@ public sealed class DeliveryInvoiceFinanceService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<DeliveryNoteDto>> ListDeliveryNotesAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.DeliveryNotes
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(MapDeliveryNote).ToArray();
+    }
+
     public async Task<DeliveryNoteDto?> GetDeliveryNoteAsync(Guid deliveryNoteId, CancellationToken cancellationToken = default)
     {
         var note = await dbContext.DeliveryNotes.AsNoTracking().Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == deliveryNoteId, cancellationToken);
@@ -351,6 +362,17 @@ public sealed class DeliveryInvoiceFinanceService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<InvoiceDto>> ListInvoicesAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.Invoices
+            .AsNoTracking()
+            .Include(x => x.Items)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(MapInvoice).ToArray();
+    }
+
     public async Task<InvoiceDto?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default)
     {
         var invoice = await dbContext.Invoices.AsNoTracking().Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
@@ -537,6 +559,16 @@ public sealed class DeliveryInvoiceFinanceService(
         await idempotencyStore.SaveAsync(scope, idempotencyKey, payloadHash, 200, JsonSerializer.Serialize(result), DateTimeOffset.UtcNow.AddDays(30), cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return result;
+    }
+
+    public async Task<IReadOnlyCollection<CurrentAccountDto>> ListCurrentAccountsAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.CurrentAccounts
+            .AsNoTracking()
+            .OrderBy(x => x.CustomerId)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(MapCurrentAccount).ToArray();
     }
 
     public async Task<CurrentAccountDto?> GetCurrentAccountAsync(Guid customerId, CancellationToken cancellationToken = default)

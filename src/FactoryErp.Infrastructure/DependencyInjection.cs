@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
         services.AddScoped<IAuditWriter, EfAuditWriter>();
         services.AddScoped<IProductCatalogService, ProductCatalogService>();
+        services.AddScoped<IStockQueryService, StockQueryService>();
         services.AddScoped<CatalogSeeder>();
         services.AddScoped<ISalesCommandService, SalesCommandService>();
         services.AddScoped<ISalesPricingService, PricingCommandService>();

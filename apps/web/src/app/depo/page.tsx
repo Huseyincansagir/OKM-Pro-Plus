@@ -1,14 +1,14 @@
 import { SessionGate } from "@/components/auth/session-gate";
-import { WarehouseTransferList } from "@/components/operations/warehouse-transfer-list";
+import { StockList } from "@/components/warehouse/stock-list";
 
 export const metadata = {
-  title: "Depo — Factory ERP",
+  title: "Stok — Factory ERP",
 };
 
 export default function WarehousePage() {
   return (
     <SessionGate>
-      <WarehouseTransferList />
+      <StockList />
     </SessionGate>
   );
 }

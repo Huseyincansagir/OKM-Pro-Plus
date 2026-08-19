@@ -105,6 +105,8 @@ public interface IShippingFinanceCommandService
         string correlationId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<DeliveryNoteDto>> ListDeliveryNotesAsync(CancellationToken cancellationToken = default);
+
     Task<DeliveryNoteDto?> GetDeliveryNoteAsync(Guid deliveryNoteId, CancellationToken cancellationToken = default);
 
     Task<DeliveryNoteDto?> IssueDeliveryNoteAsync(
@@ -121,6 +123,8 @@ public interface IShippingFinanceCommandService
         string correlationId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<InvoiceDto>> ListInvoicesAsync(CancellationToken cancellationToken = default);
+
     Task<InvoiceDto?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default);
 
     Task<InvoiceDto?> IssueInvoiceAsync(
@@ -136,6 +140,8 @@ public interface IShippingFinanceCommandService
         string idempotencyKey,
         string correlationId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<CurrentAccountDto>> ListCurrentAccountsAsync(CancellationToken cancellationToken = default);
 
     Task<CurrentAccountDto?> GetCurrentAccountAsync(Guid customerId, CancellationToken cancellationToken = default);
 }

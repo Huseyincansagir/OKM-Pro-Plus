@@ -8,7 +8,7 @@ import { listTransfers, transferStatusKind, type TransferRow } from "@/lib/opera
 export function WarehouseTransferList() {
   return (
     <OperationsCollection<TransferRow>
-      currentHref="/depo"
+      currentHref="/depo/transferler"
       title="Depo transferleri"
       description="GET /warehouse-transfers. quantityBase sunucudan gelir. Liste en fazla 100 kayıttır."
       permission="stock-transfer.read"

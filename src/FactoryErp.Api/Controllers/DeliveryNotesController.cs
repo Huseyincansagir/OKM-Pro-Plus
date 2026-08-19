@@ -22,6 +22,11 @@ public sealed class DeliveryNotesController(IShippingFinanceCommandService servi
     }
 
     [Authorize(Policy = PermissionPolicies.DeliveryNoteRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<DeliveryNoteDto>>> List(CancellationToken cancellationToken)
+        => Ok(await Service.ListDeliveryNotesAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.DeliveryNoteRead)]
     [HttpGet("{deliveryNoteId:guid}")]
     public async Task<IActionResult> Get(Guid deliveryNoteId, CancellationToken cancellationToken)
     {
