@@ -3,8 +3,20 @@
 import { forwardRef } from "react";
 import { Factory } from "lucide-react";
 import { NAVIGATION } from "@/config/navigation";
+import { useSessionStore } from "@/lib/auth/session-store";
 import { cn } from "@/lib/cn";
 import type { Viewport } from "@/lib/viewport";
+
+function initialsFrom(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return "KU";
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+}
 
 export const Sidebar = forwardRef<
   HTMLElement,
@@ -21,6 +33,9 @@ export const Sidebar = forwardRef<
 ) {
   const compact = collapsed && viewport !== "mobile";
   const hiddenOnMobile = viewport === "mobile" && !mobileOpen;
+  const user = useSessionStore((state) => state.user);
+  const userName = user?.displayName || user?.userName || "Kullanıcı";
+  const roleLabel = user?.roles[0] || "Oturum açık";
 
   return (
     <aside
@@ -117,13 +132,19 @@ export const Sidebar = forwardRef<
         ))}
       </div>
 
-      {!compact ? (
-        <div className="border-t border-white/10 px-4 py-4 text-[11px] leading-5 text-white/60">
-          İç uygulama
-          <br />
-          <span className="font-semibold text-white/80">Operasyon özeti</span>
+      <div className={cn("border-t border-white/10 px-4 py-4", compact && "px-2")}>
+        <div className={cn("flex items-center gap-3", compact && "justify-center")}>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal-500 text-[11px] font-bold text-white">
+            {initialsFrom(userName)}
+          </span>
+          {!compact ? (
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-white">{userName}</p>
+              <p className="truncate text-[11px] text-white/60">{roleLabel}</p>
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </aside>
   );
 });

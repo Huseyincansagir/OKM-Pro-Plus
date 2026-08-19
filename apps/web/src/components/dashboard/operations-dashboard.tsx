@@ -1,22 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  Building2,
   CalendarDays,
+  ChevronDown,
   ClipboardList,
+  Clock3,
   Factory,
+  FileText,
   LineChart,
+  List,
   ShoppingCart,
+  UserRound,
   Wallet,
 } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiMetric } from "@/components/dashboard/kpi-metric";
-import { Alert } from "@/components/ui/alert";
+import { RailListCard } from "@/components/dashboard/rail-list-card";
+import { UnavailableChart } from "@/components/dashboard/unavailable-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
@@ -25,36 +31,21 @@ import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
 import {
   listQuoteRequests,
-  quoteRequestStatusKind,
   quoteRequestStatusLabel,
   readSystemHealth,
   systemHealthLabel,
   type QuoteRequestSummary,
 } from "@/lib/dashboard/quote-requests";
 
-const QUOTE_COLUMNS = [
+const ACTIVITY_COLUMNS = [
   { id: "createdAt", header: "Tarih/Saat" },
   { id: "kind", header: "Tür" },
-  { id: "candidate", header: "Açıklama" },
-  { id: "requestNumber", header: "İlgili kayıt" },
-  { id: "status", header: "Durum" },
-  { id: "items", header: "Kalem" },
+  { id: "detail", header: "Açıklama" },
+  { id: "record", header: "İlgili Kayıt" },
+  { id: "user", header: "Kullanıcı" },
 ] as const;
 
-const UNAVAILABLE_RAIL = [
-  {
-    title: "Riskli müşteriler",
-    reason: "Cari risk listesi yok (GET /current-accounts yalnızca müşteri id ile).",
-  },
-  {
-    title: "Geciken ödemeler",
-    reason: "Ödeme/vade özet listesi yok (GET /payments listesi yok).",
-  },
-  {
-    title: "Faturalaşmamış irsaliyeler",
-    reason: "İrsaliye listesi yok (GET /delivery-notes yalnızca id ile).",
-  },
-] as const;
+const ACTIVITY_PAGE = 5;
 
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
@@ -76,6 +67,27 @@ function todayLabel(): string {
   }).format(new Date());
 }
 
+function HeaderChip({
+  icon: Icon,
+  children,
+  title,
+}: {
+  icon: typeof CalendarDays;
+  children: ReactNode;
+  title: string;
+}) {
+  return (
+    <span
+      title={title}
+      className="inline-flex min-h-[34px] items-center gap-2 rounded-[9px] border border-surface-200 bg-white px-2.5 text-xs text-slate-600"
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      {children}
+      <ChevronDown className="h-3 w-3 text-slate-400" aria-hidden="true" />
+    </span>
+  );
+}
+
 export function OperationsDashboard() {
   const user = useSessionStore((state) => state.user);
   const permissions = user?.permissions ?? [];
@@ -91,6 +103,7 @@ export function OperationsDashboard() {
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthDenied, setHealthDenied] = useState(false);
   const [healthLoading, setHealthLoading] = useState(canReadSystem);
+  const [showAllQuotes, setShowAllQuotes] = useState(false);
 
   useEffect(() => {
     if (!canReadQuotes) {
@@ -154,44 +167,71 @@ export function OperationsDashboard() {
   const receivedCount = quotes?.filter((row) => row.status === "Received").length ?? 0;
   const today = useMemo(() => todayLabel(), []);
   const quotesReady = Boolean(quotes) && !quotesDenied && !quotesError && !quotesLoading;
+  const visibleQuotes = quotesReady && quotes
+    ? showAllQuotes
+      ? quotes
+      : quotes.slice(0, ACTIVITY_PAGE)
+    : [];
+
+  const apiChip = !canReadSystem
+    ? "API bağlı değil"
+    : healthDenied
+      ? "API yetkisiz"
+      : healthError
+        ? "API alınamadı"
+        : healthLoading
+          ? "API · sorgulanıyor"
+          : `API · ${systemHealthLabel(health)}`;
 
   return (
     <AppShell
       currentHref="/dashboard"
       pageTitle="Genel Bakış"
       pageActions={
-        <span className="inline-flex min-h-[37px] items-center gap-2 rounded-[10px] border border-surface-200 bg-white px-3 text-xs font-semibold text-navy-800">
-          <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
-          <time dateTime={new Date().toISOString().slice(0, 10)}>{today}</time>
-        </span>
+        <>
+          <HeaderChip icon={CalendarDays} title="Tarih seçici bağlı değil">
+            <time dateTime={new Date().toISOString().slice(0, 10)}>{today}</time>
+          </HeaderChip>
+          <HeaderChip icon={Building2} title="Fabrika seçici bağlı değil">
+            Fabrika bağlı değil
+          </HeaderChip>
+          <span
+            title={!canReadSystem ? "system.read yok; çağrı yapılmaz" : "GET /system/health"}
+            className="inline-flex min-h-[34px] items-center rounded-[9px] border border-surface-200 bg-white px-2.5 text-xs text-slate-600"
+          >
+            {apiChip}
+          </span>
+        </>
       }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiMetric
-          label="Bugünkü satış"
+          label="Bugünkü Satış"
           value="—"
           icon={ShoppingCart}
           tone="teal"
           unavailable
-          caption="Satış özeti yok · GET /orders listesi yok"
+          caption="Bu ay: — · satış özeti yok"
         />
         <KpiMetric
-          label="Bugünkü üretim"
+          label="Bugünkü Üretim"
           value="—"
           unit="adet"
           icon={Factory}
           tone="teal"
           unavailable
-          caption="Üretim özeti yok · GET /production/orders listesi yok"
+          caption="Bu ay: — · iş emri listesi yok"
+          showEmptyTrack
         />
         <KpiMetric
-          label="Bekleyen sipariş"
+          label="Bekleyen Sipariş"
           value="—"
           unit="sipariş"
           icon={ClipboardList}
           tone="amber"
           unavailable
-          caption="GET /orders yok · teklif talebi sipariş değildir"
+          secondary="— tutarında"
+          caption="En eski: — · GET /orders yok"
         />
         <KpiMetric
           label="Tahsilat"
@@ -199,53 +239,61 @@ export function OperationsDashboard() {
           icon={Wallet}
           tone="teal"
           unavailable
-          caption="Tahsilat özeti yok · GET /payments listesi yok"
+          caption="Bu ay: — · tahsilat özeti yok"
         />
       </div>
+
+      {healthError ? (
+        <div className="mt-4">
+          <ErrorState
+            title="Sistem durumu alınamadı"
+            description={healthError}
+            onRetry={() => setReload((value) => value + 1)}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
         <div className="space-y-4 xl:col-span-2">
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Satış trendi</CardTitle>
-                <Badge tone="neutral">Bağlı değil</Badge>
-              </CardHeader>
-              <CardBody>
-                <div className="flex min-h-[140px] items-center gap-3 rounded-xl border border-dashed border-surface-200 bg-surface-50 px-4 py-6">
-                  <LineChart className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  <p className="text-sm text-slate-600">
-                    Satış tutarı zaman serisi yok. Sahte grafik çizilmez.
-                  </p>
-                </div>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Üretim performansı</CardTitle>
-                <Badge tone="neutral">Bağlı değil</Badge>
-              </CardHeader>
-              <CardBody>
-                <div className="flex min-h-[140px] items-center gap-3 rounded-xl border border-dashed border-surface-200 bg-surface-50 px-4 py-6">
-                  <Factory className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  <p className="text-sm text-slate-600">
-                    Kapasite/verimlilik özeti yok. Sahte seri üretilmez.
-                  </p>
-                </div>
-              </CardBody>
-            </Card>
+            <UnavailableChart
+              title="Satış Trendi"
+              icon={LineChart}
+              legend={["Tutar (₺)", "7 Günlük Ortalama"]}
+              stats={[
+                { label: "Toplam Satış" },
+                { label: "Günlük Ortalama" },
+                { label: "En Yüksek Gün" },
+              ]}
+              reason="Satış zaman serisi yok. Sahte grafik çizilmez."
+            />
+            <UnavailableChart
+              title="Üretim Performansı"
+              icon={Factory}
+              legend={["Üretilen (adet)", "Kapasite (adet)", "% Verimlilik"]}
+              stats={[
+                { label: "Toplam Üretim", unit: "adet" },
+                { label: "Ortalama Günlük", unit: "adet" },
+                { label: "Ortalama Verimlilik" },
+                { label: "Kapasite Kullanımı" },
+              ]}
+              reason="Kapasite/verimlilik özeti yok. Sahte seri üretilmez."
+            />
           </div>
 
           <Card>
             <CardHeader>
-              <div>
-                <CardTitle>Son teklif talepleri</CardTitle>
-                <p className="mt-1 text-xs text-slate-500">GET /quote-requests · son 100 kayıt</p>
+              <div className="flex min-w-0 items-center gap-2">
+                <List className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                <div>
+                  <CardTitle>Son Aktiviteler</CardTitle>
+                  <p className="mt-0.5 text-[11px] text-slate-500">
+                    Teklif talepleri · GET /quote-requests · son 100 kayıt
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
-                {quotesReady ? (
-                  <Badge tone="amber">{receivedCount} alındı</Badge>
-                ) : null}
+                {quotesReady ? <Badge tone="amber">{receivedCount} alındı</Badge> : null}
                 {canReadQuotes ? (
                   <Button
                     variant="secondary"
@@ -253,9 +301,12 @@ export function OperationsDashboard() {
                     loading={quotesLoading}
                     onClick={() => setReload((value) => value + 1)}
                   >
-                    Talepleri yenile
+                    Yenile
                   </Button>
                 ) : null}
+                <span className="text-xs font-semibold text-teal-600/70" title="Aktivite listesi yok">
+                  Tüm Aktiviteler
+                </span>
               </div>
             </CardHeader>
             <CardBody className="pt-3">
@@ -274,7 +325,7 @@ export function OperationsDashboard() {
                 />
               ) : quotesLoading ? (
                 <DataTable
-                  columns={QUOTE_COLUMNS.map((column) => ({
+                  columns={ACTIVITY_COLUMNS.map((column) => ({
                     id: column.id,
                     header: column.header,
                     accessor: () => null,
@@ -289,102 +340,88 @@ export function OperationsDashboard() {
                   description="Public katalogdan henüz talep gelmemiş veya liste boş."
                 />
               ) : (
-                <DataTable
-                  columns={[
-                    {
-                      id: "createdAt",
-                      header: "Tarih/Saat",
-                      accessor: (row) => formatDateTime(row.createdAt),
-                    },
-                    {
-                      id: "kind",
-                      header: "Tür",
-                      accessor: () => "Teklif talebi",
-                    },
-                    {
-                      id: "candidate",
-                      header: "Açıklama",
-                      accessor: (row) => row.candidateName,
-                    },
-                    {
-                      id: "requestNumber",
-                      header: "İlgili kayıt",
-                      accessor: (row) => (
-                        <span className="font-semibold text-teal-600">{row.requestNumber}</span>
-                      ),
-                    },
-                    {
-                      id: "status",
-                      header: "Durum",
-                      accessor: (row) => (
-                        <StatusBadge
-                          status={quoteRequestStatusKind(row.status)}
-                          label={quoteRequestStatusLabel(row.status)}
-                        />
-                      ),
-                    },
-                    {
-                      id: "items",
-                      header: "Kalem",
-                      accessor: (row) => String(row.itemCount),
-                    },
-                  ]}
-                  rows={quotes}
-                  getRowId={(row) => row.id}
-                />
+                <>
+                  <DataTable
+                    columns={[
+                      {
+                        id: "createdAt",
+                        header: "Tarih/Saat",
+                        accessor: (row) => formatDateTime(row.createdAt),
+                      },
+                      {
+                        id: "kind",
+                        header: "Tür",
+                        accessor: () => (
+                          <span className="inline-flex items-center gap-2">
+                            <span className="grid h-7 w-7 place-items-center rounded-lg bg-teal-500/10 text-teal-700">
+                              <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
+                            </span>
+                            Teklif talebi
+                          </span>
+                        ),
+                      },
+                      {
+                        id: "detail",
+                        header: "Açıklama",
+                        accessor: (row) =>
+                          `${row.candidateName} · ${quoteRequestStatusLabel(row.status)}`,
+                      },
+                      {
+                        id: "record",
+                        header: "İlgili Kayıt",
+                        accessor: (row) => (
+                          <span className="font-semibold text-teal-600">{row.requestNumber}</span>
+                        ),
+                      },
+                      {
+                        id: "user",
+                        header: "Kullanıcı",
+                        accessor: () => (
+                          <span className="text-slate-500" title="Kayıtta aktör yok">
+                            —
+                          </span>
+                        ),
+                      },
+                    ]}
+                    rows={visibleQuotes}
+                    getRowId={(row) => row.id}
+                  />
+                  {quotes.length > ACTIVITY_PAGE ? (
+                    <button
+                      type="button"
+                      className="mt-3 w-full text-center text-xs font-semibold text-teal-600"
+                      onClick={() => setShowAllQuotes((value) => !value)}
+                    >
+                      {showAllQuotes ? "Daha az göster" : "Daha Fazla Göster"}
+                    </button>
+                  ) : (
+                    <p className="mt-3 text-center text-xs text-slate-400">Daha Fazla Göster</p>
+                  )}
+                </>
               )}
             </CardBody>
           </Card>
         </div>
 
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>API durumu</CardTitle>
-            </CardHeader>
-            <CardBody>
-              {!canReadSystem ? (
-                <p className="text-sm text-slate-600">
-                  system.read yok. Health çağrısı yapılmaz; bu kontrol yalnızca görünürlük içindir.
-                </p>
-              ) : healthDenied ? (
-                <PermissionDenied title="Sistem durumu görülemez" />
-              ) : healthError ? (
-                <ErrorState
-                  title="Sistem durumu alınamadı"
-                  description={healthError}
-                  onRetry={() => setReload((value) => value + 1)}
-                />
-              ) : (
-                <>
-                  <p className="text-[25px] font-extrabold tracking-tight text-navy-950">
-                    {healthLoading ? "sorgulanıyor" : systemHealthLabel(health)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">GET /system/health</p>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Oturum yetkisi: {permissions.length} (UX; yetki backend’dedir)
-                  </p>
-                </>
-              )}
-            </CardBody>
-          </Card>
-
-          {UNAVAILABLE_RAIL.map((widget) => (
-            <Card key={widget.title}>
-              <CardHeader>
-                <CardTitle>{widget.title}</CardTitle>
-                <Badge tone="neutral">Bağlı değil</Badge>
-              </CardHeader>
-              <CardBody className="pt-3">
-                <p className="text-sm text-slate-600">{widget.reason}</p>
-              </CardBody>
-            </Card>
-          ))}
-
-          <Alert tone="info" title="Sahte KPI yok">
-            Mockup’taki satış, üretim, sipariş ve tahsilat kartları görsel referanstır; özet
-            endpoint’i gelene kadar sayı uydurulmaz.
-          </Alert>
+          <RailListCard
+            title="Riskli Müşteriler"
+            icon={UserRound}
+            columns={["Müşteri", "Risk Skoru", "Son İşlem"]}
+            reason="Cari risk listesi yok."
+          />
+          <RailListCard
+            title="Geciken Ödemeler"
+            icon={Clock3}
+            columns={["Müşteri", "Vadesi Geçen", "Tutar (₺)"]}
+            reason="Ödeme/vade özet listesi yok."
+          />
+          <RailListCard
+            title="Faturalaşmamış İrsaliyeler"
+            icon={FileText}
+            columns={["İrsaliye No", "Tarih", "Tutar (₺)"]}
+            reason="İrsaliye listesi yok."
+          />
         </div>
       </div>
     </AppShell>

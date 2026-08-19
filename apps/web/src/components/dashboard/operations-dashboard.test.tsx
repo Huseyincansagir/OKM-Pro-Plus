@@ -43,7 +43,7 @@ describe("OperationsDashboard", () => {
     resetSessionStore();
   });
 
-  it("does not fabricate mockup sales or production KPI numbers", async () => {
+  it("renders mockup chrome without fabricating sales or production numbers", async () => {
     authenticate(["quote-request.read", "system.read"]);
     vi.mocked(listQuoteRequests).mockResolvedValue([]);
     vi.mocked(readSystemHealth).mockResolvedValue({ status: "operational" });
@@ -51,15 +51,19 @@ describe("OperationsDashboard", () => {
     render(<OperationsDashboard />);
 
     expect(await screen.findByRole("heading", { name: "Genel Bakış" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Bugünkü satış: bağlı değil")).toBeInTheDocument();
-    expect(screen.getByLabelText("Bugünkü üretim: bağlı değil")).toBeInTheDocument();
-    expect(screen.getByLabelText("Bekleyen sipariş: bağlı değil")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Satış Trendi" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Üretim Performansı" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Son Aktiviteler" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Riskli Müşteriler" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Geciken Ödemeler" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Faturalaşmamış İrsaliyeler" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Bugünkü Satış: bağlı değil")).toBeInTheDocument();
+    expect(screen.getByLabelText("Bugünkü Üretim: bağlı değil")).toBeInTheDocument();
+    expect(screen.getByLabelText("Bekleyen Sipariş: bağlı değil")).toBeInTheDocument();
     expect(screen.getByLabelText("Tahsilat: bağlı değil")).toBeInTheDocument();
     expect(screen.queryByText(/1[.\s]?285[.\s]?750/)).not.toBeInTheDocument();
     expect(screen.queryByText(/%18[,.]6/)).not.toBeInTheDocument();
     expect(screen.queryByText(/965[.\s]?430/)).not.toBeInTheDocument();
-    expect(screen.getByText("Sahte KPI yok")).toBeInTheDocument();
-    expect(screen.getAllByText("Bağlı değil").length).toBeGreaterThan(0);
     expect(screen.queryByRole("link", { name: "Satış" })).not.toBeInTheDocument();
   });
 
@@ -85,10 +89,10 @@ describe("OperationsDashboard", () => {
 
     expect(await screen.findByText("Teklif talebi yok")).toBeInTheDocument();
     expect(readSystemHealth).not.toHaveBeenCalled();
-    expect(screen.getByText(/system.read yok/)).toBeInTheDocument();
+    expect(screen.getByText("API bağlı değil")).toBeInTheDocument();
   });
 
-  it("renders real quote rows without quantityBase or a fake order KPI", async () => {
+  it("renders real quote rows in the activity slot without quantityBase", async () => {
     authenticate(["quote-request.read", "system.read"]);
     vi.mocked(listQuoteRequests).mockResolvedValue([
       {
@@ -106,13 +110,12 @@ describe("OperationsDashboard", () => {
     render(<OperationsDashboard />);
 
     expect(await screen.findByText("TLT-2026-0001")).toBeInTheDocument();
-    expect(screen.getByText("Acme / Ali Veli")).toBeInTheDocument();
-    expect(screen.getByText("Alındı")).toBeInTheDocument();
+    expect(screen.getByText("Acme / Ali Veli · Alındı")).toBeInTheDocument();
     expect(screen.getByText("1 alındı")).toBeInTheDocument();
-    expect(screen.getByText("Çalışıyor")).toBeInTheDocument();
+    expect(screen.getByText("API · Çalışıyor")).toBeInTheDocument();
     expect(screen.getByText("Teklif talebi")).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("quantityBase");
-    expect(screen.getByLabelText("Bekleyen sipariş: bağlı değil")).toBeInTheDocument();
+    expect(screen.getByLabelText("Bekleyen Sipariş: bağlı değil")).toBeInTheDocument();
   });
 
   it("does not show a zero quote KPI when the list fails", async () => {
