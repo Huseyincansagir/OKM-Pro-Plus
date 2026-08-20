@@ -39,6 +39,18 @@ Her UI feature:
 
 Happy path tek başına PASS değildir.
 
+## Operasyonel Sıradaki Adım (Next-Step Pattern)
+
+Kullanıcının her an *"Bu belge/sevkiyat şu anda nerede ve benim sıradaki işim ne?"* sorusuna cevap verebilmesi için:
+- Belge kartlarının üst kısmında açık, anlaşılır bir **Sıradaki Adım** bildirim çubuğu gösterilir.
+- İlgili adım için gereken önkoşullar (örn. Rota kilitli mi? Yük planı kilitli mi? Yükleme doğrulandı mı?) karşılanmadığında aksiyon butonları yerine veya altında yol gösterici açıklama sunulur.
+
+## Sevkiyat ve Yükleme İş Akışı (Shipping & Load Verification UX)
+
+- **Doğrulama ve Yükleme:** Fiziksel paket barkodu taraması (`LoadVerificationScan`) ile kabul (`Accepted`), mükerrer (`Duplicate`), iptal (`CancelledPackage`) veya yük planı dışı (`Unexpected`) durumları görsel ve sesli/metinsel olarak açıkça bildirilir.
+- **Sefer Hazırlama (Dispatch Preparation):** Sefer oluşturulmadan önce araç plakası, şoför adı, rota durak sayısı, kilitli yük planı, paket sayısı ve sevkiyat durumu teyit modalında özetlenir.
+- **Yol ve Teslimat (InTransit & POD):** Varış (`Arrived`), teslim (`Delivered` + alıcı adı kanıtı), geçiş (`Departed`) ve istisna (`Skipped` + gerekçe) adımları deterministik sıra ile işletilir.
+
 ## Geri bildirim
 
 Başarı yalnızca renk değişimi olamaz. Kullanıcı oluşan belgeyi veya sonraki adımı görmeli.

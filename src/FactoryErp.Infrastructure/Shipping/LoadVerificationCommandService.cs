@@ -152,9 +152,13 @@ public sealed class LoadVerificationCommandService(
             throw new DomainException(new("LOAD_PLAN_NOT_LOCKED", "Yükleme doğrulaması yalnızca Locked LoadPlan üzerinde yapılabilir."));
         }
 
-        var package = await dbContext.ShipmentPackages
-            .FromSqlInterpolated($"SELECT * FROM shipment_packages WHERE shipment_id = {shipment.Id} AND package_code = {barcode} FOR UPDATE")
-            .SingleOrDefaultAsync(cancellationToken);
+        var package = Guid.TryParse(barcode, out var packageIdGuid)
+            ? await dbContext.ShipmentPackages
+                .FromSqlInterpolated($"SELECT * FROM shipment_packages WHERE shipment_id = {shipment.Id} AND (package_code = {barcode} OR id = {packageIdGuid}) FOR UPDATE")
+                .SingleOrDefaultAsync(cancellationToken)
+            : await dbContext.ShipmentPackages
+                .FromSqlInterpolated($"SELECT * FROM shipment_packages WHERE shipment_id = {shipment.Id} AND package_code = {barcode} FOR UPDATE")
+                .SingleOrDefaultAsync(cancellationToken);
         await LockLoadUnitsAndItemsAsync(plan.Id, cancellationToken);
         var now = DateTimeOffset.UtcNow;
         LoadUnitItemRecord? allocation = null;
