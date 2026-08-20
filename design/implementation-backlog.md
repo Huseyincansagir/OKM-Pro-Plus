@@ -16,7 +16,7 @@ Sıra: belge zinciri önce, saha sonra.
 
 - [x] **P-003** Teklif issue → sipariş (UI + gerçek dönüşüm; IssueQuote sessiz sipariş açmaz)
 - [x] **P-001** Load-plan create/lock sihirbazı (API var; web GET-only)
-- [ ] **P-002** Sefer hazırlama UI (`POST /route-plans/{id}/dispatch`)
+- [x] **P-002** Sefer hazırlama UI (`POST /route-plans/{id}/dispatch`)
 - [ ] **P-006** Fatura oluştur/kes UI
 - [ ] **P-007** Ödeme: GET list + UI (`POST /payments` only)
 - [ ] **P-008** Üretim complete UI (`/uretim` list-only)

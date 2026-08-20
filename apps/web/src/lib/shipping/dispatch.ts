@@ -59,6 +59,7 @@ export type ShipmentPackageRow = {
   quantityBase: number | null;
   status: string;
   physicalSnapshot: string;
+  packageCode?: string | null;
 };
 
 export type PackagePhysical = {
@@ -80,6 +81,7 @@ export function mapShipmentPackage(raw: unknown): ShipmentPackageRow {
     quantityBase: asFiniteNumber(record.quantityBase),
     status: String(record.status ?? ""),
     physicalSnapshot: typeof record.physicalSnapshot === "string" ? record.physicalSnapshot : "{}",
+    packageCode: typeof record.packageCode === "string" ? record.packageCode : null,
   };
 }
 
@@ -564,3 +566,103 @@ export async function deliverStop(
     }),
   );
 }
+
+export type PrepareDispatchRunInput = {
+  shipmentId: string;
+  loadPlanId: string;
+  vehicleId: string;
+  driverId: string;
+  plannedDepartureAt?: string | null;
+  stops: Array<{ routeStopId: string; sequenceNo: number }>;
+  expectedLoadPlanRowVersion: number;
+  expectedShipmentRowVersion: number;
+  expectedRoutePlanRowVersion: number;
+};
+
+export async function prepareDispatchRun(
+  routePlanId: string,
+  input: PrepareDispatchRunInput,
+): Promise<DispatchRun> {
+  return mapDispatchRun(
+    await apiRequest<unknown>({
+      path: `/route-plans/${routePlanId}/dispatch`,
+      method: "POST",
+      body: {
+        shipmentId: input.shipmentId,
+        loadPlanId: input.loadPlanId,
+        vehicleId: input.vehicleId,
+        driverId: input.driverId,
+        plannedDepartureAt: input.plannedDepartureAt ?? null,
+        stops: input.stops,
+        expectedLoadPlanRowVersion: input.expectedLoadPlanRowVersion,
+        expectedShipmentRowVersion: input.expectedShipmentRowVersion,
+        expectedRoutePlanRowVersion: input.expectedRoutePlanRowVersion,
+      },
+      idempotent: true,
+    }),
+  );
+}
+
+export type LoadVerificationSessionSummary = {
+  id: string;
+  loadPlanId: string;
+  shipmentId: string;
+  status: string;
+  rowVersion: number | null;
+};
+
+export function mapLoadVerificationSession(raw: unknown): LoadVerificationSessionSummary {
+  const record = asRecord(raw);
+  return {
+    id: String(record.id ?? ""),
+    loadPlanId: String(record.loadPlanId ?? ""),
+    shipmentId: String(record.shipmentId ?? ""),
+    status: String(record.status ?? ""),
+    rowVersion: asFiniteNumber(record.rowVersion),
+  };
+}
+
+export async function startLoadVerification(
+  loadPlanId: string,
+  rowVersion: number,
+): Promise<LoadVerificationSessionSummary> {
+  return mapLoadVerificationSession(
+    await apiRequest<unknown>({
+      path: `/load-plans/${loadPlanId}/load-verification/sessions`,
+      method: "POST",
+      body: {},
+      ifMatch: String(rowVersion),
+      idempotent: true,
+    }),
+  );
+}
+
+export async function scanLoadVerificationPackage(
+  sessionId: string,
+  sessionRowVersion: number,
+  barcode: string,
+): Promise<unknown> {
+  return apiRequest<unknown>({
+    path: `/load-verification/sessions/${sessionId}/scans`,
+    method: "POST",
+    body: { barcode, scanMode: "Scanner", expectedLoadUnitId: null },
+    ifMatch: String(sessionRowVersion),
+    idempotent: true,
+  });
+}
+
+export async function completeLoadVerification(
+  sessionId: string,
+  sessionRowVersion: number,
+): Promise<LoadVerificationSessionSummary> {
+  return mapLoadVerificationSession(
+    await apiRequest<unknown>({
+      path: `/load-verification/sessions/${sessionId}/complete`,
+      method: "POST",
+      body: {},
+      ifMatch: String(sessionRowVersion),
+      idempotent: true,
+    }),
+  );
+}
+

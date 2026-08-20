@@ -5,6 +5,7 @@ import { ShipmentDetailBoard } from "@/components/shipping/shipment-detail";
 import { resetSessionStore, useSessionStore } from "@/lib/auth/session-store";
 import { getShipment } from "@/lib/shipping/shipments";
 import {
+  completeLoadVerification,
   deliverStop,
   listDispatchRuns,
   listDrivers,
@@ -12,6 +13,9 @@ import {
   listRoutePlans,
   listShipmentPackages,
   listVehicles,
+  prepareDispatchRun,
+  scanLoadVerificationPackage,
+  startLoadVerification,
 } from "@/lib/shipping/dispatch";
 import { setWindowWidth } from "@/test/viewport";
 
@@ -35,6 +39,10 @@ vi.mock("@/lib/shipping/dispatch", async () => {
     listDrivers: vi.fn(),
     deliverStop: vi.fn(),
     confirmDispatch: vi.fn(),
+    prepareDispatchRun: vi.fn(),
+    startLoadVerification: vi.fn(),
+    scanLoadVerificationPackage: vi.fn(),
+    completeLoadVerification: vi.fn(),
   };
 });
 
@@ -54,6 +62,10 @@ describe("ShipmentDetailBoard", () => {
     vi.mocked(listVehicles).mockResolvedValue([]);
     vi.mocked(listDrivers).mockResolvedValue([]);
     vi.mocked(deliverStop).mockReset();
+    vi.mocked(prepareDispatchRun).mockReset();
+    vi.mocked(startLoadVerification).mockReset();
+    vi.mocked(scanLoadVerificationPackage).mockReset();
+    vi.mocked(completeLoadVerification).mockReset();
   });
 
   afterEach(() => {
@@ -222,4 +234,178 @@ describe("ShipmentDetailBoard", () => {
     const args = vi.mocked(deliverStop).mock.calls[0][2] as Record<string, unknown>;
     expect(args).not.toHaveProperty("quantityBase");
   });
+
+  it("opens dispatch preparation dialog and executes prepareDispatchRun when loaded and plans are locked", async () => {
+    const user = userEvent.setup();
+    useSessionStore.getState().setAuthenticated({
+      id: "u1",
+      userName: "admin",
+      displayName: "Yusuf Kaya",
+      roles: ["admin"],
+      permissions: ["shipment.read", "shipment.dispatch"],
+    });
+    vi.mocked(getShipment).mockResolvedValue({
+      id: "s1",
+      deliveryNoteId: "d1",
+      customerId: "c1",
+      status: "Loaded",
+      itemCount: 1,
+      rowVersion: 3,
+      createdAt: "2026-08-19T10:00:00Z",
+      items: [{ id: "i1", deliveryNoteItemId: "di1", productId: "p1", quantityBase: 2000 }],
+    });
+    vi.mocked(listRoutePlans).mockResolvedValue([
+      {
+        id: "rp1",
+        status: "Locked",
+        version: 1,
+        rowVersion: 4,
+        vehicleId: "v1",
+        driverId: "dr1",
+        stops: [{ id: "st1", sequenceNo: 1, customerId: "c1", addressId: "a1", status: "Pending" }],
+      },
+    ]);
+    vi.mocked(listLoadPlans).mockResolvedValue([
+      {
+        id: "lp1",
+        status: "Locked",
+        feasibilityStatus: "Feasible",
+        routePlanId: "rp1",
+        vehicleId: "v1",
+        vehicleCapacityId: "vc1",
+        rowVersion: 5,
+        inputSnapshotHash: "hash123",
+      },
+    ]);
+    vi.mocked(listVehicles).mockResolvedValue([
+      { id: "v1", plateNumber: "34 ABC 123", status: "Available", rowVersion: 1 },
+    ]);
+    vi.mocked(listDrivers).mockResolvedValue([
+      { id: "dr1", fullName: "Ahmet Yılmaz", status: "Active", isActive: true },
+    ]);
+    vi.mocked(listShipmentPackages).mockResolvedValue([
+      {
+        id: "pkg1",
+        shipmentItemId: "i1",
+        routeStopId: "st1",
+        quantityBase: 2000,
+        status: "Loaded",
+        physicalSnapshot: "{}",
+        packageCode: "PKG-001",
+      },
+    ]);
+    vi.mocked(prepareDispatchRun).mockResolvedValue({
+      id: "run1",
+      shipmentId: "s1",
+      loadPlanId: "lp1",
+      routePlanId: "rp1",
+      status: "Prepared",
+      rowVersion: 1,
+      stops: [{ routeStopId: "st1", sequenceNo: 1, status: "Pending", proofRecipient: null }],
+    });
+
+    render(<ShipmentDetailBoard id="s1" />);
+    expect(await screen.findByText(/Sefer hazırlama işlemini başlatın/)).toBeInTheDocument();
+    const prepareBtn = screen.getByRole("button", { name: "Sefer hazırla" });
+    expect(prepareBtn).toBeEnabled();
+
+    await user.click(prepareBtn);
+    expect(await screen.findByRole("heading", { name: "Sefer hazırlama" })).toBeInTheDocument();
+    expect(screen.getByText("34 ABC 123")).toBeInTheDocument();
+    expect(screen.getByText("Ahmet Yılmaz")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Seferi oluştur" }));
+    expect(prepareDispatchRun).toHaveBeenCalledWith("rp1", {
+      shipmentId: "s1",
+      loadPlanId: "lp1",
+      vehicleId: "v1",
+      driverId: "dr1",
+      stops: [{ routeStopId: "st1", sequenceNo: 1 }],
+      expectedLoadPlanRowVersion: 5,
+      expectedShipmentRowVersion: 3,
+      expectedRoutePlanRowVersion: 4,
+    });
+  });
+
+  it("offers yüklemeyi tamamla when shipment is Preparing and load plan is Locked", async () => {
+    const user = userEvent.setup();
+    useSessionStore.getState().setAuthenticated({
+      id: "u1",
+      userName: "admin",
+      displayName: "Yusuf Kaya",
+      roles: ["admin"],
+      permissions: ["shipment.read", "shipment.load-plan"],
+    });
+    vi.mocked(getShipment).mockResolvedValue({
+      id: "s1",
+      deliveryNoteId: "d1",
+      customerId: "c1",
+      status: "Preparing",
+      itemCount: 1,
+      rowVersion: 2,
+      createdAt: "2026-08-19T10:00:00Z",
+      items: [{ id: "i1", deliveryNoteItemId: "di1", productId: "p1", quantityBase: 2000 }],
+    });
+    vi.mocked(listRoutePlans).mockResolvedValue([
+      {
+        id: "rp1",
+        status: "Locked",
+        version: 1,
+        rowVersion: 2,
+        vehicleId: "v1",
+        driverId: "dr1",
+        stops: [{ id: "st1", sequenceNo: 1, customerId: "c1", addressId: "a1", status: "Pending" }],
+      },
+    ]);
+    vi.mocked(listLoadPlans).mockResolvedValue([
+      {
+        id: "lp1",
+        status: "Locked",
+        feasibilityStatus: "Feasible",
+        routePlanId: "rp1",
+        vehicleId: "v1",
+        vehicleCapacityId: "vc1",
+        rowVersion: 3,
+        inputSnapshotHash: "hash123",
+      },
+    ]);
+    vi.mocked(listShipmentPackages).mockResolvedValue([
+      {
+        id: "pkg1",
+        shipmentItemId: "i1",
+        routeStopId: "st1",
+        quantityBase: 2000,
+        status: "Available",
+        physicalSnapshot: "{}",
+        packageCode: "PKG-001",
+      },
+    ]);
+    vi.mocked(startLoadVerification).mockResolvedValue({
+      id: "ses1",
+      loadPlanId: "lp1",
+      shipmentId: "s1",
+      status: "InProgress",
+      rowVersion: 1,
+    });
+    vi.mocked(scanLoadVerificationPackage).mockResolvedValue({});
+    vi.mocked(completeLoadVerification).mockResolvedValue({
+      id: "ses1",
+      loadPlanId: "lp1",
+      shipmentId: "s1",
+      status: "Completed",
+      rowVersion: 2,
+    });
+
+    render(<ShipmentDetailBoard id="s1" />);
+    const verifyBtn = await screen.findByRole("button", { name: "Yüklemeyi tamamla (Loaded)" });
+    await user.click(verifyBtn);
+
+    expect(await screen.findByRole("heading", { name: "Yükleme doğrulaması" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Yüklemeyi onayla (Loaded)" }));
+
+    expect(startLoadVerification).toHaveBeenCalledWith("lp1", 3);
+    expect(scanLoadVerificationPackage).toHaveBeenCalledWith("ses1", 1, "PKG-001");
+    expect(completeLoadVerification).toHaveBeenCalledWith("ses1", 2);
+  });
 });
+

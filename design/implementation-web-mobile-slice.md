@@ -783,15 +783,59 @@ Next Slice: WEB SLICE 019 — Load-plan create/lock wizard
 ```text
 WEB SLICE 019
 STATUS: PASS
-Next Slice: P-002 sefer hazırlama UI (POST /route-plans/{id}/dispatch)
+Next Slice: WEB SLICE 020 — Dispatch preparation and execution (P-002)
 ```
 
-## BACKLOG — WEB 018 sonrası
+## WEB SLICE 020 — Dispatch preparation and execution (P-002)
+
+**Tarih:** 2026-08-20
+**Durum:** PASS
+**Kapsam:** `POST /api/v1/route-plans/{routePlanId}/dispatch` (`PrepareDispatchRunRequest`, `shipment.dispatch`), sevkiyat panosunda sefer hazırlama dialogu, araç ve sürücü teyidi, durak eşleştirmesi, concurrency rowVersion kontrolleri, `LoadVerificationSession` tamamlama entegrasyonu ve sıradaki adım yönlendirme bildirimleri.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| Yükleme doğrula / tamamla | `POST /load-plans/{id}/load-verification/sessions` + `POST /load-verification/sessions/{id}/scans` + `POST /load-verification/sessions/{id}/complete` |
+| Sefer hazırla | `POST /route-plans/{routePlanId}/dispatch` (`PrepareDispatchRunRequest`) |
+| Seferi onayla | `POST /dispatch-runs/{id}/confirm` (`ConfirmDispatchCommand`) |
+| Yola çık | `POST /dispatch-runs/{id}/depart` (`DepartDispatchRunCommand`) |
+| Durak varış / teslim | `POST /dispatch-runs/{id}/stops/{stopId}/arrive` + `POST .../stops/{stopId}/deliver` (POD recipient) |
+| Sefer tamamla | `POST /dispatch-runs/{id}/complete` (`CompleteRouteCommand`) |
+
+### 2. Kurallar ve Invariantlar
+
+- Kilitli Rota (`Locked`) ve Kilitli Yük Planı (`Locked`) olmadan sefer hazırlanamaz.
+- Araç (`Available`) ve Aktif Şoför (`Active`, lisans tarihi geçerli) olmadan sefer hazırlanamaz.
+- `Shipment.Status` `Loaded` (veya tamamlanmış `LoadVerificationSession`) durumunda olmalıdır.
+- Concurrency: `expectedLoadPlanRowVersion`, `expectedShipmentRowVersion`, `expectedRoutePlanRowVersion` sunucuya iletilir; bayat kayıtta optimistic concurrency guard devrededir.
+- İstemcide sahte state geçişi yapılmaz; tüm state transition sunucu cevabı ve `setReload` üzerinden senkronize edilir.
+
+### Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 219 test (70 dosya) |
+| `pnpm --dir apps/web typecheck` | PASS; 0 error |
+| `pnpm --dir apps/web lint` | PASS; 0 warning / 0 error |
+| `pnpm --dir apps/web build` | PASS; Next.js 15.5.23 prod build (28 route) |
+| `dotnet build FactoryErp.sln -c Release` | PASS; 0 warning / 0 error |
+| `dotnet test tests/FactoryErp.Domain.UnitTests` | PASS; 130 test |
+| `dotnet test tests/FactoryErp.ArchitectureTests` | PASS; 5 test |
+
+```text
+WEB SLICE 020
+STATUS: PASS
+Next Slice: P-006 — Fatura oluştur/kes UI
+```
+
+## BACKLOG — WEB 020 sonrası
 
 Yapılacak kuyruk: [`implementation-backlog.md`](./implementation-backlog.md).  
 Ölçek/satış denetimi: [`commercial-scale-readiness.md`](./commercial-scale-readiness.md). **O-015 OPEN.**
 
-Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler. P-003 ve P-001 kapandı.
+Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler. P-003, P-001 ve P-002 kapandı.
+
 
 
 

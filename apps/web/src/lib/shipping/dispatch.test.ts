@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiRequest } from "@/lib/api/client";
 import {
+  completeLoadVerification,
   confirmDispatch,
   createLoadPlan,
   createRoutePlan,
@@ -8,6 +9,8 @@ import {
   listRoutePlans,
   mapRoutePlan,
   physicalFromSnapshot,
+  prepareDispatchRun,
+  startLoadVerification,
 } from "@/lib/shipping/dispatch";
 
 vi.mock("@/lib/api/client", () => ({
@@ -119,4 +122,80 @@ describe("route plans", () => {
       idempotent: true,
     });
   });
+
+  it("prepares a dispatch run with expected versions and route stops", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({
+      id: "run1",
+      shipmentId: "sh1",
+      loadPlanId: "lp1",
+      routePlanId: "rp1",
+      status: "Prepared",
+      rowVersion: 1,
+      stops: [{ routeStopId: "st1", sequenceNo: 1, status: "Pending", proofRecipient: null }],
+    });
+    const run = await prepareDispatchRun("rp1", {
+      shipmentId: "sh1",
+      loadPlanId: "lp1",
+      vehicleId: "v1",
+      driverId: "d1",
+      stops: [{ routeStopId: "st1", sequenceNo: 1 }],
+      expectedLoadPlanRowVersion: 2,
+      expectedShipmentRowVersion: 3,
+      expectedRoutePlanRowVersion: 4,
+    });
+    expect(apiRequest).toHaveBeenCalledWith({
+      path: "/route-plans/rp1/dispatch",
+      method: "POST",
+      body: {
+        shipmentId: "sh1",
+        loadPlanId: "lp1",
+        vehicleId: "v1",
+        driverId: "d1",
+        plannedDepartureAt: null,
+        stops: [{ routeStopId: "st1", sequenceNo: 1 }],
+        expectedLoadPlanRowVersion: 2,
+        expectedShipmentRowVersion: 3,
+        expectedRoutePlanRowVersion: 4,
+      },
+      idempotent: true,
+    });
+    expect(run.status).toBe("Prepared");
+  });
+
+  it("starts and completes load verification sessions", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({
+      id: "ses1",
+      loadPlanId: "lp1",
+      shipmentId: "sh1",
+      status: "InProgress",
+      rowVersion: 1,
+    });
+    const session = await startLoadVerification("lp1", 2);
+    expect(apiRequest).toHaveBeenCalledWith({
+      path: "/load-plans/lp1/load-verification/sessions",
+      method: "POST",
+      body: {},
+      ifMatch: "2",
+      idempotent: true,
+    });
+    expect(session.status).toBe("InProgress");
+
+    vi.mocked(apiRequest).mockResolvedValue({
+      id: "ses1",
+      loadPlanId: "lp1",
+      shipmentId: "sh1",
+      status: "Completed",
+      rowVersion: 2,
+    });
+    const completed = await completeLoadVerification("ses1", 1);
+    expect(apiRequest).toHaveBeenCalledWith({
+      path: "/load-verification/sessions/ses1/complete",
+      method: "POST",
+      body: {},
+      ifMatch: "1",
+      idempotent: true,
+    });
+    expect(completed.status).toBe("Completed");
+  });
 });
+

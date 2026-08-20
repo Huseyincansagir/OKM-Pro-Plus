@@ -12,6 +12,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ApiError } from "@/lib/api/types";
 import { userFacingMessage } from "@/lib/api/auth-client";
@@ -21,6 +22,7 @@ import {
   arriveStop,
   assignRouteResources,
   completeDispatch,
+  completeLoadVerification,
   confirmDispatch,
   createRoutePlan,
   createShipmentPackage,
@@ -34,7 +36,10 @@ import {
   listVehicles,
   lockRoute,
   planRoute,
+  prepareDispatchRun,
   replaceRouteStops,
+  scanLoadVerificationPackage,
+  startLoadVerification,
   type DispatchRun,
   type DriverRow,
   type LoadPlanSummary,
@@ -77,6 +82,8 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(canRead);
   const [reload, setReload] = useState(0);
+  const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
+  const [verifyModalOpen, setVerifyModalOpen] = useState(false);
 
   useEffect(() => {
     if (!canRead) {
@@ -135,6 +142,39 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
     }
   }
 
+  const lockedLoadPlan = loadPlans.find((plan) => plan.status === "Locked");
+  const activeRoutePlan =
+    routePlans.find((plan) => plan.status === "Locked" || plan.status === "InProgress" || plan.status === "Draft" || plan.status === "Planned") ??
+    routePlans[0] ??
+    null;
+  const isRouteLocked = activeRoutePlan?.status === "Locked";
+  const isLoadPlanLocked = Boolean(lockedLoadPlan);
+  const isShipmentLoaded = row?.status === "Loaded";
+  const canPerformLoadVerification =
+    (canLoadPlan || canDispatch) && isRouteLocked && isLoadPlanLocked && row?.status === "Preparing" && packages.length > 0;
+
+  const nextStepText = !row
+    ? ""
+    : row.status === "Delivered"
+    ? "Sevkiyat ve teslimat başarıyla tamamlandı."
+    : row.status === "Cancelled"
+    ? "Sevkiyat iptal edilmiştir."
+    : dispatchRun?.status === "InTransit"
+    ? "Durak teslimatlarını (POD) işleyin ve rotayı tamamlayın."
+    : dispatchRun?.status === "Dispatched"
+    ? "Aracın yola çıkışını kaydedin (Yola çık)."
+    : dispatchRun?.status === "Prepared"
+    ? "Seferi onaylayın (Seferi onayla)."
+    : row.status === "Loaded" && !dispatchRun
+    ? "Sefer hazırlama işlemini başlatın (Sefer hazırla)."
+    : lockedLoadPlan && row.status === "Preparing"
+    ? "Yükleme doğrulamasını (Loaded) tamamlayın."
+    : isRouteLocked && !lockedLoadPlan
+    ? "Yük planı sihirbazı ile araç atayıp planı kilitleyin."
+    : activeRoutePlan && activeRoutePlan.status !== "Locked"
+    ? "Rota kaynaklarını atayın, planlayın ve rotayı kilitleyin."
+    : "Rota ve durak kaydı oluşturun.";
+
   return (
     <AppShell
       currentHref="/sevkiyat"
@@ -171,6 +211,14 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
         <p className="text-sm text-slate-600">Yükleniyor…</p>
       ) : (
         <div className="space-y-4">
+          <div className="rounded-lg border border-teal-500/20 bg-teal-500/5 p-3 text-sm flex items-center justify-between gap-2">
+            <div>
+              <span className="font-semibold text-teal-800">Sıradaki Adım: </span>
+              <span className="text-slate-700">{nextStepText}</span>
+            </div>
+            <StatusBadge status={shipmentStatusKind(row.status)} label={row.status} />
+          </div>
+
           {row.status !== "Delivered" && row.status !== "PartiallyDelivered" ? (
             <Alert tone="info" title="Teslim POD ile yazılır">
               Complete, teslim kanıtı olan duraklarda shipment’ı Delivered yapar. Kanıt yoksa InTransit kalır.
@@ -442,12 +490,179 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                     : null}
                 </div>
               ) : (
-                <p>Bu sevkiyata bağlı sefer yok.</p>
+                <div className="space-y-3">
+                  <p className="text-slate-600">Bu sevkiyata bağlı aktif sefer yok.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {canPerformLoadVerification && row.rowVersion !== null ? (
+                      <Button
+                        variant="secondary"
+                        loading={acting}
+                        onClick={() => setVerifyModalOpen(true)}
+                      >
+                        Yüklemeyi tamamla (Loaded)
+                      </Button>
+                    ) : null}
+
+                    {canDispatch && isRouteLocked && isLoadPlanLocked ? (
+                      <Button
+                        loading={acting}
+                        disabled={
+                          acting ||
+                          !isShipmentLoaded ||
+                          row.rowVersion === null ||
+                          activeRoutePlan.rowVersion === null ||
+                          !lockedLoadPlan ||
+                          lockedLoadPlan.rowVersion === null
+                        }
+                        onClick={() => setDispatchModalOpen(true)}
+                      >
+                        Sefer hazırla
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  {!isRouteLocked ? (
+                    <p className="text-xs text-amber-700">Sefer hazırlamak için rota kilitlenmelidir.</p>
+                  ) : null}
+                  {isRouteLocked && !isLoadPlanLocked ? (
+                    <p className="text-xs text-amber-700">Sefer hazırlamak için yük planı oluşturulup kilitlenmelidir.</p>
+                  ) : null}
+                  {isRouteLocked && isLoadPlanLocked && row.status === "Preparing" ? (
+                    <p className="text-xs text-amber-700">Sefer hazırlamadan önce yükleme doğrulaması (Loaded) tamamlanmalıdır.</p>
+                  ) : null}
+                </div>
               )}
             </CardBody>
           </Card>
+
+          <Dialog
+            open={dispatchModalOpen}
+            onOpenChange={(next) => {
+              if (!acting) setDispatchModalOpen(next);
+            }}
+            title="Sefer hazırlama"
+            description="Kilitli rota ve yük planı üzerinden sefer (DispatchRun) oluşturulur."
+            footer={
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" disabled={acting} onClick={() => setDispatchModalOpen(false)}>
+                  Vazgeç
+                </Button>
+                <Button
+                  loading={acting}
+                  onClick={() =>
+                    void run(async () => {
+                      if (
+                        !activeRoutePlan ||
+                        !lockedLoadPlan ||
+                        row.rowVersion === null ||
+                        activeRoutePlan.rowVersion === null ||
+                        lockedLoadPlan.rowVersion === null
+                      ) {
+                        throw new Error("Eksik versiyon veya plan.");
+                      }
+                      const selectedVehicle = lockedLoadPlan.vehicleId || activeRoutePlan.vehicleId || vehicleId;
+                      const selectedDriver = activeRoutePlan.driverId || driverId;
+                      if (!selectedVehicle) {
+                        throw new Error("Sefer için araç seçilmelidir.");
+                      }
+                      if (!selectedDriver) {
+                        throw new Error("Sefer için şoför seçilmelidir.");
+                      }
+                      const createdRun = await prepareDispatchRun(activeRoutePlan.id, {
+                        shipmentId: row.id,
+                        loadPlanId: lockedLoadPlan.id,
+                        vehicleId: selectedVehicle,
+                        driverId: selectedDriver,
+                        stops: activeRoutePlan.stops.map((s) => ({ routeStopId: s.id, sequenceNo: s.sequenceNo })),
+                        expectedLoadPlanRowVersion: lockedLoadPlan.rowVersion,
+                        expectedShipmentRowVersion: row.rowVersion,
+                        expectedRoutePlanRowVersion: activeRoutePlan.rowVersion,
+                      });
+                      setDispatchRun(createdRun);
+                      setDispatchModalOpen(false);
+                    })
+                  }
+                >
+                  Seferi oluştur
+                </Button>
+              </div>
+            }
+          >
+            <div className="space-y-2 text-sm">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-1">
+                <p>
+                  <strong>Araç:</strong>{" "}
+                  {vehicles.find(
+                    (v) => v.id === (lockedLoadPlan?.vehicleId || activeRoutePlan?.vehicleId || vehicleId),
+                  )?.plateNumber || "Seçilmedi"}
+                </p>
+                <p>
+                  <strong>Şoför:</strong>{" "}
+                  {drivers.find((d) => d.id === (activeRoutePlan?.driverId || driverId))?.fullName || "Seçilmedi"}
+                </p>
+                <p>
+                  <strong>Rota:</strong> {activeRoutePlan?.status} ({activeRoutePlan?.stops.length ?? 0} durak)
+                </p>
+                <p>
+                  <strong>Yük planı:</strong> {lockedLoadPlan?.id.slice(0, 8)} ({lockedLoadPlan?.status})
+                </p>
+                <p>
+                  <strong>Paketler:</strong> {packages.length} paket
+                </p>
+                <p>
+                  <strong>Sevkiyat durumu:</strong> {row.status}
+                </p>
+              </div>
+            </div>
+          </Dialog>
+
+          <Dialog
+            open={verifyModalOpen}
+            onOpenChange={(next) => {
+              if (!acting) setVerifyModalOpen(next);
+            }}
+            title="Yükleme doğrulaması"
+            description="Paketlerin araca fiilen yüklendiğini onaylar ve sevkiyat durumunu Loaded yapar."
+            footer={
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" disabled={acting} onClick={() => setVerifyModalOpen(false)}>
+                  Vazgeç
+                </Button>
+                <Button
+                  loading={acting}
+                  onClick={() =>
+                    void run(async () => {
+                      if (!lockedLoadPlan || lockedLoadPlan.rowVersion === null) {
+                        throw new Error("Kilitli yük planı bulunamadı.");
+                      }
+                      const session = await startLoadVerification(lockedLoadPlan.id, lockedLoadPlan.rowVersion);
+                      let currentSessionRowVersion = session.rowVersion ?? 1;
+                      for (const pkg of packages) {
+                        if (pkg.status === "Cancelled") continue;
+                        const barcode = pkg.packageCode || pkg.id;
+                        await scanLoadVerificationPackage(session.id, currentSessionRowVersion, barcode);
+                        currentSessionRowVersion++;
+                      }
+                      await completeLoadVerification(session.id, currentSessionRowVersion);
+                      setVerifyModalOpen(false);
+                    })
+                  }
+                >
+                  Yüklemeyi onayla (Loaded)
+                </Button>
+              </div>
+            }
+          >
+            <div className="space-y-2 text-sm">
+              <p>
+                Kilitli yük planındaki {packages.filter((p) => p.status !== "Cancelled").length} paket araca yüklenecek ve
+                doğrulama tamamlanacaktır.
+              </p>
+            </div>
+          </Dialog>
         </div>
       )}
     </AppShell>
   );
 }
+
