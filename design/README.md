@@ -48,6 +48,7 @@ Nümara verilmiş `docs/00`–`docs/06` klasörleri mevcut paylaşım ve arşiv 
 | [`docker-compose-deployment-plan.md`](./docker-compose-deployment-plan.md) | Docker Compose servisleri, network, HTTPS, backup/restore ve operasyon kabul kriterleri |
 | [`decision-log.md`](./decision-log.md) | DECIDED, ASSUMED ve OPEN DECISION kayıtları |
 | [`commercial-scale-readiness.md`](./commercial-scale-readiness.md) | 500 firma / binlerce kullanıcı satılabilirlik denetimi; O-015; P0/P1 boşluk listesi |
+| [`implementation-backlog.md`](./implementation-backlog.md) | WEB 018 sonrası yapılacaklar kuyruğu (P-xxx / S-xxx); O-015 kapısı |
 | [`decision-clarification-backlog.md`](./decision-clarification-backlog.md) | O-001–O-014 için karar toplantısı alt soruları ve Design Gate kapanış çıktıları |
 | [`p0-p1-decision-recommendations.md`](./p0-p1-decision-recommendations.md) | Kabul edilen P0/P1 baseline, MVP sınırları, gerekçeler, riskler ve Architecture handoff listesi |
 | [`implementation-readiness.md`](./implementation-readiness.md) | Ayrıntılı Design Gate değerlendirmesi |

@@ -771,8 +771,15 @@ Next Slice: WEB SLICE 018 — Route/dispatch execution and USB barcode
 ```text
 WEB SLICE 018
 STATUS: PASS
-Next Slice: load-plan create/lock sihirbazı veya kamera tarayıcı
+Next Slice: design/implementation-backlog.md (P-003 teklif→sipariş, sonra P-001/P-002 load-plan+dispatch)
 ```
+
+## BACKLOG — WEB 018 sonrası
+
+Yapılacak kuyruk: [`implementation-backlog.md`](./implementation-backlog.md).  
+Ölçek/satış denetimi: [`commercial-scale-readiness.md`](./commercial-scale-readiness.md). **O-015 OPEN.**
+
+Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler.
 
 
 

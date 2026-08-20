@@ -4,6 +4,7 @@
 **Kod HEAD:** `480bea9`  
 **Kaynak:** gerçek git/kod + `decision-log.md` + `implementation-web-mobile-slice.md`  
 **Amaç:** Ürün sahibi olarak satılabilirlik; uygulama değil, kanıt kaydı.  
+**Yapılacak kuyruk:** [`implementation-backlog.md`](./implementation-backlog.md)  
 **Durum:** SATIŞA KAPALI — 500 kiracı / paylaşımlı SaaS. Tek fabrikaya kontrollü on-prem MVP henüz tamamlanmamış.
 
 > Bu belge O-001–O-014 kabulünü iptal etmez. 500 firma eşzamanlı kullanım **yeni kapsamdır**; A-001’i tetikler. Karar kaydı: `decision-log.md` **O-015 OPEN**.
