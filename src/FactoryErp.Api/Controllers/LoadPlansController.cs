@@ -27,6 +27,24 @@ public sealed class LoadPlansController(ILoadPlanCommandService service) : Logis
         return Created($"/api/v1/load-plans/{result.Id}", result);
     }
 
+    [Authorize(Policy = PermissionPolicies.ShipmentLoadPlan)]
+    [HttpPost("load-plans/{loadPlanId:guid}/assign-vehicle")]
+    public async Task<ActionResult<LoadPlanDto>> AssignVehicle(
+        Guid loadPlanId,
+        [FromBody] AssignLoadPlanVehicleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.AssignVehicleAsync(
+            loadPlanId,
+            request,
+            ExpectedRowVersion(),
+            ActorId(),
+            IdempotencyKey(),
+            CorrelationId(),
+            cancellationToken);
+        return Ok(result);
+    }
+
     [Authorize(Policy = PermissionPolicies.ShipmentRead)]
     [HttpGet("shipments/{shipmentId:guid}/load-plans")]
     public async Task<ActionResult<IReadOnlyCollection<LoadPlanDto>>> ListByShipment(

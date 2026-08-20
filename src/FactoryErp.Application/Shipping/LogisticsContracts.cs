@@ -320,6 +320,10 @@ public interface IShipmentPackageCommandService
 }
 
 
+public sealed record AssignLoadPlanVehicleRequest(
+    Guid VehicleId,
+    Guid VehicleCapacityId);
+
 public sealed record CreateLoadPlanRequest(
     Guid RoutePlanId,
     int ExpectedRoutePlanVersion,
@@ -471,6 +475,15 @@ public interface ILoadPlanCommandService : ILoadPlanValidationCommandService
     Task<LoadPlanDto> CreateLoadPlanAsync(
         Guid shipmentId,
         CreateLoadPlanRequest request,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default);
+
+    Task<LoadPlanDto> AssignVehicleAsync(
+        Guid loadPlanId,
+        AssignLoadPlanVehicleRequest request,
+        long expectedRowVersion,
         Guid actorId,
         string idempotencyKey,
         string correlationId,

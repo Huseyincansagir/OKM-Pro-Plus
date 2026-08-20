@@ -62,6 +62,203 @@ public sealed class LoadPlanIntegrationTests
     }
 
     [Fact]
+    public async Task Assign_vehicle_sets_snapshot_replays_and_enables_lock_without_direct_mutation()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var vehicleTypeId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var capacityId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            await InsertLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b4-assign");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b4-assign");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            await using var context = CreateContext();
+            var service = CreateLoadPlanService(context);
+            var created = await service.CreateLoadPlanAsync(
+                shipmentId,
+                BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                actorId,
+                "l4b4-assign-create-" + Guid.NewGuid(),
+                "l4b4-assign",
+                CancellationToken.None);
+            loadPlanId = created.Id;
+            var key = "l4b4-assign-vehicle-" + Guid.NewGuid();
+            var request = new AssignLoadPlanVehicleRequest(vehicleId, capacityId);
+
+            var assigned = await service.AssignVehicleAsync(
+                loadPlanId,
+                request,
+                created.RowVersion,
+                actorId,
+                key,
+                "l4b4-assign",
+                CancellationToken.None);
+            var replay = await service.AssignVehicleAsync(
+                loadPlanId,
+                request,
+                created.RowVersion,
+                actorId,
+                key,
+                "l4b4-assign",
+                CancellationToken.None);
+
+            assigned.Status.Should().Be("Draft");
+            assigned.VehicleId.Should().Be(vehicleId);
+            assigned.VehicleCapacityId.Should().Be(capacityId);
+            assigned.CapacitySnapshot.Should().Contain(capacityId.ToString());
+            replay.Id.Should().Be(assigned.Id);
+            replay.RowVersion.Should().Be(assigned.RowVersion);
+
+            var plan = await context.LoadPlans.SingleAsync(x => x.Id == loadPlanId);
+            plan.VehicleId.Should().Be(vehicleId);
+            plan.VehicleCapacityId.Should().Be(capacityId);
+            plan.InputSnapshotHash = "sha256:l4b4-assign";
+            plan.FeasibilityStatus = nameof(LoadPlanFeasibilityStatus.Feasible);
+            plan.Status = nameof(LoadPlanStatus.Valid);
+            plan.ValidationSummary = "{\"hardErrors\":0,\"warnings\":0}";
+            await context.SaveChangesAsync();
+
+            var locked = await service.LockLoadPlanAsync(
+                loadPlanId,
+                new LockLoadPlanRequest(true, []),
+                plan.RowVersion,
+                actorId,
+                "l4b4-assign-lock-" + Guid.NewGuid(),
+                "l4b4-assign",
+                CancellationToken.None);
+
+            locked.Status.Should().Be("Locked");
+            locked.VehicleId.Should().Be(vehicleId);
+            locked.VehicleCapacityId.Should().Be(capacityId);
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
+            await CleanupLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+        }
+    }
+
+    [Fact]
+    public async Task Assign_vehicle_rejects_type_mismatch_unavailable_valid_and_stale_version()
+    {
+        var actorId = await GetAdminIdAsync();
+        var profileId = Guid.NewGuid();
+        var vehicleTypeId = Guid.NewGuid();
+        var otherTypeId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var otherVehicleId = Guid.NewGuid();
+        var capacityId = Guid.NewGuid();
+        var otherCapacityId = Guid.NewGuid();
+        var fixture = default(DeliveryFixture);
+        var shipmentId = Guid.Empty;
+        var routePlanId = Guid.Empty;
+        var loadPlanId = Guid.Empty;
+
+        try
+        {
+            await InsertPhysicalProfileAsync(profileId);
+            await InsertLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+            await InsertLockResourcesAsync(otherTypeId, otherVehicleId, otherCapacityId);
+            fixture = await CreateDeliveryFixtureAsync(actorId, "l4b4-assign-reject");
+            var setup = await CreateShipmentAndRouteAsync(actorId, fixture!, "l4b4-assign-reject");
+            shipmentId = setup.Shipment.Id;
+            routePlanId = setup.RoutePlan.Id;
+            LoadPlanDto created;
+            await using (var createContext = CreateContext())
+            {
+                created = await CreateLoadPlanService(createContext).CreateLoadPlanAsync(
+                    shipmentId,
+                    BuildRequest(setup.Shipment, setup.RoutePlan, setup.ShipmentItemId, setup.PackageId, setup.StopId, 4000),
+                    actorId,
+                    "l4b4-assign-reject-create-" + Guid.NewGuid(),
+                    "l4b4-assign-reject",
+                    CancellationToken.None);
+            }
+
+            loadPlanId = created.Id;
+            await using (var mismatchContext = CreateContext())
+            {
+                var mismatch = () => CreateLoadPlanService(mismatchContext).AssignVehicleAsync(
+                    loadPlanId,
+                    new AssignLoadPlanVehicleRequest(vehicleId, otherCapacityId),
+                    created.RowVersion,
+                    actorId,
+                    "l4b4-assign-mismatch-" + Guid.NewGuid(),
+                    "l4b4-assign-reject",
+                    CancellationToken.None);
+                await mismatch.Should().ThrowAsync<DomainException>()
+                    .Where(x => x.Error.Code == "CAPACITY_VEHICLE_TYPE_MISMATCH");
+            }
+
+            await using (var unavailableContext = CreateContext())
+            {
+                var trackedVehicle = await unavailableContext.Vehicles.SingleAsync(x => x.Id == vehicleId);
+                trackedVehicle.Status = nameof(VehicleStatus.OutOfService);
+                await unavailableContext.SaveChangesAsync();
+                var unavailable = () => CreateLoadPlanService(unavailableContext).AssignVehicleAsync(
+                    loadPlanId,
+                    new AssignLoadPlanVehicleRequest(vehicleId, capacityId),
+                    created.RowVersion,
+                    actorId,
+                    "l4b4-assign-unavailable-" + Guid.NewGuid(),
+                    "l4b4-assign-reject",
+                    CancellationToken.None);
+                await unavailable.Should().ThrowAsync<DomainException>()
+                    .Where(x => x.Error.Code == "VEHICLE_NOT_AVAILABLE");
+                trackedVehicle.Status = nameof(VehicleStatus.Available);
+                await unavailableContext.SaveChangesAsync();
+            }
+
+            await using (var staleContext = CreateContext())
+            {
+                var stale = () => CreateLoadPlanService(staleContext).AssignVehicleAsync(
+                    loadPlanId,
+                    new AssignLoadPlanVehicleRequest(vehicleId, capacityId),
+                    created.RowVersion - 1,
+                    actorId,
+                    "l4b4-assign-stale-" + Guid.NewGuid(),
+                    "l4b4-assign-reject",
+                    CancellationToken.None);
+                await stale.Should().ThrowAsync<DomainException>()
+                    .Where(x => x.Error.Code == "RESOURCE_VERSION_CONFLICT");
+            }
+
+            await using (var validContext = CreateContext())
+            {
+                var plan = await validContext.LoadPlans.SingleAsync(x => x.Id == loadPlanId);
+                plan.Status = nameof(LoadPlanStatus.Valid);
+                await validContext.SaveChangesAsync();
+                var immutable = () => CreateLoadPlanService(validContext).AssignVehicleAsync(
+                    loadPlanId,
+                    new AssignLoadPlanVehicleRequest(vehicleId, capacityId),
+                    plan.RowVersion,
+                    actorId,
+                    "l4b4-assign-valid-" + Guid.NewGuid(),
+                    "l4b4-assign-reject",
+                    CancellationToken.None);
+                await immutable.Should().ThrowAsync<DomainException>()
+                    .Where(x => x.Error.Code == "LOAD_PLAN_IMMUTABLE");
+            }
+        }
+        finally
+        {
+            await CleanupAsync(fixture, shipmentId, routePlanId, loadPlanId, profileId);
+            await CleanupLockResourcesAsync(vehicleTypeId, vehicleId, capacityId);
+            await CleanupLockResourcesAsync(otherTypeId, otherVehicleId, otherCapacityId);
+        }
+    }
+
+    [Fact]
     public async Task Create_draft_rejects_quantity_above_shipment_item_ceiling()
     {
         var actorId = await GetAdminIdAsync();

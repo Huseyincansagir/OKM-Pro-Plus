@@ -274,6 +274,128 @@ public sealed partial class LoadPlanCommandService(
         return result;
     }
 
+    public async Task<LoadPlanDto> AssignVehicleAsync(
+        Guid loadPlanId,
+        AssignLoadPlanVehicleRequest request,
+        long expectedRowVersion,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        DomainGuard.AgainstEmpty(loadPlanId, "LOAD_PLAN_REQUIRED", "LoadPlan zorunludur.");
+        DomainGuard.AgainstEmpty(request.VehicleId, "VEHICLE_REQUIRED", "LoadPlan vehicle kaydına bağlı olmalıdır.");
+        DomainGuard.AgainstEmpty(request.VehicleCapacityId, "CAPACITY_REQUIRED", "LoadPlan vehicle capacity kaydına bağlı olmalıdır.");
+        var scope = $"load-plan:assign-vehicle:{actorId}:{loadPlanId}";
+        var payloadHash = ComputePayloadHash(new { loadPlanId, request });
+        var replay = await TryReplayAsync<LoadPlanDto>(scope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var plan = await LockLoadPlanGraphAsync(loadPlanId, cancellationToken)
+            ?? throw new DomainException(new("LOAD_PLAN_NOT_FOUND", "LoadPlan bulunamadı."));
+        EnsureExpectedVersion(plan.RowVersion, expectedRowVersion, nameof(LoadPlanRecord), plan.Id);
+        EnsureMutablePlan(plan);
+        await LoadLoadUnitGraphAsync(plan.Id, cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        var vehicle = await dbContext.Vehicles
+            .FromSqlInterpolated($"SELECT * FROM vehicles WHERE id = {request.VehicleId} FOR UPDATE")
+            .SingleOrDefaultAsync(cancellationToken)
+            ?? throw new DomainException(new("VEHICLE_NOT_FOUND", "Vehicle bulunamadı."));
+        var capacity = await dbContext.VehicleCapacities
+            .FromSqlInterpolated($"SELECT * FROM vehicle_capacities WHERE id = {request.VehicleCapacityId} FOR UPDATE")
+            .SingleOrDefaultAsync(cancellationToken)
+            ?? throw new DomainException(new("VEHICLE_CAPACITY_NOT_FOUND", "Vehicle capacity bulunamadı."));
+        if (!string.Equals(vehicle.Status, nameof(VehicleStatus.Available), StringComparison.OrdinalIgnoreCase)
+            || (vehicle.MaintenanceUntil is not null && vehicle.MaintenanceUntil > now))
+        {
+            throw new DomainException(new("VEHICLE_NOT_AVAILABLE", "Vehicle Available durumda değil veya bakım süresi devam ediyor."));
+        }
+
+        if (capacity.VehicleTypeId != vehicle.VehicleTypeId)
+        {
+            throw new DomainException(new("CAPACITY_VEHICLE_TYPE_MISMATCH", "Vehicle ve capacity aynı vehicle type'a ait olmalıdır."));
+        }
+
+        if (capacity.EffectiveFrom > now || (capacity.EffectiveTo is not null && capacity.EffectiveTo <= now))
+        {
+            throw new DomainException(new("VEHICLE_CAPACITY_NOT_FOUND", "Vehicle capacity geçerlilik penceresi dışındadır."));
+        }
+
+        var zones = await dbContext.VehicleCapacityZones
+            .AsNoTracking()
+            .Where(x => x.VehicleCapacityId == capacity.Id)
+            .OrderBy(x => x.SequenceNo)
+            .ThenBy(x => x.Id)
+            .ToArrayAsync(cancellationToken);
+        var domainPlan = RehydrateDomainPlan(plan);
+        domainPlan.SetPlanningSnapshot(
+            vehicle.Id,
+            capacity.Id,
+            plan.AlgorithmName,
+            plan.AlgorithmVersion,
+            plan.ParameterSet,
+            plan.InputSnapshotHash,
+            JsonSerializer.Serialize(new
+            {
+                capacity.Id,
+                capacity.VehicleTypeId,
+                capacity.EffectiveFrom,
+                capacity.EffectiveTo,
+                capacity.MaxGrossWeight,
+                capacity.TareWeight,
+                capacity.MaxUsableVolume,
+                capacity.MaxPalletCount,
+                capacity.MaxLoadHeight,
+                capacity.CapacityPolicySnapshot,
+                zones = zones.Select(x => new
+                {
+                    x.Id,
+                    x.ZoneCode,
+                    x.LengthMm,
+                    x.WidthMm,
+                    x.MaxLoadKg,
+                    x.SequenceNo,
+                }).ToArray(),
+            }),
+            plan.UtilizationSnapshot,
+            string.IsNullOrWhiteSpace(plan.ValidationSummary) ? "{}" : plan.ValidationSummary,
+            now);
+
+        plan.VehicleId = domainPlan.VehicleId;
+        plan.VehicleCapacityId = domainPlan.VehicleCapacityId;
+        plan.AlgorithmName = domainPlan.AlgorithmName;
+        plan.AlgorithmVersion = domainPlan.AlgorithmVersion;
+        plan.ParameterSet = domainPlan.ParameterSet;
+        plan.InputSnapshotHash = domainPlan.InputSnapshotHash;
+        plan.CapacitySnapshot = domainPlan.CapacitySnapshot;
+        plan.UtilizationSnapshot = domainPlan.UtilizationSnapshot;
+        plan.ValidationSummary = domainPlan.ValidationSummary;
+        plan.UpdatedAt = domainPlan.UpdatedAt;
+        await auditWriter.AppendAsync(new(
+            "LoadPlanVehicleAssigned",
+            nameof(LoadPlanRecord),
+            plan.Id,
+            actorId,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new
+            {
+                vehicleId = vehicle.Id,
+                capacityId = capacity.Id,
+                plateNumber = vehicle.PlateNumber,
+            })), cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var result = Map(plan);
+        await SaveIdempotencyAsync(scope, idempotencyKey, payloadHash, 200, result, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
     public async Task<LoadPlanDto?> GetLoadPlanAsync(Guid loadPlanId, CancellationToken cancellationToken = default)
     {
         var record = await dbContext.LoadPlans

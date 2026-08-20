@@ -228,6 +228,14 @@ public sealed class LogisticsSecurityIntegrationTests
             using var fullCandidates = await fullClient.GetAsync($"/api/v1/shipments/{shipmentId}/vehicle-fit/candidates?loadPlanId={loadPlanId}");
             fullCandidates.StatusCode.Should().Be(HttpStatusCode.OK);
 
+            using var fullAssignVehicleRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/load-plans/{loadPlanId}/assign-vehicle")
+            {
+                Content = JsonContent.Create(new { vehicleId, vehicleCapacityId }),
+            };
+            fullAssignVehicleRequest.Headers.TryAddWithoutValidation("If-Match", $"\"{loadPlanJson.GetProperty("rowVersion").GetInt64()}\"");
+            using var fullAssignVehicle = await fullClient.SendAsync(fullAssignVehicleRequest);
+            fullAssignVehicle.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
+
             using var fullPlanLockRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/load-plans/{loadPlanId}/lock")
             {
                 Content = JsonContent.Create(new { approval = true, warningResolutions = Array.Empty<object>() }),
@@ -339,6 +347,13 @@ public sealed class LogisticsSecurityIntegrationTests
                     parameterSet = "ffd:v1:security",
                 });
             forbiddenVehicleFit.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            using var forbiddenAssignVehicleRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/load-plans/{loadPlanId}/assign-vehicle")
+            {
+                Content = JsonContent.Create(new { vehicleId, vehicleCapacityId }),
+            };
+            forbiddenAssignVehicleRequest.Headers.TryAddWithoutValidation("If-Match", $"\"{loadPlanJson.GetProperty("rowVersion").GetInt64()}\"");
+            using var forbiddenAssignVehicle = await readClient.SendAsync(forbiddenAssignVehicleRequest);
+            forbiddenAssignVehicle.StatusCode.Should().Be(HttpStatusCode.Forbidden);
             using var forbiddenPlanLockRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/load-plans/{loadPlanId}/lock")
             {
                 Content = JsonContent.Create(new { approval = true, warningResolutions = Array.Empty<object>() }),

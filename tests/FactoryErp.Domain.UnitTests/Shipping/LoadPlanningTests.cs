@@ -46,6 +46,32 @@ public sealed class LoadPlanningTests
     }
 
     [Fact]
+    public void SetPlanningSnapshot_binds_vehicle_on_draft()
+    {
+        var plan = LoadPlan.CreateDraft(Guid.NewGuid(), Now, ShipmentId, RoutePlanId, 1, 1);
+        var vehicleId = Guid.Parse("63000000-0000-0000-0000-000000000001");
+        var capacityId = Guid.Parse("63000000-0000-0000-0000-000000000002");
+
+        plan.SetPlanningSnapshot(
+            vehicleId,
+            capacityId,
+            "FFD",
+            "v1",
+            "ffd:v1",
+            "sha256:assign",
+            "{\"capacityId\":\"" + capacityId + "\"}",
+            null,
+            "{}",
+            Now.AddMinutes(1));
+
+        plan.Status.Should().Be(LoadPlanStatus.Draft);
+        plan.VehicleId.Should().Be(vehicleId);
+        plan.VehicleCapacityId.Should().Be(capacityId);
+        plan.AlgorithmName.Should().Be("FFD");
+        plan.InputSnapshotHash.Should().Be("sha256:assign");
+    }
+
+    [Fact]
     public void Valid_plan_cannot_be_mutated()
     {
         var plan = LoadPlan.CreateDraft(Guid.NewGuid(), Now, ShipmentId, RoutePlanId, 1, 1);
