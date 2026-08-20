@@ -40,7 +40,7 @@ Yapılan dilimler **sahte KPI / client `quantityBase` / viewMode=ambalaj karış
 ### Sağlam olan
 
 - Clean Architecture + permission claim politikaları API’de; frontend yetki yalnızca UX (`AGENTS.md`).
-- JWT 15 dk + refresh 14 gün, refresh hash’li, logout iptali; web `fe_access` / `fe_refresh` HttpOnly, `SameSite=lax`, production `secure` (`apps/web/src/lib/api/server/cookies.ts`).
+- JWT varsayılan 15 dk (prod compose 30) + refresh 14 gün, refresh hash’li ve rotate; web `fe_access` / `fe_refresh` HttpOnly, `SameSite=lax`, production `secure`. API cookie basmaz; BFF basar.
 - Parola PBKDF2-SHA256, 120_000 iterasyon, sabit zamanlı karşılaştırma (`PasswordHasher.cs`).
 - Idempotency-Key komut öneklerinde; `row_version` / If-Match.
 - Stok/irsaliye/fatura/sayı/sefer komutlarında `SELECT … FOR UPDATE` + belge numarası kilidi.
@@ -78,14 +78,19 @@ Sıra, sonradan saldırı listesidir. O-015 kapanmadan tenant şeması yazılmaz
 | S-002 | Global unique’ler kiracıyı varsaymıyor | `product_barcodes.barcode` unique; `users.user_name` unique; `document_sequences (type, year)` unique | Firma A’nın SO-2026-000001’i firma B’yi ezer |
 | S-003 | Control plane yok | Onboarding, fatura, kota, kiracı admin, yama orkestrasyonu yok | 500 müşteri elde işletilemez |
 | S-004 | Liste API’leri sayfalı değil | D-014: server-side pagination. Gerçek: public katalog hariç `Take(100)` (sipariş, stok, transfer, sayım, personel, irsaliye, fatura, sefer…) | Binlerce belge tarayıcıyı ve API’yi keser; sessiz 100 kesim |
-| S-005 | Public abuse koruması yok | O-009: rate limit, honeypot/CAPTCHA. `Program.cs`’te `AddRateLimiter` yok. `POST /api/v1/public/quote-requests` AllowAnonymous, limit yok | Spam + maliyet + KVKK |
+| S-005 | Public abuse yarım | O-009. `AddRateLimiter` yok. Public quote AllowAnonymous, Idempotency-Key yok. UI honeypot (`quote-checkout`) server’da yok. `CONSENT_REQUIRED` server’da var. CAPTCHA yok | Spam + maliyet; consent tek başına yetmez |
 | S-006 | Login brute-force yok | `AuthenticationService.LoginAsync` başarısızda `null`; lockout/sayaç yok | 500 public yüzeyde parola tarama |
 | S-007 | Outbox worker yok | `outbox_messages` yazılıyor; `IHostedService` / publisher **yok** | ADR-008 yarım; mail/bildirim birikmesi |
 | S-008 | Observability yok | Serilog/OpenTelemetry yok; `Logging` default | 500 kiracıda kök neden bulunamaz |
 | S-009 | Ölçek ayarı yok | Npgsql pool varsayılan; Redis yok; nginx `worker_connections 1024`; Compose’da web servisi yok | Binlerce eşzamanlı oturum tasarlanmadı |
 | S-010 | Prod compose web + TLS yok | `compose.prod.yaml`: postgres, migrator, backup, **api**, reverse-proxy. `nginx.prod.conf` `location / { return 404; }` HTTP 80 | Tek fabrikada bile tam yığın kanıtı yok |
 | S-011 | Yük / soak testi yok | Kanıt yok | “Binlerce kişi” iddiası uydurma olur |
-| S-012 | CI entegrasyonu kırılgan | `.github/workflows/domain-ci.yml` tüm `FactoryErp.sln` test; integration Postgres ister. Bu makinede 5432 kapalı, Docker yok | Yeşil CI ≠ üretim kanıtı |
+| S-012 | CI entegrasyonu kırılgan | `.github/workflows/domain-ci.yml` tüm sln; Postgres service yok. Web vitest/lint workflow’da yok. Planlanan `pull-request.yml` / `release.yml` / `security.yml` dosyaları yok | Yeşil CI ≠ üretim kanıtı |
+| S-013 | Oturum iptali yarım | Logout yalnızca o refresh token’ı iptal eder. Access JWT blacklist yok (`jti` yazılır, kontrol edilmez). `IsActive=false` access süresi bitene kadar geçerli | Çalınan 15–30 dk token + pasif kullanıcı |
+| S-014 | Satır sahipliği yok | GET-by-id = permission + `Id ==`. `ICurrentUserAccessor` tanımlı, **kayıtlı değil**. Tek fabrikada “claim’i olan herkes her satırı görür”; paylaşımlı DB’de kiracılar arası IDOR | 500 firma tek DB = çapraz sızıntı |
+| S-015 | `/me` sahte şirket | `AuthController`: `company = { code = "default", name = "Factory ERP" }` | Kiracı kimliği yok |
+| S-016 | Yedek cron yok | `backup.sh` + compose **profile**, `restart: no` — tek seferlik iş. O-010 günlük full backup | 14 gün retention script’te var, zamanlayıcı yok |
+| S-017 | Idempotency kapsamı | Unique `(scope, key)`; `company_id` yok. Public quote-request, `/mobile/*`, `/physical-logistics/*`, auth POST prefix dışında | Tasarım metni ile kod ayrışıyor |
 
 ## 4. Tek fabrikayı satmadan önce — P1 ürün boşlukları
 
@@ -110,6 +115,9 @@ Mevcut kararlarla **bir** fabrikaya para alınacaksa bunlar kapanmalı. Sahte ek
 | P-015 | Public KVKK silme/consent | O-009; retention endpoint yok |
 | P-016 | TLS / CORS / HSTS | nginx HTTP 80, `location /` 404; API’de UseHttpsRedirection yok |
 | P-017 | Stale copy | Root `README.md` “production code yok” diyor. Dashboard hâlâ “GET /orders yok” caption (WEB 011 sonrası yanlış) |
+| P-018 | Parola politikası | PBKDF2 sağlam; login `min(1)`; lockout yok; bootstrap env parola karmaşıklığı yok |
+| P-019 | `POST /mobile/quantity-previews` | Class `[Authorize]`, **permission policy yok**; `WarehouseId` ile on-hand okur |
+| P-020 | Outbox + SMTP aynı istek | Outbox satırı yazılıyor; SMTP **inline** gönderiliyor; worker yok. Host boşsa Queued (dürüst) |
 
 ## 5. Yapılanların “düzgün mü?” cevabı
 
