@@ -46,7 +46,7 @@ Aşağıdaki O-001–O-014 kararları, proje sahibinin **“hepsini kabul edildi
 
 | ID | Varsayım | Etkisi / revizyon koşulu |
 |---|---|---|
-| A-001 | İlk sürüm tek şirketlidir; multi-company tenant modeli tasarlanmaz. | İleride `company_id` eklenebilecek sınır korunur. |
+| A-001 | İlk sürüm tek şirketlidir; multi-company tenant modeli tasarlanmaz. | 2026-08-20: 500 firma / binlerce eşzamanlı kullanıcı talebi bu varsayımı tetikler. Kapanış **O-015**. Kanıt: `commercial-scale-readiness.md`. |
 | A-002 | Birden fazla depo ilk sürümden desteklenir. | Depo, konum, transfer ve stok sorgusu buna göre modellenir. |
 | A-003 | Üretim tamamlanması, tanımlı bitmiş ürün miktarı için stok girişi üretir. | Ara üretim veya kalite karantinası kararı netleşirse akış genişletilir. |
 | A-004 | Public katalog fiyat ve stok miktarı göstermeden teklif talebi toplar. | B2B fiyat listesi politikası kesinleşirse public deneyim güncellenir. |
@@ -80,7 +80,7 @@ Kararlar kabul edilmiş olsa da ilgili iş sahiplerinin Architecture/Operations 
 
 ## 5. Karar netleştirme gündemi ve kapanış durumu
 
-`decision-clarification-backlog.md` artık açık karar üretmek için değil, kabul edilen O-001–O-014 kararlarının alt sorularının kapanış kanıtını ve artefact yayılımını izlemek için kullanılır. Her madde için seçilen değer, karar sahibi, 2026-08-16 tarihi, gerekçe, etkilenen artefact’lar ve kabul kapsamı bu log’a işlendi. Açık karar sayısı: **0**.
+`decision-clarification-backlog.md` O-001–O-014 için kapanış kanıtı ve artefact yayılımı izleme listesidir. 2026-08-20’de ticari çoklu firma talebi **O-015** olarak açıldı. O-001–O-014 hâlâ `DECIDED`. Açık iş kararı: **O-015**.
 
 ## 6. ACCEPTED ARCHITECTURE DECISIONS — ADR-001–ADR-011
 
@@ -100,8 +100,18 @@ Proje sahibi, Architecture aşamasında kalan teknik kararlar için araştırma 
 | ADR-010 | Production self-hosted runner private, protected environment, restricted runner group ve release-only | GitHub Actions security |
 | ADR-011 | Architecture artefact’ları kabul edildi; implementation gate Domain + tests scaffold’u için açıldı | Implementation handoff |
 
-Açık teknik karar sayısı: **0**. ADR veya O-ID değişirse ilgili karar yeniden açılır, etkilenmiş artefact’lar güncellenir ve gate yeniden değerlendirilir.
+Açık teknik karar sayısı (ADR): **0**. ADR veya O-ID değişirse ilgili karar yeniden açılır, etkilenen artefact’lar güncellenir ve gate yeniden değerlendirilir.
 
-## 7. Karar yönetimi kuralları
+## 7. OPEN DECISIONS — ticari kapsam
+
+O-001–O-014 ve ADR-001–ADR-011 **değişmedi**. Aşağıdaki madde yeni satış hedefidir; kapanmadan tenant şeması, paylaşımlı SaaS veya 500 kurulum control plane’i yazılmaz.
+
+| ID | Durum | Soru | Tetik | Kanıt |
+|---|---|---|---|---|
+| O-015 | OPEN DECISION | 500 firma nasıl işletilecek: (A) N izole on-prem kopya, (B) paylaşımlı DB + `company_id`/RLS, (C) şema veya DB per tenant? Eşzamanlı kullanıcı hedefi nedir? | 2026-08-20 proje sahibi: “500 firma ve binlerce kişi aynı anda” | `commercial-scale-readiness.md`; A-001 |
+
+Açık iş kararı sayısı: **1** (O-015).
+
+## 8. Karar yönetimi kuralları
 
 Yeni bir kapsam veya karar değişikliği gelirse ilgili O-ID yeniden `OPEN DECISION` durumuna alınır, etkilenen domain/workflow/database/UI/skill/QA/operations artefact’ları belirlenir ve Design Gate yeniden değerlendirilir. Mevcut O-001–O-014 kararları `DECIDED` durumundadır; Architecture skill’i bu seçilmiş değerleri zorunlu teknik girdiler olarak tüketebilir. Karar sahibi onayı ve yayılım kanıtı olmadan yeni bir varsayım `DECIDED` yapılamaz.

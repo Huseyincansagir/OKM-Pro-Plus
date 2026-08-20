@@ -1,8 +1,16 @@
 # Factory ERP — Karar Netleştirme Gündemi
 
 **Aşama:** DESIGN → DESIGN GATE / READY FOR ARCHITECTURE hazırlığı
-**Durum:** O-001–O-014 proje sahibi tarafından 2026-08-16 tarihinde kabul edildi; backlog artık kapanış kanıtı ve artefact yayılımı izleme listesidir.
-**Kural:** O-001–O-014 için karar sahibi, tarih, seçilen değer ve kapsam kaydedildi. Yeni kapsam değişikliği gelirse ilgili O-ID yeniden OPEN DECISION yapılır; mevcut kararlar `DECIDED` durumundadır.
+**Durum:** O-001–O-014 proje sahibi tarafından 2026-08-16 tarihinde kabul edildi; backlog kapanış kanıtı ve artefact yayılımı izleme listesidir. **O-015** 2026-08-20’de OPEN (ticari çoklu firma).
+**Kural:** O-001–O-014 için karar sahibi, tarih, seçilen değer ve kapsam kaydedildi. Yeni kapsam değişikliği gelirse ilgili O-ID yeniden OPEN DECISION yapılır; mevcut O-001–O-014 `DECIDED` kalır.
+
+## 0. O-015 — Ticari ölçek (açık)
+
+500 firma ve binlerce eşzamanlı kullanıcı istenirse A-001 tek-şirket varsayımı yetmez. Kapanmadan `company_id` migration’ı yazılmaz.
+
+Karar sahibi cevaplamalı: Satış modeli A (N izole on-prem), B (paylaşımlı SaaS + satır izolasyonu) veya C (şema/DB per tenant) mi? Hedef eşzamanlı oturum sayısı nedir (fabrika başına mı, toplam mı)? Public katalog her kiracıya ayrı host mu, tek katalog mu? Yedekleme ve faturalama kimde?
+
+**Kapanış çıktısı:** Seçilen yol, izolasyon mekanizması, unique/sequence sınırı, JWT claim, hedef yük, control plane evet/hayır. Kanıt: `commercial-scale-readiness.md`.
 
 ## 1. Kullanım amacı
 
