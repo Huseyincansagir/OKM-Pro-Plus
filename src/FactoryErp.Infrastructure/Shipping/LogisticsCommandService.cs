@@ -531,6 +531,30 @@ public sealed class LogisticsCommandService(
         return record is null ? null : Map(record);
     }
 
+    public async Task<IReadOnlyCollection<RoutePlanDto>> ListRoutePlansByShipmentAsync(
+        Guid shipmentId,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = await dbContext.RoutePlans
+            .AsNoTracking()
+            .Where(x => x.ShipmentId == shipmentId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => x.Id)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        var result = new List<RoutePlanDto>(ids.Length);
+        foreach (var id in ids)
+        {
+            var record = await LoadRouteAsync(id, cancellationToken);
+            if (record is not null)
+            {
+                result.Add(Map(record));
+            }
+        }
+
+        return result;
+    }
+
     public async Task<RoutePlanDto?> ReplaceStopsAsync(
         Guid routePlanId,
         ReplaceRouteStopsRequest request,

@@ -219,6 +219,10 @@ public interface ILogisticsCommandService
 
     Task<RoutePlanDto?> GetRoutePlanAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<RoutePlanDto>> ListRoutePlansByShipmentAsync(
+        Guid shipmentId,
+        CancellationToken cancellationToken = default);
+
     Task<RoutePlanDto?> ReplaceStopsAsync(
         Guid routePlanId,
         ReplaceRouteStopsRequest request,

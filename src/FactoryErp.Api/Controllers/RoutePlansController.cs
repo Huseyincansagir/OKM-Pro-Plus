@@ -27,6 +27,13 @@ public sealed class RoutePlansController(ILogisticsCommandService service) : Log
         return Created($"/api/v1/route-plans/{result.Id}", result);
     }
 
+    [Authorize(Policy = PermissionPolicies.ShipmentRead)]
+    [HttpGet("shipments/{shipmentId:guid}/route-plans")]
+    public async Task<ActionResult<IReadOnlyCollection<RoutePlanDto>>> ListByShipment(
+        Guid shipmentId,
+        CancellationToken cancellationToken)
+        => Ok(await service.ListRoutePlansByShipmentAsync(shipmentId, cancellationToken));
+
     [Authorize(Policy = PermissionPolicies.ShipmentRouteManage)]
     [HttpGet("route-plans/{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)

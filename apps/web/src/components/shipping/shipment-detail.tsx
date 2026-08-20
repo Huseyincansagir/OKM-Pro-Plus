@@ -18,24 +18,55 @@ import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
 import { getShipment, shipmentStatusKind, type ShipmentDetail } from "@/lib/shipping/shipments";
 import {
+  arriveStop,
+  assignRouteResources,
+  completeDispatch,
+  confirmDispatch,
+  createRoutePlan,
+  createShipmentPackage,
   deliverStop,
+  departDispatch,
   listDispatchRuns,
+  listDrivers,
   listLoadPlans,
+  listRoutePlans,
   listShipmentPackages,
+  listVehicles,
+  lockRoute,
+  planRoute,
+  replaceRouteStops,
   type DispatchRun,
+  type DriverRow,
+  type LoadPlanSummary,
+  type RoutePlanSummary,
+  type VehicleRow,
 } from "@/lib/shipping/dispatch";
+import { getCustomer } from "@/lib/sales/customers";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 
 export function ShipmentDetailBoard({ id }: { id: string }) {
   const router = useRouter();
   const user = useSessionStore((state) => state.user);
-  const canRead = (user?.permissions ?? []).includes("shipment.read");
-  const canExecute = (user?.permissions ?? []).includes("shipment.route-execute");
+  const permissions = user?.permissions ?? [];
+  const canRead = permissions.includes("shipment.read");
+  const canExecute = permissions.includes("shipment.route-execute");
+  const canDispatch = permissions.includes("shipment.dispatch");
+  const canDepart = permissions.includes("shipment.depart");
+  const canRoute = permissions.includes("shipment.route-manage");
+  const canLockRoute = permissions.includes("shipment.route-lock");
+  const canPackage = permissions.includes("shipment.package-manage");
   const [row, setRow] = useState<ShipmentDetail | null>(null);
   const [dispatchRun, setDispatchRun] = useState<DispatchRun | null>(null);
   const [packages, setPackages] = useState<Array<{ id: string; status: string }>>([]);
-  const [loadPlans, setLoadPlans] = useState<Array<{ id: string; status: string }>>([]);
+  const [loadPlans, setLoadPlans] = useState<LoadPlanSummary[]>([]);
+  const [routePlans, setRoutePlans] = useState<RoutePlanSummary[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
+  const [drivers, setDrivers] = useState<DriverRow[]>([]);
+  const [vehicleId, setVehicleId] = useState("");
+  const [driverId, setDriverId] = useState("");
   const [recipient, setRecipient] = useState("");
+  const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(canRead);
@@ -55,13 +86,19 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
       listDispatchRuns(id).catch(() => []),
       listShipmentPackages(id).catch(() => []),
       listLoadPlans(id).catch(() => []),
+      listRoutePlans(id).catch(() => []),
+      listVehicles().catch(() => []),
+      listDrivers().catch(() => []),
     ])
-      .then(([result, runs, packageRows, planRows]) => {
+      .then(([result, runs, packageRows, planRows, routeRows, vehicleRows, driverRows]) => {
         if (cancelled) return;
         setRow(result);
         setDispatchRun(runs[0] ?? null);
         setPackages(packageRows);
         setLoadPlans(planRows);
+        setRoutePlans(routeRows);
+        setVehicles(vehicleRows);
+        setDrivers(driverRows.filter((item) => item.isActive));
       })
       .catch((caught) => {
         if (cancelled) return;
@@ -78,6 +115,19 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
       cancelled = true;
     };
   }, [canRead, id, reload]);
+
+  async function run(action: () => Promise<unknown>) {
+    setActing(true);
+    setError(null);
+    try {
+      await action();
+      setReload((value) => value + 1);
+    } catch (caught) {
+      setError(userFacingMessage(caught));
+    } finally {
+      setActing(false);
+    }
+  }
 
   return (
     <AppShell
@@ -184,12 +234,155 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
               <CardTitle>Paket / yük planı / sefer</CardTitle>
             </CardHeader>
             <CardBody className="space-y-3 text-sm">
-              <p>Paket: {packages.length} · Yük planı: {loadPlans.map((plan) => plan.status).join(", ") || "yok"}</p>
+              <p>
+                Paket: {packages.length} · Rota: {routePlans.map((plan) => plan.status).join(", ") || "yok"} ·
+                Yük planı: {loadPlans.map((plan) => plan.status).join(", ") || "yok"}
+              </p>
+              {row.status === "Preparing" && canRoute && row.rowVersion !== null ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    loading={acting}
+                    onClick={() =>
+                      void run(async () => {
+                        const plan = await createRoutePlan(row.id, row.rowVersion as number);
+                        const customer = await getCustomer(row.customerId);
+                        const address =
+                          customer.addresses.find((item) => item.isDefault && item.isActive) ??
+                          customer.addresses.find((item) => item.isActive);
+                        if (!address || plan.rowVersion === null) {
+                          throw new Error("Müşteri teslim adresi yok; durak yazılamaz.");
+                        }
+                        await replaceRouteStops(plan.id, plan.rowVersion, [
+                          { sequenceNo: 1, customerId: row.customerId, addressId: address.id },
+                        ]);
+                      })
+                    }
+                  >
+                    Rota + durak
+                  </Button>
+                  {canPackage ? (
+                    <Button
+                      variant="secondary"
+                      loading={acting}
+                      onClick={() =>
+                        void run(async () => {
+                          for (const item of row.items) {
+                            if (item.quantityBase === null) continue;
+                            await createShipmentPackage(row.id, {
+                              shipmentItemId: item.id,
+                              quantityBase: item.quantityBase,
+                            });
+                          }
+                        })
+                      }
+                    >
+                      Kalemlerden paket
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+              {routePlans[0] && canRoute && routePlans[0].rowVersion !== null ? (
+                <div className="grid gap-2 md:grid-cols-2">
+                  <Select
+                    label="Araç"
+                    value={vehicleId}
+                    onChange={(event) => setVehicleId(event.target.value)}
+                    options={[
+                      { value: "", label: "Seçin" },
+                      ...vehicles.map((item) => ({
+                        value: item.id,
+                        label: `${item.plateNumber} (${item.status})`,
+                      })),
+                    ]}
+                  />
+                  <Select
+                    label="Şoför"
+                    value={driverId}
+                    onChange={(event) => setDriverId(event.target.value)}
+                    options={[
+                      { value: "", label: "Seçin" },
+                      ...drivers.map((item) => ({ value: item.id, label: item.fullName })),
+                    ]}
+                  />
+                  <Button
+                    variant="secondary"
+                    loading={acting}
+                    onClick={() =>
+                      void run(() =>
+                        assignRouteResources(routePlans[0].id, routePlans[0].rowVersion as number, vehicleId, driverId),
+                      )
+                    }
+                  >
+                    Kaynak ata
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    loading={acting}
+                    onClick={() => void run(() => planRoute(routePlans[0].id, routePlans[0].rowVersion as number))}
+                  >
+                    Planla
+                  </Button>
+                  {canLockRoute ? (
+                    <Button
+                      loading={acting}
+                      onClick={() => void run(() => lockRoute(routePlans[0].id, routePlans[0].rowVersion as number))}
+                    >
+                      Rotayı kilitle
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
               {dispatchRun ? (
                 <div className="space-y-2">
                   <p>
                     Sefer {dispatchRun.id.slice(0, 8)} · {dispatchRun.status}
                   </p>
+                  <div className="flex flex-wrap gap-2">
+                    {canDispatch && dispatchRun.status === "Prepared" && dispatchRun.rowVersion !== null ? (
+                      <Button
+                        loading={acting}
+                        onClick={() => void run(() => confirmDispatch(dispatchRun.id, dispatchRun.rowVersion as number))}
+                      >
+                        Seferi onayla
+                      </Button>
+                    ) : null}
+                    {canDepart && dispatchRun.status === "Dispatched" && dispatchRun.rowVersion !== null ? (
+                      <Button
+                        loading={acting}
+                        onClick={() => void run(() => departDispatch(dispatchRun.id, dispatchRun.rowVersion as number))}
+                      >
+                        Yola çık
+                      </Button>
+                    ) : null}
+                    {canExecute && dispatchRun.status === "InTransit" && dispatchRun.rowVersion !== null
+                      ? dispatchRun.stops
+                          .filter((stop) => stop.status === "Pending")
+                          .slice(0, 1)
+                          .map((stop) => (
+                            <Button
+                              key={stop.routeStopId}
+                              variant="secondary"
+                              loading={acting}
+                              onClick={() =>
+                                void run(() =>
+                                  arriveStop(dispatchRun.id, stop.routeStopId, dispatchRun.rowVersion as number),
+                                )
+                              }
+                            >
+                              Durağa var #{stop.sequenceNo}
+                            </Button>
+                          ))
+                      : null}
+                    {canExecute && dispatchRun.status === "InTransit" && dispatchRun.rowVersion !== null ? (
+                      <Button
+                        variant="secondary"
+                        loading={acting}
+                        onClick={() => void run(() => completeDispatch(dispatchRun.id, dispatchRun.rowVersion as number))}
+                      >
+                        Rotayı tamamla
+                      </Button>
+                    ) : null}
+                  </div>
                   <DataTable
                     columns={[
                       { id: "seq", header: "Sıra", accessor: (stop) => String(stop.sequenceNo) },

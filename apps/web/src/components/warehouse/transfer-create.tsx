@@ -273,6 +273,13 @@ export function TransferCreate() {
                       label="Barkod"
                       value={barcode}
                       onChange={(event) => setBarcode(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void runResolve();
+                        }
+                      }}
+                      hint="USB okuyucu Enter ile çözer. Kamera yok."
                     />
                   </div>
                   <Button variant="secondary" loading={resolving} onClick={() => void runResolve()}>
