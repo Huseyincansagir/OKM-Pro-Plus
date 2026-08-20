@@ -751,7 +751,27 @@ Next Slice: WEB SLICE 017 — Deliver/POD, count, personnel, barcode resolve
 ```text
 WEB SLICE 017
 STATUS: PASS
-Next Slice: kamera/USB tarayıcı ve dosya POD; load-plan oluşturma sihirbazı
+Next Slice: WEB SLICE 018 — Route/dispatch execution and USB barcode
+```
+
+## WEB SLICE 018 — Route/dispatch execution and USB barcode
+
+**Tarih:** 2026-08-20
+**Durum:** PASS
+**Kapsam:** `GET /shipments/{id}/route-plans`; sevkiyat kartında rota+durak (müşteri varsayılan adres), kaynak ata, planla, kilitle, kalemlerden paket (`quantityBase` sunucu). Sefer onay/kalkış/varış/tamamla. Transfer barkodunda USB Enter → resolve. Load-plan oluşturma sihirbazı ve kamera yok.
+
+### Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 185 test |
+| typecheck / lint / build | PASS |
+| `dotnet build -c Release` | PASS; 0 warning / 0 error |
+
+```text
+WEB SLICE 018
+STATUS: PASS
+Next Slice: load-plan create/lock sihirbazı veya kamera tarayıcı
 ```
 
 
