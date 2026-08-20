@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/types";
 import { apiRequest } from "@/lib/api/client";
-import { createTransfer, listTransfers, mapTransfer } from "@/lib/warehouse/transfers";
+import { cancelTransfer, completeTransfer, createTransfer, listTransfers, mapTransfer } from "@/lib/warehouse/transfers";
 
 vi.mock("@/lib/api/client", () => ({
   apiRequest: vi.fn(),
@@ -55,5 +55,22 @@ describe("transfer APIs", () => {
     const call = vi.mocked(apiRequest).mock.calls[0][0];
     expect(call.path).toBe("/warehouse-transfers");
     expect(call.body).not.toHaveProperty("quantityBase");
+  });
+
+  it("completes and cancels without a client quantity", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({ id: "t1", status: "Completed", quantityBase: 2000 });
+    await completeTransfer("t1");
+    expect(apiRequest).toHaveBeenCalledWith({
+      path: "/warehouse-transfers/t1/complete",
+      method: "POST",
+      idempotent: true,
+    });
+    vi.mocked(apiRequest).mockResolvedValue({ id: "t1", status: "Cancelled", quantityBase: 2000 });
+    await cancelTransfer("t1");
+    expect(apiRequest).toHaveBeenCalledWith({
+      path: "/warehouse-transfers/t1/cancel",
+      method: "POST",
+      idempotent: true,
+    });
   });
 });

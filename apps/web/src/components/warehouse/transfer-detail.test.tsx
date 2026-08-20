@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TransferDetail } from "@/components/warehouse/transfer-detail";
 import { resetSessionStore, useSessionStore } from "@/lib/auth/session-store";
-import { completeTransfer, getTransfer } from "@/lib/warehouse/transfers";
+import { cancelTransfer, completeTransfer, getTransfer } from "@/lib/warehouse/transfers";
 import { setWindowWidth } from "@/test/viewport";
 
 vi.mock("@/lib/warehouse/transfers", async () => {
@@ -35,6 +35,7 @@ describe("TransferDetail", () => {
     resetSessionStore();
     vi.mocked(getTransfer).mockReset();
     vi.mocked(completeTransfer).mockReset();
+    vi.mocked(cancelTransfer).mockReset();
   });
 
   afterEach(() => {
@@ -72,5 +73,26 @@ describe("TransferDetail", () => {
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: "Tamamla" }));
     expect(completeTransfer).toHaveBeenCalledWith("t1");
+  });
+
+  it("cancels a draft and hides complete without permission", async () => {
+    const user = userEvent.setup();
+    useSessionStore.getState().setAuthenticated({
+      id: "u1",
+      userName: "admin",
+      displayName: "Yusuf Kaya",
+      roles: ["admin"],
+      permissions: ["stock-transfer.read", "stock-transfer.cancel"],
+    });
+    vi.mocked(getTransfer).mockResolvedValue(draft);
+    vi.mocked(cancelTransfer).mockResolvedValue({ ...draft, status: "Cancelled" });
+
+    render(<TransferDetail id="t1" />);
+    expect(await screen.findByText("2000")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Tamamla" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "İptal" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "İptal et" }));
+    expect(cancelTransfer).toHaveBeenCalledWith("t1");
   });
 });

@@ -42,4 +42,24 @@ describe("FinanceBoard", () => {
     expect(await screen.findByText("Cari bu oturumda görünmez")).toBeInTheDocument();
     expect(listInvoices).not.toHaveBeenCalled();
   });
+
+  it("links irsaliye rows without inventing a zero total", async () => {
+    useSessionStore.getState().setAuthenticated({
+      id: "u1",
+      userName: "admin",
+      displayName: "Yusuf Kaya",
+      roles: ["admin"],
+      permissions: ["delivery-note.read"],
+    });
+    vi.mocked(listDeliveryNotes).mockResolvedValue([
+      { id: "dn1", documentNumber: "DN-2026-000001", customerId: "c1", status: "Draft", itemCount: 1 },
+    ]);
+    vi.mocked(listInvoices).mockResolvedValue([]);
+    vi.mocked(listCurrentAccounts).mockResolvedValue([]);
+
+    render(<FinanceBoard />);
+    const link = await screen.findByRole("link", { name: "DN-2026-000001" });
+    expect(link).toHaveAttribute("href", "/sevkiyat/irsaliyeler/dn1");
+    expect(screen.queryByText("₺0")).not.toBeInTheDocument();
+  });
 });

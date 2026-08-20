@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/api/types";
 import { apiRequest } from "@/lib/api/client";
 import { mapBarcodeResolution, resolveBarcode } from "@/lib/catalog/barcode";
 
@@ -7,6 +8,10 @@ vi.mock("@/lib/api/client", () => ({
 }));
 
 describe("barcode resolve", () => {
+  beforeEach(() => {
+    vi.mocked(apiRequest).mockReset();
+  });
+
   it("maps product and packaging without inventing stock", () => {
     const mapped = mapBarcodeResolution({
       barcode: "869000000001",
@@ -21,7 +26,7 @@ describe("barcode resolve", () => {
     expect(mapped).not.toHaveProperty("onHand");
   });
 
-  it("posts to /mobile/barcodes/resolve", async () => {
+  it("posts to /mobile/barcodes/resolve without quantityBase", async () => {
     vi.mocked(apiRequest).mockResolvedValue({
       barcode: "869000000001",
       productId: "p1",
@@ -33,5 +38,12 @@ describe("barcode resolve", () => {
       method: "POST",
       body: { barcode: "869000000001" },
     });
+    const body = vi.mocked(apiRequest).mock.calls[0][0].body as Record<string, unknown>;
+    expect(body).not.toHaveProperty("quantityBase");
+  });
+
+  it("rejects a resolution without productId", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({ barcode: "869000000099" });
+    await expect(resolveBarcode("869000000099")).rejects.toBeInstanceOf(ApiError);
   });
 });

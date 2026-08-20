@@ -94,6 +94,84 @@ public sealed class DispatchRunTests
     }
 
     [Fact]
+    public void Deliver_rejects_pending_stop()
+    {
+        var run = Departed();
+        var beforeArrive = () => run.DeliverStop(StopOne, ActorId, Now.AddMinutes(3), "Ali", null, "pod-early", "corr-e");
+        beforeArrive.Should().Throw<DomainException>().Which.Error.Code.Should().Be("ROUTE_STOP_INVALID_STATE");
+    }
+
+    [Fact]
+    public void Deliver_rejects_second_call_after_status_is_delivered()
+    {
+        var run = Departed();
+        run.ArriveAtStop(StopOne, ActorId, Now.AddMinutes(3), "arrive-1", "corr-3");
+        run.DeliverStop(StopOne, ActorId, Now.AddMinutes(4), "Ali Kaya", null, "pod-1", "corr-4");
+        var again = () => run.DeliverStop(StopOne, ActorId, Now.AddMinutes(5), "Ali Kaya", null, "pod-2", "corr-5");
+        again.Should().Throw<DomainException>().Which.Error.Code.Should().Be("ROUTE_STOP_INVALID_STATE");
+    }
+
+    [Fact]
+    public void Deliver_rejects_rehydrated_arrived_stop_that_already_has_proof()
+    {
+        var run = DispatchRun.Rehydrate(
+            Guid.NewGuid(),
+            Now,
+            ShipmentId,
+            LoadPlanId,
+            RoutePlanId,
+            VehicleId,
+            DriverId,
+            DispatchRunStatus.InTransit,
+            Now.AddHours(1),
+            Now.AddMinutes(2),
+            null,
+            null,
+            ActorId,
+            null,
+            null,
+            null,
+            Now.AddMinutes(2),
+            [
+                new DispatchRunStop(StopOne, 1, RouteStopExecutionStatus.Arrived, "Ali Kaya", null),
+                new DispatchRunStop(StopTwo, 2),
+            ],
+            []);
+
+        var again = () => run.DeliverStop(StopOne, ActorId, Now.AddMinutes(5), "Ali Kaya", null, "pod-2", "corr-5");
+        again.Should().Throw<DomainException>().Which.Error.Code.Should().Be("ROUTE_STOP_ALREADY_DELIVERED");
+    }
+
+    [Fact]
+    public void Deliver_rejects_when_run_is_not_in_transit()
+    {
+        var prepared = Prepared();
+        var action = () => prepared.DeliverStop(StopOne, ActorId, Now.AddMinutes(1), "Ali", null, "pod-1", "corr-1");
+        action.Should().Throw<DomainException>().Which.Error.Code.Should().Be("DISPATCH_INVALID_STATE");
+    }
+
+    [Fact]
+    public void Complete_rejects_arrived_stop_without_proof()
+    {
+        var run = Departed();
+        run.ArriveAtStop(StopOne, ActorId, Now.AddMinutes(3), "arrive-1", "corr-3");
+        var action = () => run.CompleteRoute(ActorId, Now.AddMinutes(4), "complete-early", "corr-4");
+        action.Should().Throw<DomainException>().Which.Error.Code.Should().Be("ROUTE_NOT_COMPLETE");
+    }
+
+    [Fact]
+    public void Complete_allows_delivered_stops_without_departure()
+    {
+        var run = Departed();
+        run.ArriveAtStop(StopOne, ActorId, Now.AddMinutes(3), "arrive-1", "corr-3");
+        run.DeliverStop(StopOne, ActorId, Now.AddMinutes(4), "Ali", null, "pod-1", "corr-4");
+        run.ArriveAtStop(StopTwo, ActorId, Now.AddMinutes(5), "arrive-2", "corr-5");
+        run.DeliverStop(StopTwo, ActorId, Now.AddMinutes(6), "Ayşe", null, "pod-2", "corr-6");
+        run.CompleteRoute(ActorId, Now.AddMinutes(7), "complete-delivered", "corr-7");
+        run.Status.Should().Be(DispatchRunStatus.Completed);
+    }
+
+    [Fact]
     public void Skip_requires_reason_and_allows_completion_when_reasoned()
     {
         var run = Departed();

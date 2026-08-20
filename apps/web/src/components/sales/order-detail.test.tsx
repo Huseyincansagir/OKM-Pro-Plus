@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OrderDetail } from "@/components/sales/order-detail";
 import { resetSessionStore, useSessionStore } from "@/lib/auth/session-store";
 import { getSalesOrder, submitSalesOrder } from "@/lib/sales/orders";
+import { createDeliveryNote } from "@/lib/shipping/delivery-notes";
 import { setWindowWidth } from "@/test/viewport";
 
 vi.mock("@/lib/sales/orders", async () => {
@@ -11,6 +12,12 @@ vi.mock("@/lib/sales/orders", async () => {
     "@/lib/sales/orders",
   );
   return { ...actual, getSalesOrder: vi.fn(), submitSalesOrder: vi.fn() };
+});
+vi.mock("@/lib/shipping/delivery-notes", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/shipping/delivery-notes")>(
+    "@/lib/shipping/delivery-notes",
+  );
+  return { ...actual, createDeliveryNote: vi.fn() };
 });
 
 const detail = {
@@ -59,6 +66,7 @@ describe("OrderDetail", () => {
     resetSessionStore();
     vi.mocked(getSalesOrder).mockReset();
     vi.mocked(submitSalesOrder).mockReset();
+    vi.mocked(createDeliveryNote).mockReset();
   });
 
   afterEach(() => {
@@ -92,5 +100,38 @@ describe("OrderDetail", () => {
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: "Onaya gönder" }));
     expect(submitSalesOrder).toHaveBeenCalledWith("o1");
+  });
+
+  it("creates a delivery note from remainingQty in BaseUnit", async () => {
+    const user = userEvent.setup();
+    authenticate(["order.read", "delivery-note.create"]);
+    vi.mocked(getSalesOrder).mockResolvedValue({ ...detail, status: "Approved" });
+    vi.mocked(createDeliveryNote).mockResolvedValue({
+      id: "dn1",
+      documentNumber: "DN-1",
+      salesOrderId: "o1",
+      customerId: "c1",
+      status: "Draft",
+      issuedAt: null,
+      itemCount: 1,
+      rowVersion: 1,
+      items: [],
+    });
+
+    render(<OrderDetail id="o1" />);
+    await user.click(await screen.findByRole("button", { name: "İrsaliye oluştur" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Taslak irsaliye" }));
+    expect(createDeliveryNote).toHaveBeenCalledWith({
+      salesOrderId: "o1",
+      items: [
+        {
+          salesOrderItemId: "i1",
+          enteredQuantity: 10000,
+          enteredPackagingId: null,
+          viewMode: "BaseUnit",
+        },
+      ],
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/types";
 import { apiRequest } from "@/lib/api/client";
 import { createEmployee, listEmployees, mapEmployee } from "@/lib/hr/employees";
@@ -8,6 +8,10 @@ vi.mock("@/lib/api/client", () => ({
 }));
 
 describe("employees", () => {
+  beforeEach(() => {
+    vi.mocked(apiRequest).mockReset();
+  });
+
   it("does not invent salary fields", () => {
     const mapped = mapEmployee({ id: "e1", code: "PER-1", fullName: "Ali", salary: 1000 });
     expect(mapped.fullName).toBe("Ali");
@@ -28,5 +32,6 @@ describe("employees", () => {
     await createEmployee({ fullName: "Ali" });
     const body = vi.mocked(apiRequest).mock.calls[0][0].body as Record<string, unknown>;
     expect(body).not.toHaveProperty("code");
+    expect(body).not.toHaveProperty("salary");
   });
 });
