@@ -15,7 +15,7 @@ WEB 018 PASS. Bu liste sonraki saldırı kuyruğudur; `implementation-web-mobile
 Sıra: belge zinciri önce, saha sonra.
 
 - [x] **P-003** Teklif issue → sipariş (UI + gerçek dönüşüm; IssueQuote sessiz sipariş açmaz)
-- [ ] **P-001** Load-plan create/lock sihirbazı (API var; web GET-only)
+- [x] **P-001** Load-plan create/lock sihirbazı (API var; web GET-only)
 - [ ] **P-002** Sefer hazırlama UI (`POST /route-plans/{id}/dispatch`)
 - [ ] **P-006** Fatura oluştur/kes UI
 - [ ] **P-007** Ödeme: GET list + UI (`POST /payments` only)

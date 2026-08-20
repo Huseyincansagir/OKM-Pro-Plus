@@ -39,11 +39,13 @@ import {
   type DriverRow,
   type LoadPlanSummary,
   type RoutePlanSummary,
+  type ShipmentPackageRow,
   type VehicleRow,
 } from "@/lib/shipping/dispatch";
 import { getCustomer } from "@/lib/sales/customers";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { LoadPlanWizard } from "@/components/shipping/load-plan-wizard";
 
 export function ShipmentDetailBoard({ id }: { id: string }) {
   const router = useRouter();
@@ -56,9 +58,13 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
   const canRoute = permissions.includes("shipment.route-manage");
   const canLockRoute = permissions.includes("shipment.route-lock");
   const canPackage = permissions.includes("shipment.package-manage");
+  const canLoadPlan = permissions.includes("shipment.load-plan");
+  const canVehicleFit = permissions.includes("shipment.vehicle-fit");
+  const canPlanLock = permissions.includes("shipment.plan-lock");
+  const canPlanOverride = permissions.includes("shipment.plan-override");
   const [row, setRow] = useState<ShipmentDetail | null>(null);
   const [dispatchRun, setDispatchRun] = useState<DispatchRun | null>(null);
-  const [packages, setPackages] = useState<Array<{ id: string; status: string }>>([]);
+  const [packages, setPackages] = useState<ShipmentPackageRow[]>([]);
   const [loadPlans, setLoadPlans] = useState<LoadPlanSummary[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlanSummary[]>([]);
   const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
@@ -280,6 +286,20 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                     </Button>
                   ) : null}
                 </div>
+              ) : null}
+              {row.status === "Preparing" && canLoadPlan && row.rowVersion !== null ? (
+                <LoadPlanWizard
+                  shipmentId={row.id}
+                  shipmentRowVersion={row.rowVersion}
+                  packages={packages}
+                  routePlan={routePlans[0] ?? null}
+                  vehicles={vehicles}
+                  canCreate={canLoadPlan}
+                  canFit={canVehicleFit}
+                  canLock={canPlanLock}
+                  canOverride={canPlanOverride}
+                  onChanged={() => setReload((value) => value + 1)}
+                />
               ) : null}
               {routePlans[0] && canRoute && routePlans[0].rowVersion !== null ? (
                 <div className="grid gap-2 md:grid-cols-2">

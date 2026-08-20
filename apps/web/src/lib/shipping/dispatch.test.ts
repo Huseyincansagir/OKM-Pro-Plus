@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiRequest } from "@/lib/api/client";
 import {
   confirmDispatch,
+  createLoadPlan,
   createRoutePlan,
   deliverStop,
   listRoutePlans,
   mapRoutePlan,
+  physicalFromSnapshot,
 } from "@/lib/shipping/dispatch";
 
 vi.mock("@/lib/api/client", () => ({
@@ -64,6 +66,47 @@ describe("route plans", () => {
     expect(call?.ifMatch).toBe("3");
     expect(call?.body).toMatchObject({ recipientName: "Ali" });
     expect(call?.body as Record<string, unknown>).not.toHaveProperty("quantityBase");
+  });
+
+  it("reads physical snapshot without inventing stock", () => {
+    expect(physicalFromSnapshot("{}")).toBeNull();
+    expect(
+      physicalFromSnapshot(
+        JSON.stringify({ lengthMm: 1200, widthMm: 800, heightMm: 150, grossWeightKg: 20, volumeM3: 1, onHand: 9 }),
+      ),
+    ).toMatchObject({ lengthMm: 1200, volumeM3: 1 });
+  });
+
+  it("creates a load plan with server quantityBase and no client conversion", async () => {
+    vi.mocked(apiRequest).mockResolvedValue({ id: "lp1", status: "Draft", rowVersion: 1, loadUnits: [] });
+    await createLoadPlan("sh1", {
+      routePlanId: "rp1",
+      expectedRoutePlanVersion: 2,
+      expectedShipmentRowVersion: 4,
+      fallbackStopId: "st1",
+      packages: [
+        {
+          id: "pkg1",
+          shipmentItemId: "si1",
+          routeStopId: "st1",
+          quantityBase: 2000,
+          status: "Created",
+          physicalSnapshot: JSON.stringify({
+            lengthMm: 1200,
+            widthMm: 800,
+            heightMm: 150,
+            tareWeightKg: 10,
+            grossWeightKg: 40,
+            volumeM3: 1.2,
+          }),
+        },
+      ],
+    });
+    const call = vi.mocked(apiRequest).mock.calls[0][0];
+    expect(call.path).toBe("/shipments/sh1/load-plans");
+    const unit = (call.body as { loadUnits: Array<{ items: Array<{ quantityBase: number }> }> }).loadUnits[0];
+    expect(unit.items[0].quantityBase).toBe(2000);
+    expect(call.body as Record<string, unknown>).not.toHaveProperty("quantityBase");
   });
 
   it("creates a route plan with shipment row version", async () => {

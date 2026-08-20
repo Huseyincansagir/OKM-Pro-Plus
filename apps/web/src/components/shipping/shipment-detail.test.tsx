@@ -109,6 +109,30 @@ describe("ShipmentDetailBoard", () => {
     render(<ShipmentDetailBoard id="s1" />);
     expect(await screen.findByRole("button", { name: "Rota + durak" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Teslim yaz" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Yük planı" })).not.toBeInTheDocument();
+  });
+
+  it("offers load plan wizard with shipment.load-plan", async () => {
+    useSessionStore.getState().setAuthenticated({
+      id: "u1",
+      userName: "admin",
+      displayName: "Yusuf Kaya",
+      roles: ["admin"],
+      permissions: ["shipment.read", "shipment.load-plan"],
+    });
+    vi.mocked(getShipment).mockResolvedValue({
+      id: "s1",
+      deliveryNoteId: "d1",
+      customerId: "c1",
+      status: "Preparing",
+      itemCount: 1,
+      rowVersion: 1,
+      createdAt: "2026-08-19T10:00:00Z",
+      items: [{ id: "i1", deliveryNoteItemId: "di1", productId: "p1", quantityBase: 2000 }],
+    });
+
+    render(<ShipmentDetailBoard id="s1" />);
+    expect(await screen.findByRole("button", { name: "Yük planı" })).toBeInTheDocument();
   });
 
   it("shows teslim yaz only for an arrived stop", async () => {

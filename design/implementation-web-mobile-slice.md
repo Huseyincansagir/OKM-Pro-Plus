@@ -771,7 +771,19 @@ Next Slice: WEB SLICE 018 — Route/dispatch execution and USB barcode
 ```text
 WEB SLICE 018
 STATUS: PASS
-Next Slice: design/implementation-backlog.md (P-003 teklif→sipariş, sonra P-001/P-002 load-plan+dispatch)
+Next Slice: WEB SLICE 019 — Load-plan create/lock wizard
+```
+
+## WEB SLICE 019 — Load-plan create/lock wizard
+
+**Tarih:** 2026-08-20
+**Durum:** PASS
+**Kapsam:** `POST /shipments/{id}/load-plans` paket fiziksel snapshot + sunucu `quantityBase` ile taslak birim. `POST /shipments/{id}/vehicle-fit/evaluate`, `POST /load-plans/{id}/assign-vehicle` (`SetPlanningSnapshot`; lock için vehicle/capacity zorunlu). Validate sonuçları sunucudan; hard error varken kilit yok. `POST /load-plans/{id}/lock` onay + warning override (`shipment.plan-override`). Ölçü uydurulmaz.
+
+```text
+WEB SLICE 019
+STATUS: PASS
+Next Slice: P-002 sefer hazırlama UI (POST /route-plans/{id}/dispatch)
 ```
 
 ## BACKLOG — WEB 018 sonrası
@@ -779,7 +791,7 @@ Next Slice: design/implementation-backlog.md (P-003 teklif→sipariş, sonra P-0
 Yapılacak kuyruk: [`implementation-backlog.md`](./implementation-backlog.md).  
 Ölçek/satış denetimi: [`commercial-scale-readiness.md`](./commercial-scale-readiness.md). **O-015 OPEN.**
 
-Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler.
+Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler. P-003 ve P-001 kapandı.
 
 
 
