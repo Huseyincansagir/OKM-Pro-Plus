@@ -54,16 +54,19 @@ Yapılan dilimler **sahte KPI / client `quantityBase` / viewMode=ambalaj karış
 ### WEB 001–018 omurga (tek şirket)
 
 ```text
-Public katalog → teklif talebi → müşteri → teklif → sipariş submit/approve
-→ irsaliye (kalan remainingQty, BaseUnit) → issue (stok çıkışı)
-→ sevkiyat Preparing → rota/paket → (kilitli load plan API varsa) sefer
-→ varış → metin POD → complete
+Public katalog → teklif talebi → müşteri → teklif → issue
+  → [UI’da siparişe dönüş yok; IssueQuote sipariş açmaz]
+  → sipariş (ayrı POST /orders) submit/approve
+  → irsaliye (remainingQty, BaseUnit) → issue (stok çıkışı)
+  → sevkiyat Preparing → rota/paket
+  → [load-plan create/lock UI yok; POST .../dispatch UI’da yok]
+  → sefer yalnızca zaten varsa: onay/kalkış/varış/metin POD/complete
 Depo: stok listesi, transfer create/complete/cancel, hareket, sayım
 Personel: employee master (maaş yok — dürüst)
 Barkod: USB Enter → POST /mobile/barcodes/resolve (kamera yok)
 ```
 
-Bu huni **tek fabrikada** domain olarak izlenebilir. Satılabilir “bitmiş ürün” değil.
+Lojistik **backend** (load-plan, vehicle-fit, FFD, load-verify, dispatch prepare) web’den ileride. Web seferi **hazırlamaz**, var olanı yürütür. Bu huni tek fabrikada kısmen izlenebilir; satılabilir kapalı ürün değil.
 
 ## 3. 500 firma / binlerce kullanıcı — P0 boşluklar
 
@@ -90,20 +93,23 @@ Mevcut kararlarla **bir** fabrikaya para alınacaksa bunlar kapanmalı. Sahte ek
 
 | ID | Eksik | Not |
 |---|---|---|
-| P-001 | Load-plan create/lock sihirbazı | WEB 018: sefer için kilitli load plan API’den gelmeli; UI sihirbazı yok |
-| P-002 | Flutter / saha mobil | `pubspec.yaml` yok; kamera yok |
-| P-003 | Dosya POD (imza/foto) | Yalnızca recipient/note metin |
-| P-004 | Fatura oluştur/kes UI | `InvoicesController` POST/issue var; web `/cari` liste; kart/komut yok |
-| P-005 | Ödeme UI | `POST /payments` var; web yok |
-| P-006 | Üretim complete UI | `/uretim` liste; remaining dürüst; complete komutu UI’da yok |
-| P-007 | e-Belge | O-001 adapter/stub; gerçek entegratör yok |
-| P-008 | Bordro | O-008 + A-009; personel master only |
-| P-009 | Kullanıcı/rol yönetim UI | Seed + permission; admin ekranı yok |
-| P-010 | `docs/operations` | Skill çıktısı yok; backup kodu var, runbook/incident yok |
-| P-011 | Integration/E2E yeşil kanıt | Domain+Vitest var; Postgres integration bu ortamda koşturulmadı |
-| P-012 | Public katalog KVKK silme/consent | O-009; kodda retention/silme endpoint yok |
-| P-013 | CORS / HSTS / HTTPS redirection API’de yok | TLS nginx’e bırakılmış; nginx HTTP only |
-| P-014 | Varsayılan JWT signing key kodda | `AuthOptions.SigningKey` development default; compose env zorunlu — yanlış env ile ayağa kalkabilir |
+| P-001 | Load-plan create/lock sihirbazı | API var; web yalnızca GET status. Vehicle-fit / load-verify UI yok |
+| P-002 | Sefer hazırlama UI | `POST /route-plans/{id}/dispatch` web’den çağrılmıyor; kart yalnızca mevcut run’ı yürütür |
+| P-003 | Teklif → sipariş | `IssueQuote` sipariş açmaz; `POST /orders` var; UI dönüştürme yok |
+| P-004 | Flutter / saha mobil | `apps/` yalnızca `web`; `pubspec.yaml` yok; kamera yok |
+| P-005 | Dosya POD (imza/foto) | Yalnızca recipient/note metin; multipart yok |
+| P-006 | Fatura oluştur/kes UI | `POST /invoices` + issue var; `/cari` liste; kart yok |
+| P-007 | Ödeme | `POST /payments` var; **GET list yok**; web yok |
+| P-008 | Üretim complete UI | API create/start/record/complete var; `/uretim` yalnızca GET list |
+| P-009 | Ürün/ambalaj yazma UI | Staff `GET /products` only |
+| P-010 | e-Belge | O-001 adapter/stub; GİB/UBL yok |
+| P-011 | Bordro | O-008 + A-009; personel master only |
+| P-012 | Kullanıcı/rol/rapor/bildirim UI | Nav `#yonetim` `#raporlar` `#bildirimler` stub |
+| P-013 | `docs/operations` | Backup kodu var; runbook/incident yok |
+| P-014 | Integration/E2E yeşil kanıt | Domain+Vitest var; Postgres integration bu ortamda koşturulmadı; Playwright yok |
+| P-015 | Public KVKK silme/consent | O-009; retention endpoint yok |
+| P-016 | TLS / CORS / HSTS | nginx HTTP 80, `location /` 404; API’de UseHttpsRedirection yok |
+| P-017 | Stale copy | Root `README.md` “production code yok” diyor. Dashboard hâlâ “GET /orders yok” caption (WEB 011 sonrası yanlış) |
 
 ## 5. Yapılanların “düzgün mü?” cevabı
 
@@ -129,7 +135,7 @@ Karar sahibi O-015’i seçmeden kod yok.
 4. Her yolda: D-014 gerçek pagination (cursor veya page+total); Take(100) yasak.
 5. O-009: public + login rate limit, lockout, CAPTCHA/honeypot.
 6. Outbox hosted worker.
-7. Load-plan UI, fatura/ödeme UI, üretim complete — tek müşteri geliri için.
+7. Tek müşteri hunisi: teklif→sipariş, load-plan+dispatch prepare UI, fatura/ödeme UI, üretim complete.
 8. Flutter + kamera + dosya POD — saha.
 9. Yük testi: hedef (ör. 200 eşzamanlı / fabrika veya 5k eşzamanlı SaaS) yazılmadan “binlerce kişi” iddia edilmez.
 10. `docs/operations` + restore kabul kaydı (O-010).
