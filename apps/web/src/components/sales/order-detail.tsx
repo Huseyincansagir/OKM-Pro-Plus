@@ -278,6 +278,17 @@ export function OrderDetail({ id }: { id: string }) {
                     ? `${detail.customerCode} · ${detail.customerLegalName}`
                     : detail.customerLegalName || "—"}
                 </p>
+                {detail.sourceQuoteId ? (
+                  <p>
+                    Kaynak teklif:{" "}
+                    <Link
+                      href={`/satis/teklifler/${detail.sourceQuoteId}`}
+                      className="font-semibold text-teal-600"
+                    >
+                      {detail.sourceQuoteNumber || "Teklif belgesini aç"}
+                    </Link>
+                  </p>
+                ) : null}
                 {detail.customerId ? (
                   <Link href={`/satis/musteriler/${detail.customerId}`} className="font-semibold text-teal-600">
                     Rehber kartı

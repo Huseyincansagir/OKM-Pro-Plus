@@ -142,6 +142,7 @@ public sealed class SalesOrderRecord
     public Guid Id { get; set; }
     public string OrderNumber { get; set; } = string.Empty;
     public Guid CustomerId { get; set; }
+    public Guid? SourceQuoteId { get; set; }
     public string Status { get; set; } = "Draft";
     public string CurrencyCode { get; set; } = "TRY";
     public string? PriceSnapshotVersion { get; set; }
@@ -155,6 +156,7 @@ public sealed class SalesOrderRecord
 
     public ICollection<SalesOrderItemRecord> Items { get; } = new List<SalesOrderItemRecord>();
     public ICollection<SalesOrderApprovalRecord> Approvals { get; } = new List<SalesOrderApprovalRecord>();
+    public QuoteRecord? SourceQuote { get; set; }
 }
 
 public sealed class SalesOrderItemRecord

@@ -1,11 +1,14 @@
 using System;
+using FactoryErp.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace FactoryErp.Infrastructure.Persistence.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(FactoryErpDbContext))]
+    [Migration("20260819140000_AddCustomerPricingDirectory")]
     public partial class AddCustomerPricingDirectory : Migration
     {
         /// <inheritdoc />

@@ -1,6 +1,7 @@
 import { ApiError } from "@/lib/api/types";
 import { apiRequest } from "@/lib/api/client";
 import type { StatusKind } from "@/components/ui/status-badge";
+import { mapSalesOrderDetail, type SalesOrderDetail } from "@/lib/sales/orders";
 
 export type QuoteSummary = {
   id: string;
@@ -91,6 +92,10 @@ export function canCreateQuoteFromRequest(status: string, customerId: string | n
 
 export function canIssueQuote(status: string): boolean {
   return status === "Draft";
+}
+
+export function canConvertToOrder(status: string): boolean {
+  return status === "Issued";
 }
 
 export function mapQuoteLine(raw: unknown): QuoteLine {
@@ -217,4 +222,13 @@ export async function issueQuote(id: string): Promise<QuoteDetail> {
     idempotent: true,
   });
   return mapQuoteDetail(raw);
+}
+
+export async function convertQuoteToOrder(id: string): Promise<SalesOrderDetail> {
+  const raw = await apiRequest<unknown>({
+    path: `/quotes/${id}/convert`,
+    method: "POST",
+    idempotent: true,
+  });
+  return mapSalesOrderDetail(raw);
 }

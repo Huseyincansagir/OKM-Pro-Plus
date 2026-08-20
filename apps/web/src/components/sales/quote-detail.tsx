@@ -20,7 +20,9 @@ import { ApiError } from "@/lib/api/types";
 import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
 import {
+  canConvertToOrder,
   canIssueQuote,
+  convertQuoteToOrder,
   getQuote,
   issueQuote,
   quoteStatusKind,
@@ -59,6 +61,7 @@ export function QuoteDetail({ id }: { id: string }) {
   const permissions = user?.permissions ?? [];
   const canRead = permissions.includes("quote.read");
   const canIssue = permissions.includes("quote.issue");
+  const canConvert = permissions.includes("quote.convert");
   const [detail, setDetail] = useState<QuoteDetailModel | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
@@ -67,6 +70,9 @@ export function QuoteDetail({ id }: { id: string }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [issuing, setIssuing] = useState(false);
   const [issueError, setIssueError] = useState<string | null>(null);
+  const [convertConfirmOpen, setConvertConfirmOpen] = useState(false);
+  const [converting, setConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!canRead) {
@@ -111,7 +117,22 @@ export function QuoteDetail({ id }: { id: string }) {
     }
   }
 
+  async function confirmConvert() {
+    setConverting(true);
+    setConvertError(null);
+    try {
+      const next = await convertQuoteToOrder(id);
+      setConvertConfirmOpen(false);
+      router.push(`/satis/siparisler/${next.id}`);
+    } catch (caught) {
+      setConvertError(userFacingMessage(caught));
+    } finally {
+      setConverting(false);
+    }
+  }
+
   const issuable = Boolean(detail && canIssue && canIssueQuote(detail.status));
+  const convertible = Boolean(detail && canConvert && canConvertToOrder(detail.status));
 
   return (
     <AppShell
@@ -134,6 +155,9 @@ export function QuoteDetail({ id }: { id: string }) {
           </Button>
           {issuable ? (
             <Button onClick={() => setConfirmOpen(true)}>Kesinleştir</Button>
+          ) : null}
+          {convertible ? (
+            <Button onClick={() => setConvertConfirmOpen(true)}>Teklifi Siparişe Dönüştür</Button>
           ) : null}
         </div>
       }
@@ -240,9 +264,14 @@ export function QuoteDetail({ id }: { id: string }) {
                   </Alert>
                 ) : (
                   <Alert tone="success" title="Kesinleşti">
-                    Belge yayınlandı. Sipariş bu dilimde oluşturulmaz.
+                    Belge yayınlandı. Stok rezervasyonu yapılmadan taslak siparişe dönüştürülebilir.
                   </Alert>
                 )}
+                {detail.status === "Issued" && !canConvert ? (
+                  <p className="text-sm text-slate-600">
+                    quote.convert yok. Buton gizlidir; yetki backend’dedir.
+                  </p>
+                ) : null}
                 {!canIssue ? (
                   <p className="text-sm text-slate-600">
                     quote.issue yok. Buton gizlidir; yetki backend’dedir.
@@ -334,6 +363,37 @@ export function QuoteDetail({ id }: { id: string }) {
             Bu işlem geri alınamaz. Belge numarası değişmez.
           </p>
         )}
+      </Dialog>
+
+      <Dialog
+        open={convertConfirmOpen}
+        onOpenChange={(open) => {
+          if (!converting) setConvertConfirmOpen(open);
+        }}
+        title="Teklifi siparişe dönüştür"
+        description="Sunucu bu kesinleşmiş tekliften taslak sipariş oluşturur. Stok rezervasyonu yapılmaz."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConvertConfirmOpen(false)} disabled={converting}>
+              Vazgeç
+            </Button>
+            <Button loading={converting} onClick={() => void confirmConvert()}>
+              Sipariş oluştur
+            </Button>
+          </>
+        }
+      >
+        {convertError ? (
+          <Alert tone="danger" title="Dönüştürülemedi">
+            {convertError}
+          </Alert>
+        ) : null}
+        <div className="space-y-2 text-sm text-slate-600">
+          <p><span className="font-semibold text-navy-950">Müşteri:</span> {detail?.customerLegalName || "—"}</p>
+          <p><span className="font-semibold text-navy-950">Teklif:</span> {detail?.quoteNumber || "—"}</p>
+          <p><span className="font-semibold text-navy-950">Kalem:</span> {detail?.itemCount ?? 0} satır</p>
+          <p><span className="font-semibold text-navy-950">Toplam:</span> {detail ? formatMoney(detail.totalGross, detail.currencyCode || "TRY") : "—"}</p>
+        </div>
       </Dialog>
     </AppShell>
   );

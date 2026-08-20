@@ -88,6 +88,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "quote.create"));
     options.AddPolicy(PermissionPolicies.QuoteIssue, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "quote.issue"));
+    options.AddPolicy(PermissionPolicies.QuoteConvert, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("permission", "quote.convert"));
     options.AddPolicy(PermissionPolicies.DeliveryNoteCreate, policy =>
         policy.RequireAuthenticatedUser().RequireClaim("permission", "delivery-note.create"));
     options.AddPolicy(PermissionPolicies.DeliveryNoteRead, policy =>

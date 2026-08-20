@@ -52,6 +52,19 @@ public sealed class QuotesController(ISalesCommandService salesCommandService) :
         return result is null ? NotFound() : Ok(result);
     }
 
+    [Authorize(Policy = PermissionPolicies.QuoteConvert)]
+    [HttpPost("{quoteId:guid}/convert")]
+    public async Task<IActionResult> Convert(Guid quoteId, CancellationToken cancellationToken)
+    {
+        var result = await salesCommandService.ConvertQuoteToSalesOrderAsync(
+            quoteId,
+            CurrentActorId(),
+            Request.Headers["Idempotency-Key"].ToString(),
+            Request.Headers["X-Correlation-Id"].FirstOrDefault() ?? HttpContext.TraceIdentifier,
+            cancellationToken);
+        return result is null ? NotFound() : Created($"/api/v1/orders/{result.Id}", result);
+    }
+
     private Guid CurrentActorId()
     {
         var value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

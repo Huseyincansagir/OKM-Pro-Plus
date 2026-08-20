@@ -244,6 +244,7 @@ public sealed class SalesOrderRecordConfiguration : IEntityTypeConfiguration<Sal
         builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
         builder.Property(x => x.OrderNumber).HasColumnName("order_number").HasMaxLength(80).IsRequired();
         builder.Property(x => x.CustomerId).HasColumnName("customer_id");
+        builder.Property(x => x.SourceQuoteId).HasColumnName("source_quote_id");
         builder.Property(x => x.Status).HasColumnName("status").HasMaxLength(40).IsRequired();
         builder.Property(x => x.CurrencyCode).HasColumnName("currency_code").HasMaxLength(3).IsRequired();
         builder.Property(x => x.PriceSnapshotVersion).HasColumnName("price_snapshot_version").HasMaxLength(120);
@@ -255,8 +256,12 @@ public sealed class SalesOrderRecordConfiguration : IEntityTypeConfiguration<Sal
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("timestamptz");
         builder.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasColumnType("timestamptz");
         builder.HasIndex(x => x.OrderNumber).IsUnique();
+        builder.HasIndex(x => x.SourceQuoteId)
+            .IsUnique()
+            .HasFilter("source_quote_id IS NOT NULL");
         builder.HasIndex(x => new { x.Status, x.CreatedAt });
         builder.HasOne<CustomerRecord>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.SourceQuote).WithMany().HasForeignKey(x => x.SourceQuoteId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.CreatedBy).OnDelete(DeleteBehavior.Restrict);
     }
 }

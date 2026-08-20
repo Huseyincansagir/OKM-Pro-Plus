@@ -50,6 +50,8 @@ describe("OrderList", () => {
         customerId: "c1",
         customerCode: "MUS-1",
         customerLegalName: "Acme",
+        sourceQuoteId: null,
+        sourceQuoteNumber: null,
         currencyCode: "TRY",
         totalNet: 80,
         totalTax: 0,

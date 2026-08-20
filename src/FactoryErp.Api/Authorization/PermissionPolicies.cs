@@ -29,6 +29,7 @@ public static class PermissionPolicies
     public const string QuoteRead = "permission:quote.read";
     public const string QuoteCreate = "permission:quote.create";
     public const string QuoteIssue = "permission:quote.issue";
+    public const string QuoteConvert = "permission:quote.convert";
     public const string DeliveryNoteCreate = "permission:delivery-note.create";
     public const string DeliveryNoteRead = "permission:delivery-note.read";
     public const string DeliveryNoteIssue = "permission:delivery-note.issue";

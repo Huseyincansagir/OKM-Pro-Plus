@@ -379,11 +379,150 @@ public sealed class SalesCommandService(
         return result;
     }
 
+    public async Task<SalesOrderDto?> ConvertQuoteToSalesOrderAsync(
+        Guid quoteId,
+        Guid actorId,
+        string idempotencyKey,
+        string correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        var idempotencyScope = $"quote:convert:{actorId}:{quoteId}";
+        var payloadHash = ComputePayloadHash(new { quoteId, actorId, action = "convert" });
+        var replay = await TryReplayAsync<SalesOrderDto>(idempotencyScope, idempotencyKey, payloadHash, cancellationToken);
+        if (replay is not null)
+        {
+            return replay;
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var quote = await dbContext.Quotes
+            .FromSqlInterpolated($"SELECT * FROM quotes WHERE id = {quoteId} FOR UPDATE")
+            .SingleOrDefaultAsync(cancellationToken);
+        if (quote is null)
+        {
+            return null;
+        }
+
+        await dbContext.Entry(quote).Collection(x => x.Items).LoadAsync(cancellationToken);
+        if (quote.Status != "Issued")
+        {
+            throw new DomainException(new(
+                "QUOTE_NOT_ISSUED",
+                "Siparişe yalnızca kesinleştirilmiş teklifler dönüştürülebilir."));
+        }
+
+        var existingOrder = await dbContext.SalesOrders
+            .Include(x => x.Items)
+            .Include(x => x.SourceQuote)
+            .SingleOrDefaultAsync(x => x.SourceQuoteId == quote.Id, cancellationToken);
+        var customer = await dbContext.Customers
+            .SingleOrDefaultAsync(x => x.Id == quote.CustomerId && !x.IsDeleted && x.Status == "Active", cancellationToken);
+        if (customer is null)
+        {
+            throw new DomainException(new("CUSTOMER_NOT_ACTIVE", "Teklif müşterisi aktif olmalıdır."));
+        }
+
+        if (existingOrder is not null)
+        {
+            var existingResult = MapSalesOrder(existingOrder, customer.CustomerCode, customer.LegalName);
+            await idempotencyStore.SaveAsync(
+                idempotencyScope,
+                idempotencyKey,
+                payloadHash,
+                201,
+                JsonSerializer.Serialize(existingResult),
+                DateTimeOffset.UtcNow.AddDays(30),
+                cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return existingResult;
+        }
+
+        if (quote.Items.Count == 0)
+        {
+            throw new DomainException(new("QUOTE_ITEMS_REQUIRED", "Teklif en az bir kalem içermelidir."));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var order = new SalesOrderRecord
+        {
+            Id = Guid.NewGuid(),
+            OrderNumber = await NextNumberAsync("sales_order", "SO", now, cancellationToken),
+            CustomerId = quote.CustomerId,
+            SourceQuoteId = quote.Id,
+            SourceQuote = quote,
+            Status = "Draft",
+            CurrencyCode = quote.CurrencyCode,
+            CreatedBy = actorId,
+            CreatedAt = now,
+            UpdatedAt = now,
+            RowVersion = 1,
+        };
+
+        foreach (var quoteItem in quote.Items)
+        {
+            order.Items.Add(new SalesOrderItemRecord
+            {
+                Id = Guid.NewGuid(),
+                ProductId = quoteItem.ProductId,
+                OrderedQty = quoteItem.QuantityBase,
+                ReservedQty = 0,
+                ShippedQty = 0,
+                CancelledQty = 0,
+                RemainingQty = quoteItem.QuantityBase,
+                EnteredQuantity = quoteItem.EnteredQuantity,
+                EnteredPackagingId = quoteItem.EnteredPackagingId,
+                PackagingSnapshot = quoteItem.PackagingSnapshot,
+                PartialDeliveryAllowed = false,
+                UnitPrice = quoteItem.UnitPrice,
+                TaxCode = quoteItem.TaxCode,
+                PriceSnapshot = quoteItem.PriceSnapshot,
+                RowVersion = 1,
+            });
+        }
+
+        order.TotalNet = order.Items.Sum(x => decimal.Round(x.OrderedQty * x.UnitPrice, 2, MidpointRounding.AwayFromZero));
+        order.TotalTax = 0;
+        order.TotalGross = order.TotalNet + order.TotalTax;
+        dbContext.SalesOrders.Add(order);
+        await auditWriter.AppendAsync(new(
+            "QuoteConvertedToOrder",
+            nameof(QuoteRecord),
+            quote.Id,
+            actorId,
+            correlationId,
+            AfterJson: JsonSerializer.Serialize(new
+            {
+                quoteId = quote.Id,
+                quoteNumber = quote.QuoteNumber,
+                orderId = order.Id,
+                orderNumber = order.OrderNumber,
+                orderStatus = order.Status,
+                order.Items.Count,
+                order.TotalNet,
+                order.TotalTax,
+                order.TotalGross,
+                stockReservation = false,
+            })));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var result = MapSalesOrder(order, customer.CustomerCode, customer.LegalName);
+        await idempotencyStore.SaveAsync(
+            idempotencyScope,
+            idempotencyKey,
+            payloadHash,
+            201,
+            JsonSerializer.Serialize(result),
+            DateTimeOffset.UtcNow.AddDays(30),
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
     public async Task<IReadOnlyCollection<SalesOrderDto>> ListSalesOrdersAsync(CancellationToken cancellationToken = default)
     {
         var orders = await dbContext.SalesOrders
             .AsNoTracking()
             .Include(x => x.Items)
+            .Include(x => x.SourceQuote)
             .OrderByDescending(x => x.CreatedAt)
             .Take(100)
             .ToArrayAsync(cancellationToken);
@@ -395,6 +534,7 @@ public sealed class SalesCommandService(
         var order = await dbContext.SalesOrders
             .AsNoTracking()
             .Include(x => x.Items)
+            .Include(x => x.SourceQuote)
             .SingleOrDefaultAsync(x => x.Id == orderId, cancellationToken);
         if (order is null)
         {
@@ -1057,7 +1197,9 @@ public sealed class SalesCommandService(
                 x.RowVersion)).ToArray(),
             order.CreatedAt,
             customerCode,
-            customerLegalName);
+            customerLegalName,
+            order.SourceQuoteId,
+            order.SourceQuote?.QuoteNumber);
 
     private async Task<IReadOnlyList<QuoteDto>> MapQuotesAsync(
         IReadOnlyCollection<QuoteRecord> quotes,

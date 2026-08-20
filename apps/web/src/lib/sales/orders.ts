@@ -9,6 +9,8 @@ export type SalesOrderSummary = {
   customerId: string;
   customerCode: string;
   customerLegalName: string;
+  sourceQuoteId: string | null;
+  sourceQuoteNumber: string | null;
   currencyCode: string;
   totalNet: number | null;
   totalTax: number | null;
@@ -114,6 +116,8 @@ export function mapSalesOrderSummary(raw: unknown): SalesOrderSummary {
     customerId: String(record.customerId ?? ""),
     customerCode: String(record.customerCode ?? ""),
     customerLegalName: String(record.customerLegalName ?? ""),
+    sourceQuoteId: typeof record.sourceQuoteId === "string" ? record.sourceQuoteId : null,
+    sourceQuoteNumber: typeof record.sourceQuoteNumber === "string" ? record.sourceQuoteNumber : null,
     currencyCode: String(record.currencyCode ?? ""),
     totalNet: asFiniteNumber(record.totalNet),
     totalTax: asFiniteNumber(record.totalTax),

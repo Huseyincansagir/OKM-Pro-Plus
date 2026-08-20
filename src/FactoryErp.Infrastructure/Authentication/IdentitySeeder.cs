@@ -81,6 +81,7 @@ public sealed class IdentitySeeder(
             ("10000000-0000-0000-0000-000000000075", "stock-count.complete", "warehouse", "complete"),
             ("10000000-0000-0000-0000-000000000076", "employee.read", "hr", "read"),
             ("10000000-0000-0000-0000-000000000077", "employee.create", "hr", "create"),
+            ("10000000-0000-0000-0000-000000000078", "quote.convert", "sales", "convert"),
             ("10000000-0000-0000-0000-000000000017", "delivery-note.create", "shipping", "create"),
             ("10000000-0000-0000-0000-000000000018", "delivery-note.read", "shipping", "read"),
             ("10000000-0000-0000-0000-000000000019", "delivery-note.issue", "shipping", "issue"),

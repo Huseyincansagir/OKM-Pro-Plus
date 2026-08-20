@@ -1,16 +1,27 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+const routerPush = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: routerPush, replace: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: () => new URLSearchParams(),
+}));
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QuoteDetail } from "@/components/sales/quote-detail";
 import { resetSessionStore, useSessionStore } from "@/lib/auth/session-store";
-import { getQuote, issueQuote } from "@/lib/sales/quotes";
+import {
+  convertQuoteToOrder,
+  getQuote,
+  issueQuote,
+} from "@/lib/sales/quotes";
 import { setWindowWidth } from "@/test/viewport";
 
 vi.mock("@/lib/sales/quotes", async () => {
   const actual = await vi.importActual<typeof import("@/lib/sales/quotes")>(
     "@/lib/sales/quotes",
   );
-  return { ...actual, getQuote: vi.fn(), issueQuote: vi.fn() };
+  return { ...actual, getQuote: vi.fn(), issueQuote: vi.fn(), convertQuoteToOrder: vi.fn() };
 });
 
 const detail = {
@@ -62,8 +73,10 @@ describe("QuoteDetail", () => {
   beforeEach(() => {
     setWindowWidth(1280);
     resetSessionStore();
+    routerPush.mockReset();
     vi.mocked(getQuote).mockReset();
     vi.mocked(issueQuote).mockReset();
+    vi.mocked(convertQuoteToOrder).mockReset();
   });
 
   afterEach(() => {
@@ -81,6 +94,59 @@ describe("QuoteDetail", () => {
     expect(screen.getByText("Koli")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Kesinleştir" })).not.toBeInTheDocument();
     expect(issueQuote).not.toHaveBeenCalled();
+  });
+
+  it("hides conversion without quote.convert permission", async () => {
+    authenticate(["quote.read"]);
+    vi.mocked(getQuote).mockResolvedValue({
+      ...detail,
+      status: "Issued",
+      issuedAt: "2026-08-19T12:00:00Z",
+    });
+
+    render(<QuoteDetail id="q1" />);
+
+    expect(await screen.findByRole("heading", { name: "TEK-2026-000001" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Teklifi Siparişe Dönüştür" })).not.toBeInTheDocument();
+  });
+
+  it("converts an issued quote and redirects to the created order", async () => {
+    const user = userEvent.setup();
+    authenticate(["quote.read", "quote.convert"]);
+    vi.mocked(getQuote).mockResolvedValue({
+      ...detail,
+      status: "Issued",
+      issuedAt: "2026-08-19T12:00:00Z",
+    });
+    vi.mocked(convertQuoteToOrder).mockResolvedValue({
+      id: "o1",
+      orderNumber: "SO-2026-000001",
+      status: "Draft",
+      customerId: "c1",
+      customerCode: "MUS-2026-000001",
+      customerLegalName: "Acme",
+      sourceQuoteId: "q1",
+      sourceQuoteNumber: "TEK-2026-000001",
+      currencyCode: "TRY",
+      totalNet: 20000,
+      totalTax: 0,
+      totalGross: 20000,
+      itemCount: 1,
+      createdAt: "2026-08-19T12:01:00Z",
+      rowVersion: 1,
+      items: [],
+    });
+
+    render(<QuoteDetail id="q1" />);
+
+    await user.click(await screen.findByRole("button", { name: "Teklifi Siparişe Dönüştür" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("TEK-2026-000001")).toBeInTheDocument();
+    expect(within(dialog).getByText("Acme")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Sipariş oluştur" }));
+
+    expect(convertQuoteToOrder).toHaveBeenCalledWith("q1");
+    expect(routerPush).toHaveBeenCalledWith("/satis/siparisler/o1");
   });
 
   it("issues a draft after confirmation", async () => {

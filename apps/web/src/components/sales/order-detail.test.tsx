@@ -27,6 +27,8 @@ const detail = {
   customerId: "c1",
   customerCode: "MUS-1",
   customerLegalName: "Acme",
+  sourceQuoteId: null,
+  sourceQuoteNumber: null,
   currencyCode: "TRY",
   totalNet: 20000,
   totalTax: 0,
@@ -83,6 +85,20 @@ describe("OrderDetail", () => {
     expect(screen.getAllByText("10000").length).toBeGreaterThan(0);
     expect(screen.getByText("Koli")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Onaya gönder" })).not.toBeInTheDocument();
+  });
+
+  it("shows a source quote link when the order came from a quote", async () => {
+    authenticate(["order.read"]);
+    vi.mocked(getSalesOrder).mockResolvedValue({
+      ...detail,
+      sourceQuoteId: "q1",
+      sourceQuoteNumber: "TEK-2026-000001",
+    });
+
+    render(<OrderDetail id="o1" />);
+
+    const sourceLink = await screen.findByRole("link", { name: "TEK-2026-000001" });
+    expect(sourceLink).toHaveAttribute("href", "/satis/teklifler/q1");
   });
 
   it("submits a draft after confirmation", async () => {

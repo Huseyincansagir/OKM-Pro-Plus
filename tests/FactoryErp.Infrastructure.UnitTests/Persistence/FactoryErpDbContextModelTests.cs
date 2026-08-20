@@ -22,6 +22,26 @@ public sealed class FactoryErpDbContextModelTests
     }
 
     [Fact]
+    public void Sales_order_source_quote_is_optional_and_unique_per_quote()
+    {
+        using var context = CreateContext();
+        var entity = context.Model.FindEntityType(typeof(SalesOrderRecord))!;
+        var sourceQuote = entity.FindProperty(nameof(SalesOrderRecord.SourceQuoteId));
+
+        sourceQuote.Should().NotBeNull();
+        sourceQuote!.GetColumnName().Should().Be("source_quote_id");
+        entity.GetIndexes().Should().Contain(index =>
+            index.IsUnique
+            && index.GetFilter() == "source_quote_id IS NOT NULL"
+            && index.Properties.Select(property => property.Name)
+                .SequenceEqual(new[] { nameof(SalesOrderRecord.SourceQuoteId) }));
+        entity.GetForeignKeys().Should().Contain(foreignKey =>
+            foreignKey.PrincipalEntityType.ClrType == typeof(QuoteRecord)
+            && foreignKey.Properties.Select(property => property.Name)
+                .SequenceEqual(new[] { nameof(SalesOrderRecord.SourceQuoteId) }));
+    }
+
+    [Fact]
     public void User_row_version_is_an_ef_concurrency_token()
     {
         using var context = CreateContext();
