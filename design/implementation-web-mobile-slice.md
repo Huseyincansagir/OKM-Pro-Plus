@@ -857,18 +857,54 @@ Next Slice: WEB SLICE 020 — Dispatch preparation and execution (P-002)
 | `dotnet test tests/FactoryErp.Domain.UnitTests` | PASS; 130 test |
 | `dotnet test tests/FactoryErp.ArchitectureTests` | PASS; 5 test |
 
+## WEB SLICE 022 — Payment and collection ledger UI (P-007)
+
+**Tarih:** 2026-08-21
+**Durum:** PASS
+**Kapsam:** `POST /api/v1/payments` (`ApplyPaymentRequest`, `payment.apply`), `GET /api/v1/payments` (`payment.read`), `GET /api/v1/payments/methods`, `GET /api/v1/current-accounts/{customerId}/transactions` (`current-account.read`), `/cari` panosunda Tahsilatlar ve Ödemeler tablosu, **"Tahsilat / Ödeme Girişi"** modalı (`PaymentModal`), `/cari/faturalar/[id]` sayfasından tek tıkla açık faturaya tahsilat alma kısayolu.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| Tahsilat / Ödeme listesi | `GET /api/v1/payments` (`payment.read` / `current-account.read`) |
+| Ödeme yöntemleri | `GET /api/v1/payments/methods` (`payment.read`) |
+| Tahsilat / Ödeme kaydet | `POST /api/v1/payments` (`ApplyPaymentRequest`, `payment.apply`, Idempotency-Key) |
+| Müşteri cari hareketleri / ekstre | `GET /api/v1/current-accounts/{customerId}/transactions` (`current-account.read`) |
+| Faturadan tahsilat alma | `PaymentModal` (`initialCustomerId`, `initialInvoiceId`, `initialAmount`) |
+
+### 2. Kurallar ve Invariantlar
+
+- **Çift Taraflı Ledger Kaydı:** Her ödeme işleminde müşterinin cari hesabına `CreditTotal += Amount` ve `Balance -= Amount` (borç düşümü) işlenir; otomatik `CurrentTransactionRecord` (`PaymentApplied`, `CreditAmount = Amount`, `DebitAmount = 0`) açılır.
+- **Fatura Tahsisatı:** İsteğe bağlı fatura seçiminde faturanın durumu `Issued` veya `PartiallyPaid` olmalıdır; toplam tahsis tutarı fatura genel toplamını aşamaz (`OVER_PAYMENT` guard).
+- **Fiziksel Silme Yok:** Finansal kayıtlar fiziksel olarak silinmez; ters kayıt (`reverse`) uygulanır.
+- **Yetkilendirme:** Ödeme alma `payment.apply`, listeleme `payment.read` / `current-account.read`.
+
+### Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 240 test (74 dosya) |
+| `pnpm --dir apps/web typecheck` | PASS; 0 error |
+| `pnpm --dir apps/web lint` | PASS; 0 warning / 0 error |
+| `pnpm --dir apps/web build` | PASS; Next.js 15.5.23 prod build (28 route) |
+| `dotnet build FactoryErp.sln -c Release` | PASS; 0 warning / 0 error |
+| `dotnet test tests/FactoryErp.Domain.UnitTests` | PASS; 130 test |
+| `dotnet test tests/FactoryErp.ArchitectureTests` | PASS; 5 test |
+
 ```text
-WEB SLICE 021
+WEB SLICE 022
 STATUS: PASS
-Next Slice: P-007 — Tahsilat ve Ödeme UI (POST /payments & GET /current-accounts)
+Next Slice: P-008 — Üretim Tamamlama UI (/uretim complete modal & POST /production/orders/{id}/complete)
 ```
 
-## BACKLOG — WEB 021 sonrası
+## BACKLOG — WEB 022 sonrası
 
 Yapılacak kuyruk: [`implementation-backlog.md`](./implementation-backlog.md).  
 Ölçek/satış denetimi: [`commercial-scale-readiness.md`](./commercial-scale-readiness.md). **O-015 OPEN.**
 
-Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler. P-003, P-001, P-002 ve P-006 kapandı.
+Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler. P-003, P-001, P-002, P-006 ve P-007 kapandı.
+
 
 
 

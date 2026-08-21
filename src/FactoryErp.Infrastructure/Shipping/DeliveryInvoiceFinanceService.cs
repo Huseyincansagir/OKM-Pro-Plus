@@ -561,6 +561,48 @@ public sealed class DeliveryInvoiceFinanceService(
         return result;
     }
 
+    public async Task<IReadOnlyCollection<PaymentDto>> ListPaymentsAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.Payments
+            .AsNoTracking()
+            .OrderByDescending(x => x.AppliedAt ?? DateTimeOffset.MinValue)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+        var customerIds = rows.Select(x => x.CustomerId).Distinct().ToArray();
+        var paymentIds = rows.Select(x => x.Id).ToArray();
+        var accounts = await dbContext.CurrentAccounts
+            .AsNoTracking()
+            .Where(x => customerIds.Contains(x.CustomerId))
+            .ToDictionaryAsync(x => x.CustomerId, cancellationToken);
+        var allocations = await dbContext.PaymentAllocations
+            .AsNoTracking()
+            .Where(x => paymentIds.Contains(x.PaymentId))
+            .ToDictionaryAsync(x => x.PaymentId, x => x.InvoiceId, cancellationToken);
+
+        return rows.Select(x => new PaymentDto(
+            x.Id,
+            x.CustomerId,
+            x.Amount,
+            x.PaymentMethodId,
+            x.Status,
+            allocations.TryGetValue(x.Id, out var invoiceId) ? invoiceId : null,
+            x.AppliedAt,
+            accounts.TryGetValue(x.CustomerId, out var acc)
+                ? MapCurrentAccount(acc)
+                : new CurrentAccountDto(x.CustomerId, x.CurrencyCode, 0, 0, 0, 1)
+        )).ToArray();
+    }
+
+    public async Task<IReadOnlyCollection<PaymentMethodDto>> ListPaymentMethodsAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.PaymentMethods
+            .AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Code)
+            .ToArrayAsync(cancellationToken);
+        return rows.Select(x => new PaymentMethodDto(x.Id, x.Code, x.Name, x.IsActive)).ToArray();
+    }
+
     public async Task<IReadOnlyCollection<CurrentAccountDto>> ListCurrentAccountsAsync(CancellationToken cancellationToken = default)
     {
         var rows = await dbContext.CurrentAccounts
@@ -575,6 +617,35 @@ public sealed class DeliveryInvoiceFinanceService(
     {
         var account = await dbContext.CurrentAccounts.AsNoTracking().SingleOrDefaultAsync(x => x.CustomerId == customerId, cancellationToken);
         return account is null ? null : MapCurrentAccount(account);
+    }
+
+    public async Task<IReadOnlyCollection<CurrentTransactionDto>> ListCurrentTransactionsAsync(Guid customerId, CancellationToken cancellationToken = default)
+    {
+        var account = await dbContext.CurrentAccounts
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.CustomerId == customerId, cancellationToken);
+        if (account is null)
+        {
+            return Array.Empty<CurrentTransactionDto>();
+        }
+
+        var rows = await dbContext.CurrentTransactions
+            .AsNoTracking()
+            .Where(x => x.CurrentAccountId == account.Id)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(100)
+            .ToArrayAsync(cancellationToken);
+
+        return rows.Select(x => new CurrentTransactionDto(
+            x.Id,
+            x.CurrentAccountId,
+            x.TransactionType,
+            x.DebitAmount,
+            x.CreditAmount,
+            x.CurrencyCode,
+            x.SourceEntityType,
+            x.SourceEntityId,
+            x.CreatedAt)).ToArray();
     }
 
     private async Task<SalesOrderItemRecord?> LockSalesOrderItemAsync(Guid id, CancellationToken cancellationToken)

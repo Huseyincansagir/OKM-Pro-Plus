@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FileText, Layers, Receipt, Wallet } from "lucide-react";
+import { CreditCard, FileText, Receipt, Wallet } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiMetric } from "@/components/dashboard/kpi-metric";
 import { EmptyState } from "@/components/states/empty-state";
@@ -23,6 +23,12 @@ import {
   type DeliveryNoteRow,
   type InvoiceRow,
 } from "@/lib/finance/ledgers";
+import {
+  listPayments,
+  paymentStatusKind,
+  type PaymentRow,
+} from "@/lib/finance/payments";
+import { PaymentModal } from "@/components/finance/payment-modal";
 
 function formatMoney(value: number | null, currency: string): string {
   if (value === null || !currency) {
@@ -41,10 +47,14 @@ export function FinanceBoard() {
   const canReadInvoices = permissions.includes("invoice.read");
   const canReadNotes = permissions.includes("delivery-note.read");
   const canReadAccounts = permissions.includes("current-account.read");
-  const canRead = canReadInvoices || canReadNotes || canReadAccounts;
+  const canReadPayments = permissions.includes("payment.read") || permissions.includes("current-account.read");
+  const canApplyPayment = permissions.includes("payment.apply");
+  const canRead = canReadInvoices || canReadNotes || canReadAccounts || canReadPayments;
   const [invoices, setInvoices] = useState<InvoiceRow[] | null>(null);
   const [notes, setNotes] = useState<DeliveryNoteRow[] | null>(null);
   const [accounts, setAccounts] = useState<AccountRow[] | null>(null);
+  const [payments, setPayments] = useState<PaymentRow[] | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(canRead);
@@ -63,12 +73,14 @@ export function FinanceBoard() {
       canReadInvoices ? listInvoices() : Promise.resolve([]),
       canReadNotes ? listDeliveryNotes() : Promise.resolve([]),
       canReadAccounts ? listCurrentAccounts() : Promise.resolve([]),
+      canReadPayments ? listPayments() : Promise.resolve([]),
     ])
-      .then(([invoiceRows, noteRows, accountRows]) => {
+      .then(([invoiceRows, noteRows, accountRows, paymentRows]) => {
         if (cancelled) return;
         setInvoices(invoiceRows);
         setNotes(noteRows);
         setAccounts(accountRows);
+        setPayments(paymentRows);
       })
       .catch((caught) => {
         if (cancelled) return;
@@ -84,12 +96,13 @@ export function FinanceBoard() {
     return () => {
       cancelled = true;
     };
-  }, [canRead, canReadAccounts, canReadInvoices, canReadNotes, reload]);
+  }, [canRead, canReadAccounts, canReadInvoices, canReadNotes, canReadPayments, reload]);
 
   const ready = !loading && !error && !denied;
   const invoiceTotal = invoices?.length ?? 0;
   const noteTotal = notes?.length ?? 0;
   const accountTotal = accounts?.length ?? 0;
+  const paymentTotal = payments?.length ?? 0;
 
   return (
     <AppShell
@@ -99,13 +112,18 @@ export function FinanceBoard() {
         { label: "Cari ve muhasebe" },
       ]}
       pageTitle="Cari ve muhasebe"
-      pageDescription="Faturalar, irsaliyeler ve cari bakiyeler sunucudan gelir. Eksik tutar ₺0 yazılmaz."
+      pageDescription="Faturalar, irsaliyeler, tahsilatlar ve cari bakiyeler sunucudan gelir. Eksik tutar ₺0 yazılmaz."
       pageActions={
-        canRead ? (
-          <Button variant="secondary" loading={loading} onClick={() => setReload((value) => value + 1)}>
-            Yenile
-          </Button>
-        ) : null
+        <div className="flex flex-wrap gap-2">
+          {canRead ? (
+            <Button variant="secondary" loading={loading} onClick={() => setReload((value) => value + 1)}>
+              Yenile
+            </Button>
+          ) : null}
+          {canApplyPayment ? (
+            <Button onClick={() => setPaymentModalOpen(true)}>Tahsilat / Ödeme Girişi</Button>
+          ) : null}
+        </div>
       }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -128,6 +146,15 @@ export function FinanceBoard() {
           caption="GET /delivery-notes"
         />
         <KpiMetric
+          label="Tahsilat / Ödeme"
+          value={ready && canReadPayments ? String(paymentTotal) : "—"}
+          unit="işlem"
+          icon={CreditCard}
+          tone="teal"
+          unavailable={!ready || !canReadPayments}
+          caption="GET /payments"
+        />
+        <KpiMetric
           label="Cari kart"
           value={ready && canReadAccounts ? String(accountTotal) : "—"}
           unit="hesap"
@@ -136,21 +163,13 @@ export function FinanceBoard() {
           unavailable={!ready || !canReadAccounts}
           caption="GET /current-accounts"
         />
-        <KpiMetric
-          label="Pencere"
-          value={ready ? "100" : "—"}
-          icon={Layers}
-          tone="navy"
-          unavailable={!ready}
-          caption="Her liste en fazla 100"
-        />
       </div>
 
       {!canRead ? (
         <div className="mt-4">
           <PermissionDenied
             title="Cari bu oturumda görünmez"
-            description="invoice.read / delivery-note.read / current-account.read yok."
+            description="invoice.read / delivery-note.read / current-account.read / payment.read yok."
           />
         </div>
       ) : denied ? (
@@ -251,6 +270,60 @@ export function FinanceBoard() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle>Tahsilatlar ve Ödemeler</CardTitle>
+            </CardHeader>
+            <CardBody>
+              {!canReadPayments ? (
+                <p className="text-sm text-slate-600">payment.read / current-account.read yok.</p>
+              ) : loading || !payments ? (
+                <p className="text-sm text-slate-600">Yükleniyor…</p>
+              ) : payments.length === 0 ? (
+                <EmptyState title="Tahsilat kaydı yok" description="GET /payments boş." />
+              ) : (
+                <DataTable
+                  columns={[
+                    {
+                      id: "date",
+                      header: "Tarih",
+                      accessor: (row) => (row.appliedAt ? new Date(row.appliedAt).toLocaleDateString("tr-TR") : "—"),
+                    },
+                    { id: "customer", header: "Müşteri", accessor: (row) => row.customerId.slice(0, 8) },
+                    {
+                      id: "amount",
+                      header: "Tutar",
+                      accessor: (row) => formatMoney(row.amount, "TRY"),
+                    },
+                    {
+                      id: "invoice",
+                      header: "İlişkili Fatura",
+                      accessor: (row) =>
+                        row.invoiceId ? (
+                          <Link className="font-medium text-teal-600 underline" href={`/cari/faturalar/${row.invoiceId}`}>
+                            {row.invoiceId.slice(0, 8)}
+                          </Link>
+                        ) : (
+                          <span className="text-slate-500">Serbest Tahsilat</span>
+                        ),
+                    },
+                    {
+                      id: "status",
+                      header: "Durum",
+                      accessor: (row) => (
+                        <StatusBadge
+                          status={paymentStatusKind(row.status)}
+                          label={row.status}
+                        />
+                      ),
+                    },
+                  ]}
+                  rows={payments}
+                  getRowId={(row) => row.id}
+                />
+              )}
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle>Cari bakiyeler</CardTitle>
             </CardHeader>
             <CardBody>
@@ -288,6 +361,12 @@ export function FinanceBoard() {
           </Card>
         </div>
       )}
+
+      <PaymentModal
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
+        onSuccess={() => setReload((v) => v + 1)}
+      />
     </AppShell>
   );
 }

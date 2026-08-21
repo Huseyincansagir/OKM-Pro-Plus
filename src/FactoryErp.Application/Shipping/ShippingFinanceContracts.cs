@@ -86,6 +86,23 @@ public sealed record CurrentAccountDto(
     decimal Balance,
     long RowVersion);
 
+public sealed record PaymentMethodDto(
+    Guid Id,
+    string Code,
+    string Name,
+    bool IsActive);
+
+public sealed record CurrentTransactionDto(
+    Guid Id,
+    Guid CurrentAccountId,
+    string TransactionType,
+    decimal DebitAmount,
+    decimal CreditAmount,
+    string CurrencyCode,
+    string SourceEntityType,
+    Guid SourceEntityId,
+    DateTimeOffset CreatedAt);
+
 public sealed record PaymentDto(
     Guid Id,
     Guid CustomerId,
@@ -141,7 +158,13 @@ public interface IShippingFinanceCommandService
         string correlationId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<PaymentDto>> ListPaymentsAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<PaymentMethodDto>> ListPaymentMethodsAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyCollection<CurrentAccountDto>> ListCurrentAccountsAsync(CancellationToken cancellationToken = default);
 
     Task<CurrentAccountDto?> GetCurrentAccountAsync(Guid customerId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<CurrentTransactionDto>> ListCurrentTransactionsAsync(Guid customerId, CancellationToken cancellationToken = default);
 }

@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InvoiceDetailBoard } from "@/components/finance/invoice-detail";
 import { resetSessionStore, useSessionStore } from "@/lib/auth/session-store";
 import { getInvoice, issueInvoice } from "@/lib/finance/invoices";
+import { listPaymentMethods } from "@/lib/finance/payments";
+import { listCustomers } from "@/lib/sales/customers";
+import { listInvoices } from "@/lib/finance/ledgers";
 import { setWindowWidth } from "@/test/viewport";
 
 vi.mock("@/lib/finance/invoices", async () => {
@@ -17,12 +20,30 @@ vi.mock("@/lib/finance/invoices", async () => {
   };
 });
 
+vi.mock("@/lib/finance/payments", () => ({
+  applyPayment: vi.fn(),
+  listPaymentMethods: vi.fn().mockResolvedValue([]),
+  listPayments: vi.fn().mockResolvedValue([]),
+  listCustomerTransactions: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/lib/sales/customers", () => ({
+  listCustomers: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/lib/finance/ledgers", () => ({
+  listInvoices: vi.fn().mockResolvedValue([]),
+}));
+
 describe("InvoiceDetailBoard", () => {
   beforeEach(() => {
     setWindowWidth(1280);
     resetSessionStore();
     vi.mocked(getInvoice).mockReset();
     vi.mocked(issueInvoice).mockReset();
+    vi.mocked(listPaymentMethods).mockResolvedValue([]);
+    vi.mocked(listCustomers).mockResolvedValue([]);
+    vi.mocked(listInvoices).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -155,5 +176,36 @@ describe("InvoiceDetailBoard", () => {
     await user.click(confirmBtn);
 
     expect(issueInvoice).toHaveBeenCalledWith("inv-1");
+  });
+
+  it("renders issued invoice and opens payment modal when Tahsilat Al is clicked", async () => {
+    const user = userEvent.setup();
+    useSessionStore.getState().setAuthenticated({
+      id: "u1",
+      userName: "admin",
+      displayName: "Admin User",
+      roles: ["admin"],
+      permissions: ["invoice.read", "payment.apply", "current-account.read"],
+    });
+
+    vi.mocked(getInvoice).mockResolvedValue({
+      id: "inv-1",
+      invoiceNumber: "INV-2026-000001",
+      customerId: "cust-1",
+      status: "Issued",
+      currencyCode: "TRY",
+      subtotal: 1000,
+      taxTotal: 200,
+      grandTotal: 1200,
+      items: [],
+      issuedAt: "2026-08-21T10:00:00Z",
+      rowVersion: 2,
+    });
+
+    render(<InvoiceDetailBoard id="inv-1" />);
+    const paymentBtn = await screen.findByRole("button", { name: "Tahsilat Al" });
+    await user.click(paymentBtn);
+
+    expect(await screen.findByRole("heading", { name: "Tahsilat / Ödeme Girişi" })).toBeInTheDocument();
   });
 });

@@ -20,4 +20,14 @@ public sealed class PaymentsController(IShippingFinanceCommandService service)
         var result = await Service.ApplyPaymentAsync(request, ActorId(), IdempotencyKey(), CorrelationId(), cancellationToken);
         return Ok(result);
     }
+
+    [Authorize(Policy = PermissionPolicies.PaymentRead)]
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyCollection<PaymentDto>>> List(CancellationToken cancellationToken)
+        => Ok(await Service.ListPaymentsAsync(cancellationToken));
+
+    [Authorize(Policy = PermissionPolicies.PaymentRead)]
+    [HttpGet("methods")]
+    public async Task<ActionResult<IReadOnlyCollection<PaymentMethodDto>>> ListMethods(CancellationToken cancellationToken)
+        => Ok(await Service.ListPaymentMethodsAsync(cancellationToken));
 }

@@ -37,6 +37,7 @@ public static class PermissionPolicies
     public const string InvoiceRead = "permission:invoice.read";
     public const string InvoiceIssue = "permission:invoice.issue";
     public const string PaymentApply = "permission:payment.apply";
+    public const string PaymentRead = "permission:payment.read";
     public const string CurrentAccountRead = "permission:current-account.read";
     public const string ProductionCreate = "permission:production.create";
     public const string ProductionRead = "permission:production.read";

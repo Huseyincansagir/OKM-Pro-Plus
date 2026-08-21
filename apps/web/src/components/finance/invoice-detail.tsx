@@ -18,6 +18,7 @@ import { ApiError } from "@/lib/api/types";
 import { userFacingMessage } from "@/lib/api/auth-client";
 import { useSessionStore } from "@/lib/auth/session-store";
 import { getInvoice, invoiceStatusKind, issueInvoice, type InvoiceDetail } from "@/lib/finance/invoices";
+import { PaymentModal } from "@/components/finance/payment-modal";
 
 function formatMoney(value: number | null, currency: string): string {
   if (value === null || !currency) {
@@ -36,6 +37,7 @@ export function InvoiceDetailBoard({ id }: { id: string }) {
   const permissions = user?.permissions ?? [];
   const canRead = permissions.includes("invoice.read");
   const canIssue = permissions.includes("invoice.issue");
+  const canApplyPayment = permissions.includes("payment.apply");
   const canReadAccounts = permissions.includes("current-account.read");
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +47,7 @@ export function InvoiceDetailBoard({ id }: { id: string }) {
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [issueConfirmOpen, setIssueConfirmOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     if (!canRead) {
@@ -116,6 +119,9 @@ export function InvoiceDetailBoard({ id }: { id: string }) {
           ) : null}
           {invoice && canIssue && isDraft ? (
             <Button onClick={() => setIssueConfirmOpen(true)}>Faturayı kesinleştir (Issue)</Button>
+          ) : null}
+          {invoice && canApplyPayment && isIssued ? (
+            <Button onClick={() => setPaymentModalOpen(true)}>Tahsilat Al</Button>
           ) : null}
         </div>
       }
@@ -291,6 +297,17 @@ export function InvoiceDetailBoard({ id }: { id: string }) {
           </p>
         </div>
       </Dialog>
+
+      {invoice ? (
+        <PaymentModal
+          open={paymentModalOpen}
+          onOpenChange={setPaymentModalOpen}
+          initialCustomerId={invoice.customerId}
+          initialInvoiceId={invoice.id}
+          initialAmount={invoice.grandTotal}
+          onSuccess={() => setReload((v) => v + 1)}
+        />
+      ) : null}
     </AppShell>
   );
 }

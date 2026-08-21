@@ -23,4 +23,11 @@ public sealed class CurrentAccountsController(IShippingFinanceCommandService ser
         var result = await Service.GetCurrentAccountAsync(customerId, cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
+
+    [Authorize(Policy = PermissionPolicies.CurrentAccountRead)]
+    [HttpGet("{customerId:guid}/transactions")]
+    public async Task<ActionResult<IReadOnlyCollection<CurrentTransactionDto>>> ListTransactions(
+        Guid customerId,
+        CancellationToken cancellationToken)
+        => Ok(await Service.ListCurrentTransactionsAsync(customerId, cancellationToken));
 }
