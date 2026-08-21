@@ -24,6 +24,8 @@ import {
   type DeliveryNoteDetail,
 } from "@/lib/shipping/delivery-notes";
 import { createShipment } from "@/lib/shipping/shipments";
+import { createInvoice } from "@/lib/finance/invoices";
+import { Input } from "@/components/ui/input";
 
 export function DeliveryNoteDetailBoard({ id }: { id: string }) {
   const router = useRouter();
@@ -32,6 +34,7 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
   const canRead = permissions.includes("delivery-note.read");
   const canIssue = permissions.includes("delivery-note.issue");
   const canCreateShipment = permissions.includes("shipment.create");
+  const canCreateInvoice = permissions.includes("invoice.create");
   const [note, setNote] = useState<DeliveryNoteDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
@@ -39,7 +42,8 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
   const [reload, setReload] = useState(0);
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<"issue" | "shipment" | null>(null);
+  const [confirm, setConfirm] = useState<"issue" | "shipment" | "invoice" | null>(null);
+  const [unitPrices, setUnitPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!canRead) {
@@ -78,6 +82,28 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
       if (confirm === "issue") {
         setNote(await issueDeliveryNote(note.id));
         setConfirm(null);
+        return;
+      }
+      if (confirm === "invoice") {
+        const invoiceableItems = note.items.filter((item) => (item.remainingToInvoice ?? 0) > 0);
+        if (invoiceableItems.length === 0) {
+          setActionError("Faturalanabilir kalan miktar bulunamadı.");
+          return;
+        }
+        const createdInvoice = await createInvoice({
+          customerId: note.customerId,
+          currencyCode: "TRY",
+          items: invoiceableItems.map((item) => ({
+            deliveryNoteItemId: item.id,
+            enteredQuantity: item.remainingToInvoice ?? item.quantityBase ?? 1,
+            enteredPackagingId: null,
+            viewMode: "Piece",
+            unitPrice: unitPrices[item.id] ?? 0,
+            taxCodeId: null,
+          })),
+        });
+        setConfirm(null);
+        router.push(`/cari/faturalar/${createdInvoice.id}`);
         return;
       }
       if (note.rowVersion === null) {
@@ -122,6 +148,9 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
           ) : null}
           {note && canCreateShipment && note.status === "Issued" ? (
             <Button onClick={() => setConfirm("shipment")}>Sevkiyat oluştur</Button>
+          ) : null}
+          {note && canCreateInvoice && note.status === "Issued" && note.items.some((i) => (i.remainingToInvoice ?? 0) > 0) ? (
+            <Button onClick={() => setConfirm("invoice")}>Fatura oluştur</Button>
           ) : null}
         </div>
       }
@@ -211,11 +240,19 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
         onOpenChange={(open) => {
           if (!open && !acting) setConfirm(null);
         }}
-        title={confirm === "issue" ? "İrsaliyeyi kesinleştir" : "Sevkiyat oluştur"}
+        title={
+          confirm === "issue"
+            ? "İrsaliyeyi kesinleştir"
+            : confirm === "shipment"
+            ? "Sevkiyat oluştur"
+            : "Fatura oluştur"
+        }
         description={
           confirm === "issue"
             ? "Rezerve stok düşer, DeliveryIssue hareketi yazılır. İkinci issue yapılmaz."
-            : "Issued irsaliyeden Preparing sevkiyat oluşur. Aynı irsaliye ikinci kez bağlanamaz."
+            : confirm === "shipment"
+            ? "Issued irsaliyeden Preparing sevkiyat oluşur. Aynı irsaliye ikinci kez bağlanamaz."
+            : "Kalan faturalanabilir miktarlar üzerinden taslak fatura (Draft) oluşturulur."
         }
         footer={
           <div className="flex justify-end gap-2">
@@ -223,12 +260,41 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
               Vazgeç
             </Button>
             <Button loading={acting} onClick={() => void runAction()}>
-              {confirm === "issue" ? "Kesinleştir" : "Oluştur"}
+              {confirm === "issue" ? "Kesinleştir" : confirm === "shipment" ? "Oluştur" : "Faturayı oluştur"}
             </Button>
           </div>
         }
       >
         {actionError ? <Alert tone="danger" title="Komut başarısız">{actionError}</Alert> : null}
+        {confirm === "invoice" && note ? (
+          <div className="space-y-3 text-sm">
+            <p className="text-slate-600">Kalem birim fiyatlarını kontrol edin:</p>
+            {note.items
+              .filter((item) => (item.remainingToInvoice ?? 0) > 0)
+              .map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                  <div>
+                    <p className="font-medium text-slate-800">Ürün: {item.productId.slice(0, 8)}</p>
+                    <p className="text-xs text-slate-500">Miktar: {item.remainingToInvoice}</p>
+                  </div>
+                  <div className="w-32">
+                    <Input
+                      label="Birim fiyat"
+                      type="number"
+                      value={unitPrices[item.id] !== undefined ? String(unitPrices[item.id]) : "0"}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setUnitPrices((prev) => ({
+                          ...prev,
+                          [item.id]: isNaN(val) ? 0 : val,
+                        }));
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : null}
       </Dialog>
     </AppShell>
   );

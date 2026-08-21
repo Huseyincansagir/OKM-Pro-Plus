@@ -823,18 +823,53 @@ Next Slice: WEB SLICE 020 — Dispatch preparation and execution (P-002)
 | `dotnet test tests/FactoryErp.Domain.UnitTests` | PASS; 130 test |
 | `dotnet test tests/FactoryErp.ArchitectureTests` | PASS; 5 test |
 
+## WEB SLICE 021 — Invoice creation and issuing UI (P-006)
+
+**Tarih:** 2026-08-21
+**Durum:** PASS
+**Kapsam:** `POST /api/v1/invoices` (`CreateInvoiceRequest`, `invoice.create`), `POST /api/v1/invoices/{id}/issue` (`invoice.issue`), `/sevkiyat/irsaliyeler/[id]` üzerinden faturalanabilir kalan miktarla fatura açma aksiyonu, `/cari/faturalar/[id]` detay ve kesinleştirme panosu, `/cari` listesinden fatura detayına bağlantı ve cari borç kaydı (CurrentTransaction Debit) bildirimleri.
+
+### 1. Route ve API
+
+| UI | Backend |
+|---|---|
+| Fatura oluştur (İrsaliye kartından) | `POST /api/v1/invoices` (`CreateInvoiceRequest`, `invoice.create`, Idempotency-Key) |
+| Fatura detayı | `GET /api/v1/invoices/{id}` (`invoice.read`) |
+| Fatura kesinleştir (Issue) | `POST /api/v1/invoices/{id}/issue` (`invoice.issue`, Idempotency-Key) |
+| Cari hesap bakiyesi & hareketler | `GET /api/v1/current-accounts` (`current-account.read`) |
+
+### 2. Kurallar ve Invariantlar
+
+- **Finansal ve Stok Bütünlüğü:** Fatura kesinleştirme işlemi stok hareketi üretmez (stok irsaliyede düşmüştür); yalnızca müşterinin cari hesabına borç kaydı (`CurrentTransaction(Debit)`) açar ve bakiyeyi artırır.
+- **Miktar Güvenliği:** İrsaliyenin kalan faturalanabilir miktarı (`remainingToInvoice`) sunucu tarafından denetlenir; `OVER_INVOICING` engellenir.
+- **Yetkilendirme:** Taslak açma `invoice.create`, görüntüleme `invoice.read`, kesinleştirme `invoice.issue`.
+- **Eşzamanlılık & Idempotency:** Fatura oluşturma ve issue isteklerinde sunucu idempotency koruması işletilir.
+
+### Gate
+
+| Kontrol | Sonuç |
+|---|---|
+| `pnpm --dir apps/web test` | PASS; 228 test (72 dosya) |
+| `pnpm --dir apps/web typecheck` | PASS; 0 error |
+| `pnpm --dir apps/web lint` | PASS; 0 warning / 0 error |
+| `pnpm --dir apps/web build` | PASS; Next.js 15.5.23 prod build (28 route dahil `/cari/faturalar/[id]`) |
+| `dotnet build FactoryErp.sln -c Release` | PASS; 0 warning / 0 error |
+| `dotnet test tests/FactoryErp.Domain.UnitTests` | PASS; 130 test |
+| `dotnet test tests/FactoryErp.ArchitectureTests` | PASS; 5 test |
+
 ```text
-WEB SLICE 020
+WEB SLICE 021
 STATUS: PASS
-Next Slice: P-006 — Fatura oluştur/kes UI
+Next Slice: P-007 — Tahsilat ve Ödeme UI (POST /payments & GET /current-accounts)
 ```
 
-## BACKLOG — WEB 020 sonrası
+## BACKLOG — WEB 021 sonrası
 
 Yapılacak kuyruk: [`implementation-backlog.md`](./implementation-backlog.md).  
 Ölçek/satış denetimi: [`commercial-scale-readiness.md`](./commercial-scale-readiness.md). **O-015 OPEN.**
 
-Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler. P-003, P-001 ve P-002 kapandı.
+Tek fabrika hunisi O-015 beklemez. Tenant/`company_id` bekler. P-003, P-001, P-002 ve P-006 kapandı.
+
 
 
 

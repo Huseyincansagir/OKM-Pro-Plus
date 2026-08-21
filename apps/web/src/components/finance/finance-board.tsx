@@ -218,7 +218,15 @@ export function FinanceBoard() {
               ) : (
                 <DataTable
                   columns={[
-                    { id: "no", header: "Belge", accessor: (row) => row.invoiceNumber || row.id.slice(0, 8) },
+                    {
+                      id: "no",
+                      header: "Belge",
+                      accessor: (row) => (
+                        <Link className="font-semibold text-teal-600" href={`/cari/faturalar/${row.id}`}>
+                          {row.invoiceNumber || row.id.slice(0, 8)}
+                        </Link>
+                      ),
+                    },
                     {
                       id: "status",
                       header: "Durum",
