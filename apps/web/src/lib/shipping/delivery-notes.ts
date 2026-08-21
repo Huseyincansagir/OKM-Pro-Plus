@@ -8,6 +8,8 @@ export type DeliveryNoteLine = {
   productId: string;
   quantityBase: number | null;
   enteredQuantity: number;
+  enteredPackagingId: string | null;
+  viewMode: string | null;
   shippedQty: number | null;
   remainingToInvoice: number | null;
 };
@@ -50,6 +52,9 @@ export function mapDeliveryNoteLine(raw: unknown): DeliveryNoteLine {
       typeof record.enteredQuantity === "number" && Number.isFinite(record.enteredQuantity)
         ? record.enteredQuantity
         : 0,
+    enteredPackagingId:
+      typeof record.enteredPackagingId === "string" ? record.enteredPackagingId : null,
+    viewMode: typeof record.viewMode === "string" ? record.viewMode : null,
     shippedQty: asFiniteNumber(record.shippedQty),
     remainingToInvoice: asFiniteNumber(record.remainingToInvoice),
   };

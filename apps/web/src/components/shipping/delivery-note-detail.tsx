@@ -26,6 +26,7 @@ import {
 import { createShipment } from "@/lib/shipping/shipments";
 import { createInvoice } from "@/lib/finance/invoices";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 
 export function DeliveryNoteDetailBoard({ id }: { id: string }) {
   const router = useRouter();
@@ -44,6 +45,7 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<"issue" | "shipment" | "invoice" | null>(null);
   const [unitPrices, setUnitPrices] = useState<Record<string, number>>({});
+  const [invoiceCurrency, setInvoiceCurrency] = useState("TRY");
 
   useEffect(() => {
     if (!canRead) {
@@ -90,15 +92,22 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
           setActionError("Faturalanabilir kalan miktar bulunamadı.");
           return;
         }
+        for (const item of invoiceableItems) {
+          const price = unitPrices[item.id];
+          if (price === undefined || isNaN(price) || price <= 0) {
+            setActionError("Her kalem için geçerli bir birim fiyat (> 0) girilmelidir.");
+            return;
+          }
+        }
         const createdInvoice = await createInvoice({
           customerId: note.customerId,
-          currencyCode: "TRY",
+          currencyCode: invoiceCurrency || "TRY",
           items: invoiceableItems.map((item) => ({
             deliveryNoteItemId: item.id,
             enteredQuantity: item.remainingToInvoice ?? item.quantityBase ?? 1,
-            enteredPackagingId: null,
-            viewMode: "Piece",
-            unitPrice: unitPrices[item.id] ?? 0,
+            enteredPackagingId: item.enteredPackagingId ?? null,
+            viewMode: item.enteredPackagingId ? "Packaging" : "BaseUnit",
+            unitPrice: unitPrices[item.id],
             taxCodeId: null,
           })),
         });
@@ -268,7 +277,17 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
         {actionError ? <Alert tone="danger" title="Komut başarısız">{actionError}</Alert> : null}
         {confirm === "invoice" && note ? (
           <div className="space-y-3 text-sm">
-            <p className="text-slate-600">Kalem birim fiyatlarını kontrol edin:</p>
+            <Select
+              label="Fatura Para Birimi"
+              value={invoiceCurrency}
+              onChange={(e) => setInvoiceCurrency(e.target.value)}
+              options={[
+                { value: "TRY", label: "TRY (₺)" },
+                { value: "USD", label: "USD ($)" },
+                { value: "EUR", label: "EUR (€)" },
+              ]}
+            />
+            <p className="font-medium text-slate-700">Kalem birim fiyatlarını girin:</p>
             {note.items
               .filter((item) => (item.remainingToInvoice ?? 0) > 0)
               .map((item) => (
@@ -277,11 +296,14 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
                     <p className="font-medium text-slate-800">Ürün: {item.productId.slice(0, 8)}</p>
                     <p className="text-xs text-slate-500">Miktar: {item.remainingToInvoice}</p>
                   </div>
-                  <div className="w-32">
+                  <div className="w-36">
                     <Input
                       label="Birim fiyat"
                       type="number"
-                      value={unitPrices[item.id] !== undefined ? String(unitPrices[item.id]) : "0"}
+                      step="0.01"
+                      min="0.01"
+                      placeholder="0.00"
+                      value={unitPrices[item.id] !== undefined ? String(unitPrices[item.id]) : ""}
                       onChange={(e) => {
                         const val = parseFloat(e.target.value);
                         setUnitPrices((prev) => ({
@@ -289,6 +311,7 @@ export function DeliveryNoteDetailBoard({ id }: { id: string }) {
                           [item.id]: isNaN(val) ? 0 : val,
                         }));
                       }}
+                      required
                     />
                   </div>
                 </div>

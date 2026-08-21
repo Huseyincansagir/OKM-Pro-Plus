@@ -46,6 +46,36 @@ describe("invoices client", () => {
     expect(mapped.items[0].unitPrice).toBe(10);
   });
 
+  it("maps missing or invalid financial fields to null instead of inventing 0", () => {
+    const raw = {
+      id: "inv-missing",
+      invoiceNumber: "INV-2026-000002",
+      customerId: "cust-1",
+      status: "Draft",
+      currencyCode: "TRY",
+      subtotal: null,
+      taxTotal: undefined,
+      grandTotal: null,
+      items: [
+        {
+          id: "item-1",
+          deliveryNoteItemId: "dn-item-1",
+          productId: "prod-1",
+          quantityBase: null,
+          unitPrice: undefined,
+          lineTotal: null,
+        },
+      ],
+    };
+
+    const mapped = mapInvoiceDetail(raw);
+    expect(mapped.subtotal).toBeNull();
+    expect(mapped.taxTotal).toBeNull();
+    expect(mapped.grandTotal).toBeNull();
+    expect(mapped.items[0].unitPrice).toBeNull();
+    expect(mapped.items[0].lineTotal).toBeNull();
+  });
+
   it("calls getInvoice and returns mapped detail", async () => {
     vi.mocked(apiRequest).mockResolvedValue({
       id: "inv-1",

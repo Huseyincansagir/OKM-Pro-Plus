@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeliveryNoteDetailBoard } from "@/components/shipping/delivery-note-detail";
@@ -37,6 +37,8 @@ const draft = {
       productId: "p1",
       quantityBase: 2000,
       enteredQuantity: 1,
+      enteredPackagingId: null,
+      viewMode: "BaseUnit",
       shippedQty: 0,
       remainingToInvoice: 0,
     },
@@ -96,6 +98,8 @@ describe("DeliveryNoteDetailBoard", () => {
           productId: "p1",
           quantityBase: 2000,
           enteredQuantity: 1,
+          enteredPackagingId: null,
+          viewMode: "BaseUnit",
           shippedQty: 2000,
           remainingToInvoice: 2000,
         },
@@ -121,6 +125,15 @@ describe("DeliveryNoteDetailBoard", () => {
 
     expect(await screen.findByRole("heading", { name: "Fatura oluştur" })).toBeInTheDocument();
     const createBtn = screen.getByRole("button", { name: "Faturayı oluştur" });
+
+    // Trying to create without entering unit price should show validation error
+    await user.click(createBtn);
+    expect(await screen.findByText("Her kalem için geçerli bir birim fiyat (> 0) girilmelidir.")).toBeInTheDocument();
+    expect(createInvoice).not.toHaveBeenCalled();
+
+    // Enter valid unit price
+    const priceInput = screen.getByLabelText(/Birim fiyat/i);
+    fireEvent.change(priceInput, { target: { value: "12.5" } });
     await user.click(createBtn);
 
     expect(createInvoice).toHaveBeenCalledWith({
@@ -131,8 +144,8 @@ describe("DeliveryNoteDetailBoard", () => {
           deliveryNoteItemId: "i1",
           enteredQuantity: 2000,
           enteredPackagingId: null,
-          viewMode: "Piece",
-          unitPrice: 0,
+          viewMode: "BaseUnit",
+          unitPrice: 12.5,
           taxCodeId: null,
         },
       ],

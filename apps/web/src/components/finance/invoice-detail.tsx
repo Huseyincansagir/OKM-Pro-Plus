@@ -304,7 +304,7 @@ export function InvoiceDetailBoard({ id }: { id: string }) {
           onOpenChange={setPaymentModalOpen}
           initialCustomerId={invoice.customerId}
           initialInvoiceId={invoice.id}
-          initialAmount={invoice.grandTotal}
+          initialAmount={invoice.grandTotal ?? undefined}
           onSuccess={() => setReload((v) => v + 1)}
         />
       ) : null}

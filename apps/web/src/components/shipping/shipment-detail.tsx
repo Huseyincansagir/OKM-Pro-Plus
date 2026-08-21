@@ -64,6 +64,7 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
   const canLockRoute = permissions.includes("shipment.route-lock");
   const canPackage = permissions.includes("shipment.package-manage");
   const canLoadPlan = permissions.includes("shipment.load-plan");
+  const canLoadVerify = permissions.includes("shipment.load-verify");
   const canVehicleFit = permissions.includes("shipment.vehicle-fit");
   const canPlanLock = permissions.includes("shipment.plan-lock");
   const canPlanOverride = permissions.includes("shipment.plan-override");
@@ -84,6 +85,9 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
   const [reload, setReload] = useState(0);
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [scannedBarcodes, setScannedBarcodes] = useState<string[]>([]);
+  const [barcodeInput, setBarcodeInput] = useState("");
+  const [verifyError, setVerifyError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!canRead) {
@@ -151,7 +155,7 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
   const isLoadPlanLocked = Boolean(lockedLoadPlan);
   const isShipmentLoaded = row?.status === "Loaded";
   const canPerformLoadVerification =
-    (canLoadPlan || canDispatch) && isRouteLocked && isLoadPlanLocked && row?.status === "Preparing" && packages.length > 0;
+    canLoadVerify && isRouteLocked && isLoadPlanLocked && row?.status === "Preparing" && packages.length > 0;
 
   const nextStepText = !row
     ? ""
@@ -340,7 +344,7 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                   shipmentId={row.id}
                   shipmentRowVersion={row.rowVersion}
                   packages={packages}
-                  routePlan={routePlans[0] ?? null}
+                  routePlan={activeRoutePlan}
                   vehicles={vehicles}
                   canCreate={canLoadPlan}
                   canFit={canVehicleFit}
@@ -349,7 +353,7 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                   onChanged={() => setReload((value) => value + 1)}
                 />
               ) : null}
-              {routePlans[0] && canRoute && routePlans[0].rowVersion !== null ? (
+              {activeRoutePlan && canRoute && activeRoutePlan.rowVersion !== null ? (
                 <div className="grid gap-2 md:grid-cols-2">
                   <Select
                     label="Araç"
@@ -377,7 +381,7 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                     loading={acting}
                     onClick={() =>
                       void run(() =>
-                        assignRouteResources(routePlans[0].id, routePlans[0].rowVersion as number, vehicleId, driverId),
+                        assignRouteResources(activeRoutePlan.id, activeRoutePlan.rowVersion as number, vehicleId, driverId),
                       )
                     }
                   >
@@ -386,14 +390,14 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                   <Button
                     variant="secondary"
                     loading={acting}
-                    onClick={() => void run(() => planRoute(routePlans[0].id, routePlans[0].rowVersion as number))}
+                    onClick={() => void run(() => planRoute(activeRoutePlan.id, activeRoutePlan.rowVersion as number))}
                   >
                     Planla
                   </Button>
                   {canLockRoute ? (
                     <Button
                       loading={acting}
-                      onClick={() => void run(() => lockRoute(routePlans[0].id, routePlans[0].rowVersion as number))}
+                      onClick={() => void run(() => lockRoute(activeRoutePlan.id, activeRoutePlan.rowVersion as number))}
                     >
                       Rotayı kilitle
                     </Button>
@@ -405,7 +409,7 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                   <p>
                     Sefer {dispatchRun.id.slice(0, 8)} · {dispatchRun.status}
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {canDispatch && dispatchRun.status === "Prepared" && dispatchRun.rowVersion !== null ? (
                       <Button
                         loading={acting}
@@ -442,13 +446,24 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                           ))
                       : null}
                     {canExecute && dispatchRun.status === "InTransit" && dispatchRun.rowVersion !== null ? (
-                      <Button
-                        variant="secondary"
-                        loading={acting}
-                        onClick={() => void run(() => completeDispatch(dispatchRun.id, dispatchRun.rowVersion as number))}
-                      >
-                        Rotayı tamamla
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          variant="secondary"
+                          loading={acting}
+                          disabled={
+                            acting ||
+                            dispatchRun.stops.some((stop) => stop.status === "Pending" || stop.status === "Arrived")
+                          }
+                          onClick={() => void run(() => completeDispatch(dispatchRun.id, dispatchRun.rowVersion as number))}
+                        >
+                          Rotayı tamamla
+                        </Button>
+                        {dispatchRun.stops.some((stop) => stop.status === "Pending" || stop.status === "Arrived") ? (
+                          <span className="text-xs text-amber-700">
+                            (Bekleyen {dispatchRun.stops.filter((s) => s.status === "Pending" || s.status === "Arrived").length} durak var)
+                          </span>
+                        ) : null}
+                      </div>
                     ) : null}
                   </div>
                   <DataTable
@@ -619,13 +634,29 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
           <Dialog
             open={verifyModalOpen}
             onOpenChange={(next) => {
-              if (!acting) setVerifyModalOpen(next);
+              if (!acting) {
+                setVerifyModalOpen(next);
+                if (!next) {
+                  setScannedBarcodes([]);
+                  setBarcodeInput("");
+                  setVerifyError(null);
+                }
+              }
             }}
             title="Yükleme doğrulaması"
-            description="Paketlerin araca fiilen yüklendiğini onaylar ve sevkiyat durumunu Loaded yapar."
+            description="Paketlerin araca fiilen yüklendiğini barkod ile tek tek veya toplu olarak doğrulayın."
             footer={
               <div className="flex justify-end gap-2">
-                <Button variant="secondary" disabled={acting} onClick={() => setVerifyModalOpen(false)}>
+                <Button
+                  variant="secondary"
+                  disabled={acting}
+                  onClick={() => {
+                    setVerifyModalOpen(false);
+                    setScannedBarcodes([]);
+                    setBarcodeInput("");
+                    setVerifyError(null);
+                  }}
+                >
                   Vazgeç
                 </Button>
                 <Button
@@ -635,16 +666,18 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                       if (!lockedLoadPlan || lockedLoadPlan.rowVersion === null) {
                         throw new Error("Kilitli yük planı bulunamadı.");
                       }
+                      const activePkgs = packages.filter((p) => p.status !== "Cancelled");
                       const session = await startLoadVerification(lockedLoadPlan.id, lockedLoadPlan.rowVersion);
                       let currentSessionRowVersion = session.rowVersion ?? 1;
-                      for (const pkg of packages) {
-                        if (pkg.status === "Cancelled") continue;
+                      for (const pkg of activePkgs) {
                         const barcode = pkg.packageCode || pkg.id;
                         await scanLoadVerificationPackage(session.id, currentSessionRowVersion, barcode);
                         currentSessionRowVersion++;
                       }
                       await completeLoadVerification(session.id, currentSessionRowVersion);
                       setVerifyModalOpen(false);
+                      setScannedBarcodes([]);
+                      setBarcodeInput("");
                     })
                   }
                 >
@@ -653,10 +686,101 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
               </div>
             }
           >
-            <div className="space-y-2 text-sm">
-              <p>
-                Kilitli yük planındaki {packages.filter((p) => p.status !== "Cancelled").length} paket araca yüklenecek ve
-                doğrulama tamamlanacaktır.
+            <div className="space-y-3 text-sm">
+              {verifyError ? <Alert tone="danger" title="Doğrulama Hatası">{verifyError}</Alert> : null}
+              
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Input
+                    label="Barkod / Paket Kodu Okutun"
+                    placeholder="Paket barkodunu okutun veya yazın..."
+                    value={barcodeInput}
+                    onChange={(e) => setBarcodeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const trimmed = barcodeInput.trim();
+                        if (!trimmed) return;
+                        const match = packages.find(
+                          (p) => p.status !== "Cancelled" && (p.packageCode === trimmed || p.id === trimmed)
+                        );
+                        if (!match) {
+                          setVerifyError(`"${trimmed}" kodlu paket bu sevkiyatta bulunamadı.`);
+                        } else {
+                          setVerifyError(null);
+                          if (!scannedBarcodes.includes(match.id)) {
+                            setScannedBarcodes((prev) => [...prev, match.id]);
+                          }
+                          setBarcodeInput("");
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    const trimmed = barcodeInput.trim();
+                    if (!trimmed) return;
+                    const match = packages.find(
+                      (p) => p.status !== "Cancelled" && (p.packageCode === trimmed || p.id === trimmed)
+                    );
+                    if (!match) {
+                      setVerifyError(`"${trimmed}" kodlu paket bu sevkiyatta bulunamadı.`);
+                    } else {
+                      setVerifyError(null);
+                      if (!scannedBarcodes.includes(match.id)) {
+                        setScannedBarcodes((prev) => [...prev, match.id]);
+                      }
+                      setBarcodeInput("");
+                    }
+                  }}
+                >
+                  Okut
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    const activePkgs = packages.filter((p) => p.status !== "Cancelled");
+                    setScannedBarcodes(activePkgs.map((p) => p.id));
+                    setVerifyError(null);
+                  }}
+                >
+                  Tümünü Doğrula
+                </Button>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                {packages
+                  .filter((p) => p.status !== "Cancelled")
+                  .map((pkg) => {
+                    const isScanned = scannedBarcodes.includes(pkg.id);
+                    return (
+                      <div key={pkg.id} className="flex items-center justify-between p-2 text-xs">
+                        <div>
+                          <span className="font-mono font-medium text-slate-800">
+                            {pkg.packageCode || pkg.id.slice(0, 8)}
+                          </span>
+                          <span className="text-slate-500 ml-2">Miktar: {pkg.quantityBase}</span>
+                        </div>
+                        {isScanned ? (
+                          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-medium">
+                            Doğrulandı
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
+                            Bekliyor
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+
+              <p className="text-xs text-slate-500">
+                Toplam {packages.filter((p) => p.status !== "Cancelled").length} paketten {scannedBarcodes.length} tanesi tarandı.
               </p>
             </div>
           </Dialog>

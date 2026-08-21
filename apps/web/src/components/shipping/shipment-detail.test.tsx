@@ -327,14 +327,72 @@ describe("ShipmentDetailBoard", () => {
     });
   });
 
-  it("offers yüklemeyi tamamla when shipment is Preparing and load plan is Locked", async () => {
+  it("hides yüklemeyi tamamla when user lacks shipment.load-verify", async () => {
+    useSessionStore.getState().setAuthenticated({
+      id: "u1",
+      userName: "admin",
+      displayName: "Yusuf Kaya",
+      roles: ["admin"],
+      permissions: ["shipment.read", "shipment.load-plan", "shipment.dispatch"],
+    });
+    vi.mocked(getShipment).mockResolvedValue({
+      id: "s1",
+      deliveryNoteId: "d1",
+      customerId: "c1",
+      status: "Preparing",
+      itemCount: 1,
+      rowVersion: 2,
+      createdAt: "2026-08-19T10:00:00Z",
+      items: [{ id: "i1", deliveryNoteItemId: "di1", productId: "p1", quantityBase: 2000 }],
+    });
+    vi.mocked(listRoutePlans).mockResolvedValue([
+      {
+        id: "rp1",
+        status: "Locked",
+        version: 1,
+        rowVersion: 2,
+        vehicleId: "v1",
+        driverId: "dr1",
+        stops: [{ id: "st1", sequenceNo: 1, customerId: "c1", addressId: "a1", status: "Pending" }],
+      },
+    ]);
+    vi.mocked(listLoadPlans).mockResolvedValue([
+      {
+        id: "lp1",
+        status: "Locked",
+        feasibilityStatus: "Feasible",
+        routePlanId: "rp1",
+        vehicleId: "v1",
+        vehicleCapacityId: "vc1",
+        rowVersion: 3,
+        inputSnapshotHash: "hash123",
+      },
+    ]);
+    vi.mocked(listShipmentPackages).mockResolvedValue([
+      {
+        id: "pkg1",
+        shipmentItemId: "i1",
+        routeStopId: "st1",
+        quantityBase: 2000,
+        status: "Available",
+        physicalSnapshot: "{}",
+        packageCode: "PKG-001",
+      },
+    ]);
+
+    render(<ShipmentDetailBoard id="s1" />);
+    expect(await screen.findAllByText("Preparing")).not.toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Yüklemeyi tamamla (Loaded)" })).not.toBeInTheDocument();
+  });
+
+  it("offers yüklemeyi tamamla when shipment is Preparing, load plan is Locked, and user has shipment.load-verify", async () => {
     const user = userEvent.setup();
     useSessionStore.getState().setAuthenticated({
       id: "u1",
       userName: "admin",
       displayName: "Yusuf Kaya",
       roles: ["admin"],
-      permissions: ["shipment.read", "shipment.load-plan"],
+      permissions: ["shipment.read", "shipment.load-verify"],
     });
     vi.mocked(getShipment).mockResolvedValue({
       id: "s1",

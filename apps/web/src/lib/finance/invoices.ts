@@ -5,11 +5,11 @@ export type InvoiceItemDetail = {
   id: string;
   deliveryNoteItemId: string;
   productId: string;
-  quantityBase: number;
+  quantityBase: number | null;
   enteredQuantity: number | null;
   enteredPackagingId: string | null;
-  unitPrice: number;
-  lineTotal: number;
+  unitPrice: number | null;
+  lineTotal: number | null;
   rowVersion: number | null;
 };
 
@@ -19,9 +19,9 @@ export type InvoiceDetail = {
   customerId: string;
   status: string;
   currencyCode: string;
-  subtotal: number;
-  taxTotal: number;
-  grandTotal: number;
+  subtotal: number | null;
+  taxTotal: number | null;
+  grandTotal: number | null;
   items: InvoiceItemDetail[];
   issuedAt: string | null;
   rowVersion: number | null;
@@ -46,8 +46,8 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
-function asFiniteNumber(value: unknown, defaultValue = 0): number {
-  return typeof value === "number" && Number.isFinite(value) ? value : defaultValue;
+function asFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 export function mapInvoiceDetail(raw: unknown): InvoiceDetail {
