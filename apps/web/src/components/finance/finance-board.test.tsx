@@ -99,6 +99,7 @@ describe("FinanceBoard", () => {
         id: "pay-1",
         customerId: "c1",
         amount: 2500,
+        currencyCode: "TRY",
         paymentMethodId: "pm1",
         status: "Applied",
         invoiceId: null,

@@ -495,12 +495,20 @@ public sealed class DeliveryInvoiceFinanceService(
         }
 
         InvoiceRecord? invoice = null;
+        var currencyCode = string.IsNullOrWhiteSpace(request.CurrencyCode) ? "TRY" : request.CurrencyCode.Trim().ToUpperInvariant();
         if (request.InvoiceId.HasValue)
         {
-            invoice = await dbContext.Invoices.SingleOrDefaultAsync(x => x.Id == request.InvoiceId.Value && x.CustomerId == request.CustomerId, cancellationToken);
+            invoice = await dbContext.Invoices
+                .FromSqlInterpolated($"SELECT * FROM invoices WHERE id = {request.InvoiceId.Value} AND customer_id = {request.CustomerId} FOR UPDATE")
+                .SingleOrDefaultAsync(cancellationToken);
             if (invoice is null || invoice.Status is not ("Issued" or "PartiallyPaid"))
             {
                 throw new DomainException(new("INVOICE_NOT_PAYABLE", "Ödeme uygulanacak issued fatura bulunamadı."));
+            }
+
+            if (!string.Equals(invoice.CurrencyCode, currencyCode, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new DomainException(new("CURRENCY_MISMATCH", $"Ödeme para birimi ({currencyCode}) fatura para birimi ({invoice.CurrencyCode}) ile eşleşmelidir."));
             }
 
             var allocated = await dbContext.PaymentAllocations.Where(x => x.InvoiceId == invoice.Id).SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
@@ -510,13 +518,13 @@ public sealed class DeliveryInvoiceFinanceService(
             }
         }
 
-        var account = await LockOrCreateCurrentAccountAsync(request.CustomerId, "TRY", cancellationToken);
+        var account = await LockOrCreateCurrentAccountAsync(request.CustomerId, currencyCode, cancellationToken);
         var payment = new PaymentRecord
         {
             Id = Guid.NewGuid(),
             CustomerId = request.CustomerId,
             Amount = request.Amount,
-            CurrencyCode = "TRY",
+            CurrencyCode = currencyCode,
             PaymentMethodId = request.PaymentMethodId,
             Status = "Applied",
             Reference = request.Reference,
@@ -546,7 +554,7 @@ public sealed class DeliveryInvoiceFinanceService(
             TransactionType = "PaymentApplied",
             DebitAmount = 0,
             CreditAmount = request.Amount,
-            CurrencyCode = "TRY",
+            CurrencyCode = currencyCode,
             SourceEntityType = nameof(PaymentRecord),
             SourceEntityId = payment.Id,
             IdempotencyKey = idempotencyKey,
@@ -555,7 +563,7 @@ public sealed class DeliveryInvoiceFinanceService(
         });
         await auditWriter.AppendAsync(new("PaymentApplied", nameof(PaymentRecord), payment.Id, actorId, correlationId));
         await dbContext.SaveChangesAsync(cancellationToken);
-        var result = new PaymentDto(payment.Id, payment.CustomerId, payment.Amount, payment.PaymentMethodId, payment.Status, invoice?.Id, payment.AppliedAt, MapCurrentAccount(account));
+        var result = new PaymentDto(payment.Id, payment.CustomerId, payment.Amount, payment.CurrencyCode, payment.PaymentMethodId, payment.Status, invoice?.Id, payment.AppliedAt, MapCurrentAccount(account));
         await idempotencyStore.SaveAsync(scope, idempotencyKey, payloadHash, 200, JsonSerializer.Serialize(result), DateTimeOffset.UtcNow.AddDays(30), cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return result;
@@ -583,13 +591,14 @@ public sealed class DeliveryInvoiceFinanceService(
             x.Id,
             x.CustomerId,
             x.Amount,
+            x.CurrencyCode ?? "TRY",
             x.PaymentMethodId,
             x.Status,
             allocations.TryGetValue(x.Id, out var invoiceId) ? invoiceId : null,
             x.AppliedAt,
             accounts.TryGetValue(x.CustomerId, out var acc)
                 ? MapCurrentAccount(acc)
-                : new CurrentAccountDto(x.CustomerId, x.CurrencyCode, 0, 0, 0, 1)
+                : new CurrentAccountDto(x.CustomerId, x.CurrencyCode ?? "TRY", 0, 0, 0, 1)
         )).ToArray();
     }
 
@@ -659,7 +668,7 @@ public sealed class DeliveryInvoiceFinanceService(
 
     private async Task<CurrentAccountRecord> LockOrCreateCurrentAccountAsync(Guid customerId, string currencyCode, CancellationToken cancellationToken)
     {
-        var account = await dbContext.CurrentAccounts.FromSqlInterpolated($"SELECT * FROM current_accounts WHERE customer_id = {customerId} FOR UPDATE").SingleOrDefaultAsync(cancellationToken);
+        var account = await dbContext.CurrentAccounts.FromSqlInterpolated($"SELECT * FROM current_accounts WHERE customer_id = {customerId} AND currency_code = {currencyCode} FOR UPDATE").SingleOrDefaultAsync(cancellationToken);
         if (account is not null)
         {
             return account;

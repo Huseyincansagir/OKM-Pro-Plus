@@ -85,9 +85,11 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
   const [reload, setReload] = useState(0);
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [verifySession, setVerifySession] = useState<{ id: string; rowVersion: number } | null>(null);
   const [scannedBarcodes, setScannedBarcodes] = useState<string[]>([]);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     if (!canRead) {
@@ -511,8 +513,26 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                     {canPerformLoadVerification && row.rowVersion !== null ? (
                       <Button
                         variant="secondary"
-                        loading={acting}
-                        onClick={() => setVerifyModalOpen(true)}
+                        loading={acting || scanning}
+                        onClick={() => {
+                          if (!lockedLoadPlan || lockedLoadPlan.rowVersion === null) return;
+                          setVerifyError(null);
+                          setBarcodeInput("");
+                          setScannedBarcodes([]);
+                          setVerifySession(null);
+                          setVerifyModalOpen(true);
+                          setScanning(true);
+                          startLoadVerification(lockedLoadPlan.id, lockedLoadPlan.rowVersion)
+                            .then((session) => {
+                              setVerifySession({ id: session.id, rowVersion: session.rowVersion ?? 1 });
+                            })
+                            .catch((caught) => {
+                              setVerifyError(userFacingMessage(caught));
+                            })
+                            .finally(() => {
+                              setScanning(false);
+                            });
+                        }}
                       >
                         Yüklemeyi tamamla (Loaded)
                       </Button>
@@ -634,12 +654,13 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
           <Dialog
             open={verifyModalOpen}
             onOpenChange={(next) => {
-              if (!acting) {
+              if (!acting && !scanning) {
                 setVerifyModalOpen(next);
                 if (!next) {
                   setScannedBarcodes([]);
                   setBarcodeInput("");
                   setVerifyError(null);
+                  setVerifySession(null);
                 }
               }
             }}
@@ -649,33 +670,34 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
               <div className="flex justify-end gap-2">
                 <Button
                   variant="secondary"
-                  disabled={acting}
+                  disabled={acting || scanning}
                   onClick={() => {
                     setVerifyModalOpen(false);
                     setScannedBarcodes([]);
                     setBarcodeInput("");
                     setVerifyError(null);
+                    setVerifySession(null);
                   }}
                 >
                   Vazgeç
                 </Button>
                 <Button
                   loading={acting}
+                  disabled={
+                    acting ||
+                    scanning ||
+                    !verifySession ||
+                    scannedBarcodes.length < packages.filter((p) => p.status !== "Cancelled").length ||
+                    packages.filter((p) => p.status !== "Cancelled").length === 0
+                  }
                   onClick={() =>
                     void run(async () => {
-                      if (!lockedLoadPlan || lockedLoadPlan.rowVersion === null) {
-                        throw new Error("Kilitli yük planı bulunamadı.");
+                      if (!verifySession) {
+                        throw new Error("Doğrulama oturumu bulunamadı.");
                       }
-                      const activePkgs = packages.filter((p) => p.status !== "Cancelled");
-                      const session = await startLoadVerification(lockedLoadPlan.id, lockedLoadPlan.rowVersion);
-                      let currentSessionRowVersion = session.rowVersion ?? 1;
-                      for (const pkg of activePkgs) {
-                        const barcode = pkg.packageCode || pkg.id;
-                        await scanLoadVerificationPackage(session.id, currentSessionRowVersion, barcode);
-                        currentSessionRowVersion++;
-                      }
-                      await completeLoadVerification(session.id, currentSessionRowVersion);
+                      await completeLoadVerification(verifySession.id, verifySession.rowVersion);
                       setVerifyModalOpen(false);
+                      setVerifySession(null);
                       setScannedBarcodes([]);
                       setBarcodeInput("");
                     })
@@ -695,24 +717,39 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                     label="Barkod / Paket Kodu Okutun"
                     placeholder="Paket barkodunu okutun veya yazın..."
                     value={barcodeInput}
+                    disabled={scanning || !verifySession}
                     onChange={(e) => setBarcodeInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         const trimmed = barcodeInput.trim();
-                        if (!trimmed) return;
-                        const match = packages.find(
-                          (p) => p.status !== "Cancelled" && (p.packageCode === trimmed || p.id === trimmed)
+                        if (!trimmed || !verifySession || scanning) return;
+                        const activePkgs = packages.filter((p) => p.status !== "Cancelled");
+                        const match = activePkgs.find(
+                          (p) => (p.packageCode && p.packageCode.toLowerCase() === trimmed.toLowerCase()) || p.id === trimmed
                         );
                         if (!match) {
                           setVerifyError(`"${trimmed}" kodlu paket bu sevkiyatta bulunamadı.`);
-                        } else {
-                          setVerifyError(null);
-                          if (!scannedBarcodes.includes(match.id)) {
-                            setScannedBarcodes((prev) => [...prev, match.id]);
-                          }
-                          setBarcodeInput("");
+                          return;
                         }
+                        if (scannedBarcodes.includes(match.id)) {
+                          setVerifyError(`"${trimmed}" paketi zaten doğrulandı.`);
+                          return;
+                        }
+                        setScanning(true);
+                        setVerifyError(null);
+                        scanLoadVerificationPackage(verifySession.id, verifySession.rowVersion, trimmed)
+                          .then(() => {
+                            setVerifySession((prev) => (prev ? { ...prev, rowVersion: prev.rowVersion + 1 } : null));
+                            setScannedBarcodes((prev) => [...prev, match.id]);
+                            setBarcodeInput("");
+                          })
+                          .catch((caught) => {
+                            setVerifyError(userFacingMessage(caught));
+                          })
+                          .finally(() => {
+                            setScanning(false);
+                          });
                       }
                     }}
                   />
@@ -720,21 +757,36 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                 <Button
                   type="button"
                   variant="secondary"
+                  disabled={scanning || !verifySession}
                   onClick={() => {
                     const trimmed = barcodeInput.trim();
-                    if (!trimmed) return;
-                    const match = packages.find(
-                      (p) => p.status !== "Cancelled" && (p.packageCode === trimmed || p.id === trimmed)
+                    if (!trimmed || !verifySession || scanning) return;
+                    const activePkgs = packages.filter((p) => p.status !== "Cancelled");
+                    const match = activePkgs.find(
+                      (p) => (p.packageCode && p.packageCode.toLowerCase() === trimmed.toLowerCase()) || p.id === trimmed
                     );
                     if (!match) {
                       setVerifyError(`"${trimmed}" kodlu paket bu sevkiyatta bulunamadı.`);
-                    } else {
-                      setVerifyError(null);
-                      if (!scannedBarcodes.includes(match.id)) {
-                        setScannedBarcodes((prev) => [...prev, match.id]);
-                      }
-                      setBarcodeInput("");
+                      return;
                     }
+                    if (scannedBarcodes.includes(match.id)) {
+                      setVerifyError(`"${trimmed}" paketi zaten doğrulandı.`);
+                      return;
+                    }
+                    setScanning(true);
+                    setVerifyError(null);
+                    scanLoadVerificationPackage(verifySession.id, verifySession.rowVersion, trimmed)
+                      .then(() => {
+                        setVerifySession((prev) => (prev ? { ...prev, rowVersion: prev.rowVersion + 1 } : null));
+                        setScannedBarcodes((prev) => [...prev, match.id]);
+                        setBarcodeInput("");
+                      })
+                      .catch((caught) => {
+                        setVerifyError(userFacingMessage(caught));
+                      })
+                      .finally(() => {
+                        setScanning(false);
+                      });
                   }}
                 >
                   Okut
@@ -742,10 +794,32 @@ export function ShipmentDetailBoard({ id }: { id: string }) {
                 <Button
                   type="button"
                   variant="secondary"
+                  disabled={scanning || !verifySession}
                   onClick={() => {
+                    if (!verifySession || scanning) return;
                     const activePkgs = packages.filter((p) => p.status !== "Cancelled");
-                    setScannedBarcodes(activePkgs.map((p) => p.id));
+                    const remaining = activePkgs.filter((p) => !scannedBarcodes.includes(p.id));
+                    if (remaining.length === 0) return;
+                    setScanning(true);
                     setVerifyError(null);
+                    (async () => {
+                      try {
+                        let currentVer = verifySession.rowVersion;
+                        const verified: string[] = [];
+                        for (const pkg of remaining) {
+                          const barcode = pkg.packageCode || pkg.id;
+                          await scanLoadVerificationPackage(verifySession.id, currentVer, barcode);
+                          currentVer++;
+                          verified.push(pkg.id);
+                        }
+                        setVerifySession({ id: verifySession.id, rowVersion: currentVer });
+                        setScannedBarcodes((prev) => [...prev, ...verified]);
+                      } catch (caught) {
+                        setVerifyError(userFacingMessage(caught));
+                      } finally {
+                        setScanning(false);
+                      }
+                    })();
                   }}
                 >
                   Tümünü Doğrula

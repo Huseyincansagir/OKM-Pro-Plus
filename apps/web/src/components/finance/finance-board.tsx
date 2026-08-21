@@ -47,7 +47,7 @@ export function FinanceBoard() {
   const canReadInvoices = permissions.includes("invoice.read");
   const canReadNotes = permissions.includes("delivery-note.read");
   const canReadAccounts = permissions.includes("current-account.read");
-  const canReadPayments = permissions.includes("payment.read") || permissions.includes("current-account.read");
+  const canReadPayments = permissions.includes("payment.read");
   const canApplyPayment = permissions.includes("payment.apply");
   const canRead = canReadInvoices || canReadNotes || canReadAccounts || canReadPayments;
   const [invoices, setInvoices] = useState<InvoiceRow[] | null>(null);
@@ -274,7 +274,7 @@ export function FinanceBoard() {
             </CardHeader>
             <CardBody>
               {!canReadPayments ? (
-                <p className="text-sm text-slate-600">payment.read / current-account.read yok.</p>
+                <p className="text-sm text-slate-600">payment.read yok.</p>
               ) : loading || !payments ? (
                 <p className="text-sm text-slate-600">Yükleniyor…</p>
               ) : payments.length === 0 ? (
@@ -291,7 +291,7 @@ export function FinanceBoard() {
                     {
                       id: "amount",
                       header: "Tutar",
-                      accessor: (row) => formatMoney(row.amount, "TRY"),
+                      accessor: (row) => formatMoney(row.amount, row.currencyCode || "TRY"),
                     },
                     {
                       id: "invoice",

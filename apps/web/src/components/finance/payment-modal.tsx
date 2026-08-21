@@ -40,6 +40,7 @@ export function PaymentModal({
   const [invoiceId, setInvoiceId] = useState(initialInvoiceId || "");
   const [paymentMethodId, setPaymentMethodId] = useState("");
   const [amount, setAmount] = useState(initialAmount !== undefined ? String(initialAmount) : "");
+  const [currencyCode, setCurrencyCode] = useState("TRY");
   const [reference, setReference] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +51,7 @@ export function PaymentModal({
     setCustomerId(initialCustomerId || "");
     setInvoiceId(initialInvoiceId || "");
     setAmount(initialAmount !== undefined ? String(initialAmount) : "");
+    setCurrencyCode("TRY");
     setReference("");
 
     listPaymentMethods()
@@ -93,6 +95,7 @@ export function PaymentModal({
       const payment = await applyPayment({
         customerId,
         amount: parsedAmount,
+        currencyCode,
         paymentMethodId,
         invoiceId: invoiceId || null,
         reference: reference.trim() || null,
@@ -163,18 +166,33 @@ export function PaymentModal({
           />
         </div>
 
-        <div>
-          <Input
-            label="Tutar (TRY)"
-            type="number"
-            step="0.01"
-            min="0.01"
-            placeholder="0.00"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            disabled={submitting}
-            required
-          />
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-2">
+            <Input
+              label={`Tutar (${currencyCode})`}
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={submitting}
+              required
+            />
+          </div>
+          <div>
+            <Select
+              label="Para Birimi"
+              value={currencyCode}
+              onChange={(e) => setCurrencyCode(e.target.value)}
+              disabled={submitting || Boolean(invoiceId)}
+              options={[
+                { value: "TRY", label: "TRY (₺)" },
+                { value: "USD", label: "USD ($)" },
+                { value: "EUR", label: "EUR (€)" },
+              ]}
+            />
+          </div>
         </div>
 
         <div>
@@ -186,8 +204,13 @@ export function PaymentModal({
               setInvoiceId(selected);
               if (selected) {
                 const targetInvoice = invoices.find((inv) => inv.id === selected);
-                if (targetInvoice && targetInvoice.grandTotal !== null && !amount) {
-                  setAmount(String(targetInvoice.grandTotal));
+                if (targetInvoice) {
+                  if (targetInvoice.currencyCode) {
+                    setCurrencyCode(targetInvoice.currencyCode);
+                  }
+                  if (targetInvoice.grandTotal !== null && !amount) {
+                    setAmount(String(targetInvoice.grandTotal));
+                  }
                 }
               }
             }}
@@ -196,7 +219,7 @@ export function PaymentModal({
               { value: "", label: "Serbest Tahsilat (Faturasız)" },
               ...availableInvoices.map((inv) => ({
                 value: inv.id,
-                label: `${inv.invoiceNumber || inv.id.slice(0, 8)} — ${inv.grandTotal ? `₺${inv.grandTotal}` : "—"} (${inv.status})`,
+                label: `${inv.invoiceNumber || inv.id.slice(0, 8)} — ${inv.grandTotal !== null ? `${inv.currencyCode || "TRY"} ${inv.grandTotal}` : "—"} (${inv.status})`,
               })),
             ]}
           />

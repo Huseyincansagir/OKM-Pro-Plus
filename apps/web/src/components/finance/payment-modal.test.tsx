@@ -69,6 +69,7 @@ describe("PaymentModal", () => {
       id: "pay-1",
       customerId: "cust-1",
       amount: 1500,
+      currencyCode: "TRY",
       paymentMethodId: "pm-1",
       status: "Applied",
       invoiceId: "inv-1",
@@ -94,6 +95,7 @@ describe("PaymentModal", () => {
     expect(applyPayment).toHaveBeenCalledWith({
       customerId: "cust-1",
       amount: 1500,
+      currencyCode: "TRY",
       paymentMethodId: "pm-1",
       invoiceId: "inv-1",
       reference: null,

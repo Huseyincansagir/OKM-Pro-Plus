@@ -5,7 +5,8 @@ import type { StatusKind } from "@/components/ui/status-badge";
 export type PaymentRow = {
   id: string;
   customerId: string;
-  amount: number;
+  amount: number | null;
+  currencyCode: string;
   paymentMethodId: string;
   status: string;
   invoiceId: string | null;
@@ -23,8 +24,8 @@ export type CurrentTransactionRow = {
   id: string;
   currentAccountId: string;
   transactionType: string;
-  debitAmount: number;
-  creditAmount: number;
+  debitAmount: number | null;
+  creditAmount: number | null;
   currencyCode: string;
   sourceEntityType: string;
   sourceEntityId: string;
@@ -34,6 +35,7 @@ export type CurrentTransactionRow = {
 export type ApplyPaymentInput = {
   customerId: string;
   amount: number;
+  currencyCode?: string;
   paymentMethodId: string;
   invoiceId?: string | null;
   reference?: string | null;
@@ -43,8 +45,8 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
-function asFiniteNumber(value: unknown, defaultValue = 0): number {
-  return typeof value === "number" && Number.isFinite(value) ? value : defaultValue;
+function asFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 export function mapPaymentRow(raw: unknown): PaymentRow {
@@ -53,6 +55,7 @@ export function mapPaymentRow(raw: unknown): PaymentRow {
     id: String(record.id ?? ""),
     customerId: String(record.customerId ?? ""),
     amount: asFiniteNumber(record.amount),
+    currencyCode: String(record.currencyCode ?? "TRY"),
     paymentMethodId: String(record.paymentMethodId ?? ""),
     status: String(record.status ?? "Applied"),
     invoiceId: typeof record.invoiceId === "string" ? record.invoiceId : null,
@@ -134,6 +137,7 @@ export async function applyPayment(input: ApplyPaymentInput): Promise<PaymentRow
     body: {
       customerId: input.customerId,
       amount: input.amount,
+      currencyCode: input.currencyCode || "TRY",
       paymentMethodId: input.paymentMethodId,
       invoiceId: input.invoiceId ?? null,
       reference: input.reference ?? null,

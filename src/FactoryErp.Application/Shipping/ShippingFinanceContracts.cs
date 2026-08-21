@@ -76,7 +76,8 @@ public sealed record ApplyPaymentRequest(
     decimal Amount,
     Guid PaymentMethodId,
     Guid? InvoiceId,
-    string? Reference);
+    string? Reference,
+    string? CurrencyCode = "TRY");
 
 public sealed record CurrentAccountDto(
     Guid CustomerId,
@@ -107,6 +108,7 @@ public sealed record PaymentDto(
     Guid Id,
     Guid CustomerId,
     decimal Amount,
+    string CurrencyCode,
     Guid PaymentMethodId,
     string Status,
     Guid? InvoiceId,

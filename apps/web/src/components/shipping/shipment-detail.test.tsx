@@ -459,7 +459,14 @@ describe("ShipmentDetailBoard", () => {
     await user.click(verifyBtn);
 
     expect(await screen.findByRole("heading", { name: "Yükleme doğrulaması" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Yüklemeyi onayla (Loaded)" }));
+    
+    // Click Tümünü Doğrula to scan all packages
+    const scanAllBtn = await screen.findByRole("button", { name: "Tümünü Doğrula" });
+    await user.click(scanAllBtn);
+
+    // Confirm verification
+    const confirmBtn = await screen.findByRole("button", { name: "Yüklemeyi onayla (Loaded)" });
+    await user.click(confirmBtn);
 
     expect(startLoadVerification).toHaveBeenCalledWith("lp1", 3);
     expect(scanLoadVerificationPackage).toHaveBeenCalledWith("ses1", 1, "PKG-001");

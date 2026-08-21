@@ -154,6 +154,7 @@ describe("payments API client", () => {
       body: {
         customerId: "cust-1",
         amount: 750,
+        currencyCode: "TRY",
         paymentMethodId: "pm-bank",
         invoiceId: "inv-1",
         reference: "Dekont No 12345",
